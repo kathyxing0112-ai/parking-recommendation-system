@@ -1,6 +1,6 @@
 # Development Environment
 
-- Language / Version: Python 3.12
+- Language / Version: Python 3.13
 - Runtime: Local virtual environment
 - Model Runner: Ollama
 - Model: Qwen3 4B as the initial baseline

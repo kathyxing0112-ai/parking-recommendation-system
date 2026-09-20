@@ -1,2 +1,4 @@
-# No external Python packages are required for the Chapter 1 repository scaffold.
-# Dependencies will be added when the walking skeleton is implemented.
+# No external Python packages are required.
+# The walking skeleton uses only the Python standard library; every participant
+# is a stub returning a hard-coded value. Dependencies will be added when a
+# requirement authorizes real data access or a real language-model call.

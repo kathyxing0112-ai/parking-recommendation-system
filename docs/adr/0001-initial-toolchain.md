@@ -14,7 +14,7 @@ The team does not currently have a paid cloud API key, and the primary developme
 
 ## Decision
 
-- Language: Python 3.12
+- Language: Python 3.13
 - Runtime: Local Python virtual environment
 - Model hosting: Local for initial development and demonstration
 - Model runner: Ollama
@@ -38,4 +38,4 @@ The team will reconsider this decision if testing shows that Qwen3 4B does not p
 
 The team may move from local to hosted model deployment if local inference is too slow, consumes too much memory, or prevents the application from being deployed as a publicly accessible multi-user service.
 
-The runtime or Python version may also be changed if required dependencies are incompatible with Python 3.12. Docker may be introduced later if cloud deployment, multiple supporting services, or reproducible cross-platform execution becomes necessary.
+The runtime or Python version may also be changed if required dependencies are incompatible with Python 3.13. Docker may be introduced later if cloud deployment, multiple supporting services, or reproducible cross-platform execution becomes necessary.
