@@ -1,2 +1,0 @@
-# No external Python packages are required for the Chapter 1 repository scaffold.
-# Dependencies will be added when the walking skeleton is implemented.
