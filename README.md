@@ -14,4 +14,6 @@ The system provides decision support only. It does not reserve parking spaces or
    python app.py
 ```
 
-   At this increment the command starts the application and performs no behavior.
+At this increment, the command runs one end-to-end UC.1 walking-skeleton
+scenario and prints a hard-coded, synthetic ranked parking recommendation.
+No real parking data source, ranking algorithm, or language model is used.
