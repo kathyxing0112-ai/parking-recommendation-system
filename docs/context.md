@@ -36,9 +36,9 @@ The system provides decision support only.
   - Destination
   - Expected arrival time
   - Expected departure time
-  - Vehicle information or vehicle type
-  - Group size
-  - Parking eligibility
+  - Vehicle category
+  - Declared parking eligibility
+  - Accessible-parking need
   - Parking request
 - Information leaving the SoI:
   - Ranked parking recommendations
