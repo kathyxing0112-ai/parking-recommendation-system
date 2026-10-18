@@ -165,7 +165,9 @@ def test_FR_1_4_4_presents_parking_recommendations_and_status():
     """1.4.4: The system shall Present Parking Recommendations and Status.
 
     Traced: SR-09 (stale label and last-observed time), SR-15 (an explanation
-    for every returned option), SR-13 (no implied reservation or guarantee).
+    for every returned option), SR-13 (no implied reservation or guarantee: an
+    advisory notice is shown and no explanation claims a reserved or
+    guaranteed space).
     """
     validated_parking_data = [
         {"lot_id": "LOT-1", "occupied": 90, "capacity": 100,
@@ -197,53 +199,77 @@ def test_FR_1_4_4_presents_parking_recommendations_and_status():
     assert recommendations["LOT-1"]["stale"] is False
     assert recommendations["LOT-2"]["stale"] is True
     assert recommendations["LOT-2"]["last_observed_at"] == "2026-10-02T10:27:00-04:00"
+    assert result["advisory_notice"]
+    affirmative_claims = ("is reserved", "reserved for you", "is guaranteed",
+                          "guaranteed space", "guaranteed to")
     for recommendation in recommendations.values():
         explanation = recommendation["explanation"].lower()
         assert explanation
-        assert "reserved" not in explanation
-        assert "guaranteed" not in explanation
+        assert not any(claim in explanation for claim in affirmative_claims)
 
 
 def test_FR_1_4_5_authorizes_protected_data_operations():
     """1.4.5: The system shall Authorize Protected Data Operations.
 
-    Traced: SR-03 (operations are allowed only by the approved role-permission
-    matrix; zero prohibited operations succeed).
+    Traced: SR-03 (operations are allowed only by the approved three-role
+    matrix; drivers and maintainers access only their own session's trip
+    record; zero prohibited operations succeed). Identity establishment is an
+    open decision and is not tested here.
     """
-    trip_operations = ["save_trip_record", "read_trip_record", "update_trip_record"]
+    own_session_trip_operations = {
+        "save_trip_record": "own_session",
+        "read_trip_record": "own_session",
+        "update_trip_record": "own_session",
+    }
     matrix = {
-        "driver": trip_operations,
-        "maintainer": trip_operations + [
-            "change_parking_rules", "change_simulator_settings", "change_model_version",
-        ],
-        "retention_service": ["delete_expired_trip_record"],
+        "driver": own_session_trip_operations,
+        "maintainer": {
+            **own_session_trip_operations,
+            "change_parking_rules": "any",
+            "change_simulator_settings": "any",
+            "change_model_version": "any",
+        },
+        "retention_service": {"delete_expired_trip_record": "any"},
     }
 
-    def decide(role, operation):
+    def decide(role, operation, caller_session_id=None, record_session_id=None):
+        request = {"role": role, "operation": operation}
+        if caller_session_id is not None:
+            request["caller_session_id"] = caller_session_id
+        if record_session_id is not None:
+            request["record_session_id"] = record_session_id
         return authorize_protected_data_operations(
-            {"role": role, "operation": operation, "record_id": "trip-001"},
-            approved_role_permission_matrix=matrix,
+            request, approved_role_permission_matrix=matrix,
         )["permitted"]
 
-    assert decide("driver", "read_trip_record") is True
+    assert decide("driver", "read_trip_record", "s-1", "s-1") is True
+    assert decide("driver", "read_trip_record", "s-1", "s-2") is False
+    assert decide("driver", "read_trip_record", None, "s-1") is False
+    assert decide("maintainer", "update_trip_record", "s-3", "s-4") is False
     assert decide("maintainer", "change_parking_rules") is True
     assert decide("retention_service", "delete_expired_trip_record") is True
     assert decide("driver", "change_parking_rules") is False
-    assert decide("driver", "delete_expired_trip_record") is False
-    assert decide("retention_service", "read_trip_record") is False
-    assert decide("unknown_role", "read_trip_record") is False
+    assert decide("driver", "delete_expired_trip_record", "s-1", "s-1") is False
+    assert decide("retention_service", "read_trip_record", "s-1", "s-1") is False
+    assert decide("unknown_role", "read_trip_record", "s-1", "s-1") is False
 
 
 def test_FR_1_4_6_applies_personal_data_retention_rules():
     """1.4.6: The system shall Apply Personal Data Retention Rules.
 
     Traced: SR-04 (each trip record is deleted no later than 24 hours after
-    submission).
+    submission). This increment identifies expired records and authorizes
+    their deletion; physical deletion from storage arrives with the storage
+    adapter in Chapter 8.
     """
     now = datetime.now(timezone.utc)
     records = [
-        {"record_id": "trip-expired", "submitted_at": (now - timedelta(hours=25)).isoformat()},
-        {"record_id": "trip-current", "submitted_at": (now - timedelta(hours=1)).isoformat()},
+        {"record_id": "trip-25h", "submitted_at": (now - timedelta(hours=25)).isoformat()},
+        {"record_id": "trip-24h01m",
+         "submitted_at": (now - timedelta(hours=24, minutes=1)).isoformat()},
+        {"record_id": "trip-23h59m",
+         "submitted_at": (now - timedelta(hours=23, minutes=59)).isoformat()},
+        {"record_id": "trip-1h", "submitted_at": (now - timedelta(hours=1)).isoformat()},
     ]
     schedule = {"retention_hours": 24}
 
@@ -251,10 +277,12 @@ def test_FR_1_4_6_applies_personal_data_retention_rules():
         records, authorization_decision={"permitted": True},
         approved_data_retention_schedule=schedule,
     )
-    assert permitted["personal_record_disposition_result"]["deleted"] == ["trip-expired"]
+    disposition = permitted["personal_record_disposition_result"]
+    assert disposition["authorized_for_deletion"] == ["trip-25h", "trip-24h01m"]
+    assert "deleted" not in disposition
 
     denied = apply_personal_data_retention_rules(
         records, authorization_decision={"permitted": False},
         approved_data_retention_schedule=schedule,
     )
-    assert denied["personal_record_disposition_result"]["deleted"] == []
+    assert denied["personal_record_disposition_result"]["authorized_for_deletion"] == []

@@ -35,8 +35,12 @@ def apply_personal_data_retention_rules(
         "operation": "delete_expired_trip_record",
         "record_ids": expired_record_ids,
     }
-    deleted = expired_record_ids if authorization_decision["permitted"] else []
+    authorized_for_deletion = (
+        expired_record_ids if authorization_decision["permitted"] else []
+    )
     return {
         "protected_data_operation_request": protected_data_operation_request,
-        "personal_record_disposition_result": {"deleted": deleted},
+        "personal_record_disposition_result": {
+            "authorized_for_deletion": authorized_for_deletion
+        },
     }

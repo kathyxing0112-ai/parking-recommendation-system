@@ -21,5 +21,14 @@ def authorize_protected_data_operations(
     """
     role = protected_data_operation_request["role"]
     operation = protected_data_operation_request["operation"]
-    permitted_operations = approved_role_permission_matrix.get(role, [])
-    return {"permitted": operation in permitted_operations}
+    scope = approved_role_permission_matrix.get(role, {}).get(operation)
+    if scope == "any":
+        return {"permitted": True}
+    if scope == "own_session":
+        caller_session_id = protected_data_operation_request.get("caller_session_id")
+        record_session_id = protected_data_operation_request.get("record_session_id")
+        return {
+            "permitted": caller_session_id is not None
+            and caller_session_id == record_session_id
+        }
+    return {"permitted": False}

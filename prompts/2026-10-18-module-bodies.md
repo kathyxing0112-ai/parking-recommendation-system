@@ -50,3 +50,27 @@ written. Generate one module per prompt. The tests must not be modified.
 - **Success criteria:** `tests/test_functional_requirements.py::test_FR_1_4_3_ranks_parking_options` passes without modification. The current failure is `ValueError: min() iterable argument is empty` when `eligible_parking_areas` is empty.
 - **Output format:** A minimal diff to `rank_parking_options/__init__.py`.
 - **Out of scope:** Any other change to the ranking logic, return fields, or other modules.
+
+## A5 — Fix for session ownership
+
+- **Context:** As for A5 above. A5 has a body, but SR-03's own-session rule was out of scope in the first prompt. The 1.4.5 test now covers it and fails.
+- **Component:** `authorize_protected_data_operations.authorize_protected_data_operations`
+- **Function performed:** A5 — Authorize Protected Data Operations
+- **Requirements:** 1.4.5 — "The Cornell Smart Parking Availability & Recommendation System shall Authorize Protected Data Operations." SR-03 (`SPEC.md`): "a driver may submit a trip, view results, and save, read, or update the trip record of the driver's own session; a maintainer may do the same and may also change parking rules, simulator settings, and model versions; the internal Retention Service may only delete trip records past their 24-hour expiry (SR-04). Any other operation, and any operation by an unrecognized role, is denied."
+- **Interfaces:** Signature unchanged. The matrix now maps each role to a dict of `{operation: scope}`, where scope is `"own_session"` or `"any"`. The request has `role` and `operation`, and for trip-record operations `caller_session_id` and `record_session_id`. Permit only when the role lists the operation and, for `"own_session"` scope, both session IDs are present and equal. Return `{"permitted": bool}`.
+- **Constraints:** Python 3.13, standard library only, local execution, no changes to any other file.
+- **Success criteria:** `tests/test_functional_requirements.py::test_FR_1_4_5_authorizes_protected_data_operations` passes without modification. It currently fails because a driver may read another session's record.
+- **Output format:** A minimal diff to `authorize_protected_data_operations/__init__.py`.
+- **Out of scope:** Identity establishment or authentication, logging, caching, other modules.
+
+## A6 — Fix for disposition field
+
+- **Context:** As for A6 above. A6 returned its expired record IDs as `deleted`, but no storage is deleted in this increment, so the field overstated the result. The 1.4.6 test now expects `authorized_for_deletion` and fails.
+- **Component:** `apply_personal_data_retention_rules.apply_personal_data_retention_rules`
+- **Function performed:** A6 — Apply Personal Data Retention Rules
+- **Requirements:** 1.4.6 — "The Cornell Smart Parking Availability & Recommendation System shall Apply Personal Data Retention Rules." SR-04 (`SPEC.md`): trip records are retained "for **no more than 24 hours after request submission**." Physical deletion from storage arrives with the storage adapter in Chapter 8.
+- **Interfaces:** Signature unchanged. Return `personal_record_disposition_result` as `{"authorized_for_deletion": [record_id, ...]}`, listing expired records only when the authorization decision permits; do not return a `deleted` field.
+- **Constraints:** Python 3.13, standard library only, local execution, no changes to any other file.
+- **Success criteria:** `tests/test_functional_requirements.py::test_FR_1_4_6_applies_personal_data_retention_rules` passes without modification. It currently fails with `KeyError: 'authorized_for_deletion'`.
+- **Output format:** A minimal diff to `apply_personal_data_retention_rules/__init__.py`.
+- **Out of scope:** Storage, cache, or backup deletion; any other change to the expiry logic; other modules.

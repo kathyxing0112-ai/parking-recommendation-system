@@ -19,15 +19,16 @@ allocation (report Table 2) and `SPEC.md`. Tests are in
 | A3 | Rank Parking Options | `rank_parking_options/` | 1.4.3 | SR-13, SR-15 | SN-07, SN-08 | `test_FR_1_4_3_ranks_parking_options` | implemented; test passes |
 | A4 | Present Parking Recommendations and Status | `present_parking_recommendations_and_status/` | 1.4.4 | SR-08, SR-09, SR-11, SR-13, SR-15 | SN-05, SN-07, SN-08 | `test_FR_1_4_4_presents_parking_recommendations_and_status` | pending |
 | A5 | Authorize Protected Data Operations | `authorize_protected_data_operations/` | 1.4.5 | SR-03 | SN-02 | `test_FR_1_4_5_authorizes_protected_data_operations` | implemented; test passes |
-| A6 | Apply Personal Data Retention Rules | `apply_personal_data_retention_rules/` | 1.4.6 | SR-04 | SN-02 | `test_FR_1_4_6_applies_personal_data_retention_rules` | implemented; test passes |
+| A6 | Apply Personal Data Retention Rules | `apply_personal_data_retention_rules/` | 1.4.6 | SR-04 | SN-02 | `test_FR_1_4_6_applies_personal_data_retention_rules` | implemented (deletion authorized, not yet physical); test passes |
 
 ## Notes
 
 - A1 is decomposed in the model into A1.1 Interpret and Confirm Parking
   Requests, A1.2 Request Parking, Context, and Policy Information, A1.3
   Validate Parking and Context Information, and A1.4 Determine Eligible
-  Parking Areas. These child functions are implemented inside
-  `prepare_eligible_parking_information/` and have no module of their own.
+  Parking Areas. These child functions are allocated to
+  `prepare_eligible_parking_information/` and have no module of their own;
+  their implementation is pending with A1.
 - The mechanism of every function is C.0, the system itself, so no
   signature has an injected dependency.
 - The following modules are not functions on the IDEF0 and have no row:
@@ -39,9 +40,16 @@ allocation (report Table 2) and `SPEC.md`. Tests are in
   `contextual_information_sources/` (X.C.3),
   `cornell_transportation_and_parking_services/` (X.C.4), and
   `cloud_and_network_infrastructure/` (X.C.5).
-- 1.4 Provide Parking Decision Support (A0) is the parent requirement. It is
-  verified through 1.4.1–1.4.6 and the end-to-end acceptance suite
-  `tests/test_spec_acceptance.py`, and has no test of its own.
+- 1.4 Provide Parking Decision Support (A0) is the parent requirement and
+  has no test of its own. It is planned to be verified through the 1.4.1–1.4.6
+  tests and a future end-to-end test; the acceptance suite
+  `tests/test_spec_acceptance.py` does not yet call the system. Verification
+  of 1.4 is not complete.
 - A1, A2, and A4 bodies are not yet implemented, so their tests fail with
   `NotImplementedError`. A2 waits for the forecasting model and simulated
   data (Chapter 8).
+- A6 identifies expired records and authorizes their deletion. Physical
+  deletion from storage arrives with the storage adapter in Chapter 8, so
+  SR-04 is only partly satisfied in this increment.
+- A5 checks role, operation, and session ownership. Identity establishment
+  is an open decision in the report and is not implemented.
