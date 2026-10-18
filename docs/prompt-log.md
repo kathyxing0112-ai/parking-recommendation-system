@@ -76,3 +76,35 @@
 - Rejected or removed: None
 - Deferred: Verification criteria for 1.4.1–1.4.6 are in progress by a teammate. Maintainer configuration requests have no source function in the current IDEF0, because maintenance is outside UC.1; this is recorded in the report's Open Decisions
 - Assistant assumptions: The record shapes and field names in the test inputs (for example `data_quality_and_freshness_status` values "current" and "stale", and `forecast_validity_status` values "supported" and "unsupported") were not specified by the model; the team accepted them as described in finding (4)
+
+## 2026-10-18 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: A5 Authorize Protected Data Operations; requirement 1.4.5; SR-03 (`SPEC.md`, three-role matrix); the failing test `test_FR_1_4_5_authorizes_protected_data_operations`
+- Prompt: see `prompts/2026-10-18-module-bodies.md` (A5), run in a new session separate from the one that wrote the tests
+- Reviewed by: Katherine Xing, who also ran the generation; no other team member reviewed this module. Accepted as generated: the body looks up the operations permitted for the request's role and denies any role not in the matrix. The test passed on the first run, and no test file was modified
+- Rejected or removed: None
+- Assistant assumptions: None
+
+## 2026-10-18 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: A6 Apply Personal Data Retention Rules; requirement 1.4.6; SR-04 (`SPEC.md`); the A6 model description (expiry judged against the C.0 system clock); the failing test `test_FR_1_4_6_applies_personal_data_retention_rules`
+- Prompt: see `prompts/2026-10-18-module-bodies.md` (A6), run in a new session separate from the one that wrote the tests
+- Reviewed by: Katherine Xing, who also ran the generation; no other team member reviewed this module. Accepted as generated: records whose submission time plus the scheduled retention period has passed are identified as expired and deleted only when the authorization decision permits it. The test passed on the first run, and no test file was modified
+- Rejected or removed: None
+- Assistant assumptions: The delete request sent to A5 uses the role `retention_service` and the operation `delete_expired_trip_record`, matching the three-role matrix in `SPEC.md` SR-03. Accepted
+
+## 2026-10-18 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: A3 Rank Parking Options; requirement 1.4.3; SR-13 (`SPEC.md`, score, tie-break, and fallback rules); the failing test `test_FR_1_4_3_ranks_parking_options`
+- Prompt: see `prompts/2026-10-18-module-bodies.md` (A3), run in a new session separate from the one that wrote the tests
+- Reviewed by: Katherine Xing, who also ran the generation; no other team member reviewed this module. Accepted as generated; the test passed on the first run, and no test file was modified. During review, the test-writing session found that the body raised `ValueError` when there were no eligible areas, a case the test did not cover; see the next entry
+- Rejected or removed: None
+- Assistant assumptions: Each returned option also carries `score`, `walking_time_minutes`, and `ranking_basis` ("score" or "fallback_walking_time"), and `_is_valid_estimate` treats a malformed estimate as invalid. None of these was in the prompt. The team kept them: `ranking_basis` provides the labeled fallback that SR-13 requires, the score and walking time support the explanations in SR-15, and treating a malformed estimate as invalid follows the SR-13 fallback rule
+
+## 2026-10-18 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: 1.4.3; SR-13 ("With one eligible area, show one option; with none, state that no confirmed eligible option is available"); the extended test `test_FR_1_4_3_ranks_parking_options`
+- Prompt: In the test-writing session, the assistant added the one- and zero-eligible-area cases from SR-13 to the 1.4.3 test, which then failed with `ValueError: min() iterable argument is empty`. The fix was generated in a new session; see `prompts/2026-10-18-module-bodies.md` (A3 — Fix for zero eligible areas)
+- Reviewed by: Katherine Xing, who also ran the generation. Accepted: a two-line change that returns an empty list when no area is eligible. The extended test passes, and the test was not modified by the fix session
+- Rejected or removed: None
+- Assistant assumptions: None. The gap was in the test coverage of SR-13, not in the requirement

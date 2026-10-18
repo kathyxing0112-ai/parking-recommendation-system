@@ -6,7 +6,7 @@ Support (source: SYS.1).
 Mechanism: C.0 Cornell Smart Parking Availability & Recommendation System
 (the system itself), so no dependency is injected.
 
-Signature from the ICOMs only; the body arrives in Chapter 5.
+Signature from the ICOMs in Chapter 4; body added in Chapter 5.
 """
 
 
@@ -19,4 +19,7 @@ def authorize_protected_data_operations(
     control: approved_role_permission_matrix.
     out: authorization_decision (A1, A4, A6).
     """
-    raise NotImplementedError
+    role = protected_data_operation_request["role"]
+    operation = protected_data_operation_request["operation"]
+    permitted_operations = approved_role_permission_matrix.get(role, [])
+    return {"permitted": operation in permitted_operations}

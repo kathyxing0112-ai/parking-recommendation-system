@@ -31,3 +31,8 @@ python -m pytest tests/ -v
 `tests/test_spec_acceptance.py` contains 19 acceptance-test placeholders, one
 for each need-to-requirement trace in `SPEC.md`. They fail on purpose until
 later increments implement the corresponding behavior.
+
+`tests/test_functional_requirements.py` contains one test per system
+functional requirement (1.4.1–1.4.6). The tests for A3, A5, and A6 pass; the
+tests for A1, A2, and A4 fail until those modules are implemented. See
+`docs/traceability.md` for the function-to-module-to-test map.

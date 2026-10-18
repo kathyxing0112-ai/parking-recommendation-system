@@ -146,6 +146,20 @@ def test_FR_1_4_3_ranks_parking_options():
     )
     assert [option["lot_id"] for option in fallback] == ["LOT-1", "LOT-2"]
 
+    # SR-13: with one eligible area, return one option; with none, return none.
+    single = rank_parking_options(
+        TRIP, WALKING, [{"lot_id": "LOT-2"}], {"LOT-2": "current"}, estimates[1:2],
+        {"LOT-2": "supported"},
+        ranking_and_fallback_rules=rules,
+    )
+    assert [option["lot_id"] for option in single] == ["LOT-2"]
+
+    none = rank_parking_options(
+        TRIP, WALKING, [], {}, [], {},
+        ranking_and_fallback_rules=rules,
+    )
+    assert none == []
+
 
 def test_FR_1_4_4_presents_parking_recommendations_and_status():
     """1.4.4: The system shall Present Parking Recommendations and Status.
