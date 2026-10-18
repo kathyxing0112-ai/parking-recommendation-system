@@ -1,69 +1,74 @@
 # Walking Skeleton — UC.1 Find Suitable Parking
 
-This increment builds the walking skeleton for UC.1, the single use case that
-delivers the main value of the system-of-interest: a Cornell Driver obtaining
-ranked parking recommendations for a planned trip.
+This increment builds the walking skeleton for UC.1, the use case that delivers
+the main value of the system-of-interest: a Cornell Driver obtaining ranked
+parking recommendations for a planned trip and rechecking the selected option
+before arrival.
 
-## Sequence (from the model, verb-oriented)
+The skeleton follows the **updated UC.1 sequence diagram** in Innoslate. It
+replaces the Lab 2 call list, which was built from an earlier version of the
+diagram.
 
-1.  Cornell Driver -> Cornell Driver Interface: submit trip request
-2.  Cornell Driver Interface -> Smart Parking Service: forward trip request
-3.  Smart Parking Service -> Parking Availability Data Sources: request current parking availability
-4.  Parking Availability Data Sources -> Smart Parking Service: return current parking availability
-5.  Smart Parking Service -> Contextual Information Sources: request contextual information
-6.  Contextual Information Sources -> Smart Parking Service: return contextual information
-7.  Smart Parking Service -> Cornell Transportation and Parking Services: request parking policy constraints
-8.  Cornell Transportation and Parking Services -> Smart Parking Service: return parking policy constraints
-9.  Smart Parking Service -> Recommendation Model: request recommendation explanation
-10. Recommendation Model -> Smart Parking Service: return recommendation explanation
-11. Smart Parking Service -> Cornell Driver Interface: return ranked parking recommendations
-12. Cornell Driver Interface -> Cornell Driver: display ranked parking recommendations
+## Sequence (from the model)
+
+| UC.1 message | From → To | Implementation |
+|---|---|---|
+| UC.1.1 Submit Trip Request | Cornell Driver → SoI | `cornell_driver_interface.submit_trip_request()` |
+| UC.1.2 Interpret and Confirm Trip Request | SoI → Cornell Driver | `smart_parking_service.interpret_trip_request()` → `language_model.interpret_trip_request()` |
+| UC.1.3 Confirm Trip Requirements | Cornell Driver → SoI | `cornell_driver_interface.confirm_trip_requirements()` |
+| UC.1.4 Request Parking Availability | SoI → X.C.2 | `parking_availability_data_sources.get_current_parking_availability()` |
+| UC.1.6 Request Context Information | SoI → X.C.3 | `contextual_information_sources.get_contextual_information()` |
+| UC.1.8 Request Parking Rules and Closures | SoI → X.C.4 | `cornell_transportation_and_parking_services.get_parking_rules_and_closures()` |
+| UC.1.5 Provide Current Parking Availability | X.C.2 → SoI | return value of the X.C.2 call |
+| UC.1.7 Provide Context Information | X.C.3 → SoI | return value of the X.C.3 call |
+| UC.1.9 Provide Parking Rules and Closures | X.C.4 → SoI | return value of the X.C.4 call |
+| UC.1.10–UC.1.13 (internal Actions) | within SoI | placeholder inside `smart_parking_service.find_suitable_parking()` |
+| UC.1.14 Present Ranked Parking Recommendations | SoI → Cornell Driver | `ranked_options` returned by `find_suitable_parking()` |
+| UC.1.16 Select Parking Option | Cornell Driver → SoI | `cornell_driver_interface.select_parking_option()` |
+| UC.1.17 Present Selected Parking Information | SoI → Cornell Driver | `smart_parking_service.get_selected_parking_information()` |
+| UC.1.18 Request Pre-Arrival Status Recheck | Cornell Driver → SoI | `cornell_driver_interface.request_pre_arrival_recheck()` |
+| UC.1.19 Request Updated Parking Availability | SoI → X.C.2 | `parking_availability_data_sources.get_updated_parking_availability()` |
+| UC.1.20 Provide Updated Parking Availability | X.C.2 → SoI | return value of the X.C.2 call |
+| UC.1.21 Present Updated Parking Status | SoI → Cornell Driver | return value of `smart_parking_service.recheck_parking_status()` |
+
+`app.py` plays the Cornell Driver and prints the result of each driver-facing
+message, labeled with its UC.1 identifier.
 
 ## Participants
-
-The system context diagram represents the Smart Parking System (C.0) as a
-single system-of-interest. This call list is finer-grained: it names the
-minimum internal components required to carry one driver action across every
-boundary the context diagram shows.
 
 ### External actors and systems
 
 - Cornell Driver (X.C.1) — a person; the system's interface to this actor is
-  `cornell_driver_interface/`
+  `cornell_driver_interface/`, and `app.py` plays the driver
 - Parking Availability Data Sources (X.C.2) — `parking_availability_data_sources/`
 - Contextual Information Sources (X.C.3) — `contextual_information_sources/`
 - Cornell Transportation and Parking Services (X.C.4) — `cornell_transportation_and_parking_services/`
+
+Cloud and Network Infrastructure (X.C.5) is an enabling system. It supports
+future hosting and network access but has no message in UC.1, so its
+placeholder package is not invoked.
 
 ### Components internal to the system-of-interest
 
 - Cornell Driver Interface — `cornell_driver_interface/`
 - Smart Parking Service — `smart_parking_service/`
-- Recommendation Model — `recommendation_model/`
+- Language Model — `language_model/` (formerly `recommendation_model/`)
 
-The Smart Parking Service coordinates the end-to-end request. The
-Recommendation Model stands in for the local language model recorded in
-`docs/adr/0001-initial-toolchain.md`; because that decision runs the model
-locally, it sits inside the system boundary rather than outside it.
+The sequence diagram shows the system-of-interest as a single lifeline, so
+these internal components have no lifeline of their own. Per ADR-0002, the
+Language Model only interprets the driver's message into the six-field trip
+request (UC.1.2); the Smart Parking Service derives recommendation
+explanations from the factors it used (SR-15).
 
-These three components are not external systems, so they do not appear on the
-system context diagram, the Universe hierarchy, or the use case diagram, and
-they need no lifeline of their own in the sequence diagram, which shows
-interactions between actors rather than actions internal to one. The
-system-of-interest is modeled as a single asset at this stage; decomposing it
-into named subsystems is later work. What must agree between the model and this
-call list is the set of external participants, the message names, and their
-order.
+## Scope and Placeholders
 
-Cloud and Network Infrastructure (X.C.5) is an enabling system. It supports
-future hosting and network access but is not invoked by the UC.1 walking
-skeleton. Its Chapter 1 placeholder package remains unchanged.
-
-## Stub rule
-
-Every response above is a hard-coded value of the right shape and type. The
-values are synthetic and do not represent real Cornell parking data.
-
-No real parking-data query, no real language-model call, no filtering, no
-ranking algorithm, no error handling, no retries, and no logging appear in this
-increment. None of that is specified yet; those behaviors wait for the
-functional requirements developed in later chapters.
+- Every external participant and the Language Model return hard-coded,
+  synthetic values of the right shape; outputs are labeled `synthetic`.
+- UC.1.10–UC.1.13 (validate inputs, filter ineligible areas, estimate
+  arrival-time availability, rank primary and backup options) are a single
+  placeholder: the primary and backup options are hard-coded, not computed.
+- The skeleton sends each external request and receives its response before
+  the next request, whereas the diagram shows the three requests before the
+  three responses; the participants and information exchanged are the same.
+- UC.1.15 and the trip-completion Actions after UC.1.21 have no message in the
+  sequence diagram and are not part of this skeleton.

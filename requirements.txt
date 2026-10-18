@@ -1,4 +1,3 @@
-# No external Python packages are required.
-# The walking skeleton uses only the Python standard library; every participant
-# is a stub returning a hard-coded value. Dependencies will be added when a
-# requirement authorizes real data access or a real language-model call.
+# The walking skeleton uses the Python standard library at runtime.
+# Chapter 3's red acceptance suite runs with pytest.
+pytest
