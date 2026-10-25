@@ -1,0 +1,671 @@
+openapi: 3.0.3
+info:
+  title: Cornell Smart Parking Internal Interface Contract
+  version: 1.0.0
+  description: >
+    Internal interfaces between the first-level functions A1-A6 of A0 Provide
+    Parking Decision Support (Innoslate model V2). Written from the model's
+    internal-flow list I-01 to I-12 (B2_Trace_Mapping.xlsx, sheet 02 I-O
+    Coverage) and the SPEC.md Data Contract, not from the existing code.
+
+    One operation per receiving first-level function. Each operation is
+    implemented in-process as a Python function (x-function): request
+    properties marked x-icom input are positional parameters, x-icom control
+    are keyword-only parameters, in the order listed; the 200 response is the
+    return value. contracts/generate_stubs.py generates
+    contracts/generated/ from this file.
+
+    Units: times are offset-aware ISO 8601 strings; durations carry their unit
+    in the field name (minutes or seconds); counts of parking spaces are
+    integers. An object with no properties present (an empty object) means the
+    input has not arrived in this activation (A1 and A4 receive inputs that
+    arrive at different times).
+
+    Error conditions are listed per operation. A request that violates a
+    required property is a contract violation ('422'), raised as KeyError or
+    TypeError in-process.
+
+paths:
+  /internal/prepare-eligible-parking-information:
+    post:
+      operationId: prepareEligibleParkingInformation
+      summary: A1 Prepare Eligible Parking Information (FR 1.4.1)
+      description: >
+        Receives internal flows I-10 (from A5) and I-12 (from A6) together with
+        the A0 boundary inputs and controls carried down to A1. Produces
+        I-01 to I-05 (to A2, A3, A4), I-09 (to A5) and I-11 (to A6).
+      x-function: prepare_eligible_parking_information.prepare_eligible_parking_information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - trip_information_and_parking_request
+                - confirmed_trip_requirements
+                - status_recheck_request
+                - parking_availability_data
+                - updated_parking_availability
+                - contextual_information
+                - personal_record_disposition_result
+                - trip_request_validation_rules
+                - information_acquisition_and_refresh_rules
+                - data_validation_and_freshness_rules
+                - parking_policy_constraints
+                - authorization_decision
+              properties:
+                trip_information_and_parking_request:
+                  x-icom: input
+                  $ref: '#/components/schemas/TripInformationAndParkingRequest'
+                confirmed_trip_requirements:
+                  x-icom: input
+                  $ref: '#/components/schemas/TripRequest'
+                status_recheck_request:
+                  x-icom: input
+                  $ref: '#/components/schemas/StatusRecheckRequest'
+                parking_availability_data:
+                  x-icom: input
+                  type: array
+                  items: {$ref: '#/components/schemas/SensorEvent'}
+                updated_parking_availability:
+                  x-icom: input
+                  $ref: '#/components/schemas/UpdatedParkingAvailability'
+                contextual_information:
+                  x-icom: input
+                  type: array
+                  items: {$ref: '#/components/schemas/WalkingTime'}
+                personal_record_disposition_result:
+                  x-icom: input
+                  $ref: '#/components/schemas/PersonalRecordDispositionResult'
+                trip_request_validation_rules:
+                  x-icom: control
+                  $ref: '#/components/schemas/TripRequestValidationRules'
+                information_acquisition_and_refresh_rules:
+                  x-icom: control
+                  $ref: '#/components/schemas/InformationAcquisitionAndRefreshRules'
+                data_validation_and_freshness_rules:
+                  x-icom: control
+                  $ref: '#/components/schemas/DataValidationAndFreshnessRules'
+                parking_policy_constraints:
+                  x-icom: control
+                  $ref: '#/components/schemas/ParkingPolicyConstraints'
+                authorization_decision:
+                  x-icom: control
+                  $ref: '#/components/schemas/AuthorizationDecision'
+      responses:
+        '200':
+          description: A1 outputs.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - normalized_trip_requirements
+                  - validated_parking_data
+                  - validated_context_information
+                  - data_quality_and_freshness_status
+                  - eligible_parking_areas
+                properties:
+                  interpreted_trip_summary:
+                    description: A0 boundary output to the Cornell Driver (Seq 2).
+                    type: object
+                  availability_data_request:
+                    description: A0 boundary output to X.C.2 (Seq 4).
+                    type: object
+                  context_data_request:
+                    description: A0 boundary output to X.C.3 (Seq 5).
+                    type: object
+                  parking_policy_request:
+                    description: A0 boundary output to X.C.4 (Seq 6).
+                    type: object
+                  updated_availability_request:
+                    description: A0 boundary output to X.C.2 (Seq 14).
+                    type: object
+                  normalized_trip_requirements: {$ref: '#/components/schemas/NormalizedTripRequirements'}
+                  validated_parking_data: {$ref: '#/components/schemas/ValidatedParkingData'}
+                  validated_context_information: {$ref: '#/components/schemas/ValidatedContextInformation'}
+                  data_quality_and_freshness_status: {$ref: '#/components/schemas/DataQualityAndFreshnessStatus'}
+                  eligible_parking_areas: {$ref: '#/components/schemas/EligibleParkingAreas'}
+                  protected_data_operation_request: {$ref: '#/components/schemas/ProtectedDataOperationRequest'}
+                  personal_records_and_retention_metadata: {$ref: '#/components/schemas/PersonalRecordsAndRetentionMetadata'}
+        '422':
+          description: >
+            A required trip field is missing or invalid (SR-12). No
+            recommendation proceeds until the request is corrected.
+
+  /internal/estimate-arrival-time-availability:
+    post:
+      operationId: estimateArrivalTimeAvailability
+      summary: A1 -> A2 (FR 1.4.2), flows 9.1-9.5
+      x-function: estimate_arrival_time_availability.estimate_arrival_time_availability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - validated_parking_data
+                - normalized_trip_requirements
+                - validated_context_information
+                - eligible_parking_areas
+                - data_quality_and_freshness_status
+                - forecast_validity_criteria
+              properties:
+                validated_parking_data:
+                  x-icom: input
+                  $ref: '#/components/schemas/ValidatedParkingData'
+                normalized_trip_requirements:
+                  x-icom: input
+                  $ref: '#/components/schemas/NormalizedTripRequirements'
+                validated_context_information:
+                  x-icom: input
+                  $ref: '#/components/schemas/ValidatedContextInformation'
+                eligible_parking_areas:
+                  x-icom: input
+                  $ref: '#/components/schemas/EligibleParkingAreas'
+                data_quality_and_freshness_status:
+                  x-icom: input
+                  $ref: '#/components/schemas/DataQualityAndFreshnessStatus'
+                forecast_validity_criteria:
+                  x-icom: control
+                  $ref: '#/components/schemas/ForecastValidityCriteria'
+      responses:
+        '200':
+          description: >
+            A2 outputs. An area without a supported forecast has no estimate
+            and is marked unsupported (SR-14); this is a normal result, not an
+            error.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [arrival_time_availability_estimates, forecast_validity_status]
+                properties:
+                  arrival_time_availability_estimates: {$ref: '#/components/schemas/ArrivalTimeAvailabilityEstimates'}
+                  forecast_validity_status: {$ref: '#/components/schemas/ForecastValidityStatus'}
+
+  /internal/rank-parking-options:
+    post:
+      operationId: rankParkingOptions
+      summary: A1, A2 -> A3 (FR 1.4.3), flows 9.6, 9.7, 9.9-9.12
+      x-function: rank_parking_options.rank_parking_options
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - normalized_trip_requirements
+                - validated_context_information
+                - eligible_parking_areas
+                - data_quality_and_freshness_status
+                - arrival_time_availability_estimates
+                - forecast_validity_status
+                - ranking_and_fallback_rules
+              properties:
+                normalized_trip_requirements:
+                  x-icom: input
+                  $ref: '#/components/schemas/NormalizedTripRequirements'
+                validated_context_information:
+                  x-icom: input
+                  $ref: '#/components/schemas/ValidatedContextInformation'
+                eligible_parking_areas:
+                  x-icom: input
+                  $ref: '#/components/schemas/EligibleParkingAreas'
+                data_quality_and_freshness_status:
+                  x-icom: input
+                  $ref: '#/components/schemas/DataQualityAndFreshnessStatus'
+                arrival_time_availability_estimates:
+                  x-icom: input
+                  $ref: '#/components/schemas/ArrivalTimeAvailabilityEstimates'
+                forecast_validity_status:
+                  x-icom: input
+                  $ref: '#/components/schemas/ForecastValidityStatus'
+                ranking_and_fallback_rules:
+                  x-icom: control
+                  $ref: '#/components/schemas/RankingAndFallbackRules'
+      responses:
+        '200':
+          description: >
+            I-08 Ranked Parking Options, at most two (primary, backup). Empty
+            when no area is eligible (SR-13). An invalid forecast or interval
+            selects the labeled walking-time fallback; it is not an error.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RankedParkingOptions'}
+
+  /internal/present-parking-recommendations-and-status:
+    post:
+      operationId: presentParkingRecommendationsAndStatus
+      summary: A1, A2, A3, A5, A6 -> A4 (FR 1.4.4), flows 9.8, 9.13-9.19, 15.1-15.3
+      x-function: present_parking_recommendations_and_status.present_parking_recommendations_and_status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - personal_record_disposition_result
+                - selected_parking_option
+                - status_recheck_request
+                - validated_parking_data
+                - normalized_trip_requirements
+                - validated_context_information
+                - eligible_parking_areas
+                - data_quality_and_freshness_status
+                - arrival_time_availability_estimates
+                - forecast_validity_status
+                - ranked_parking_options
+                - authorization_decision
+                - parking_policy_constraints
+                - presentation_and_explanation_rules
+              properties:
+                personal_record_disposition_result:
+                  x-icom: input
+                  $ref: '#/components/schemas/PersonalRecordDispositionResult'
+                selected_parking_option:
+                  x-icom: input
+                  $ref: '#/components/schemas/SelectedParkingOption'
+                status_recheck_request:
+                  x-icom: input
+                  $ref: '#/components/schemas/StatusRecheckRequest'
+                validated_parking_data:
+                  x-icom: input
+                  $ref: '#/components/schemas/ValidatedParkingData'
+                normalized_trip_requirements:
+                  x-icom: input
+                  $ref: '#/components/schemas/NormalizedTripRequirements'
+                validated_context_information:
+                  x-icom: input
+                  $ref: '#/components/schemas/ValidatedContextInformation'
+                eligible_parking_areas:
+                  x-icom: input
+                  $ref: '#/components/schemas/EligibleParkingAreas'
+                data_quality_and_freshness_status:
+                  x-icom: input
+                  $ref: '#/components/schemas/DataQualityAndFreshnessStatus'
+                arrival_time_availability_estimates:
+                  x-icom: input
+                  $ref: '#/components/schemas/ArrivalTimeAvailabilityEstimates'
+                forecast_validity_status:
+                  x-icom: input
+                  $ref: '#/components/schemas/ForecastValidityStatus'
+                ranked_parking_options:
+                  x-icom: input
+                  $ref: '#/components/schemas/RankedParkingOptions'
+                authorization_decision:
+                  x-icom: control
+                  $ref: '#/components/schemas/AuthorizationDecision'
+                parking_policy_constraints:
+                  x-icom: control
+                  $ref: '#/components/schemas/ParkingPolicyConstraints'
+                presentation_and_explanation_rules:
+                  x-icom: control
+                  $ref: '#/components/schemas/PresentationAndExplanationRules'
+      responses:
+        '200':
+          description: A4 outputs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ranked_parking_recommendations:
+                    description: A0 boundary output E-21 (Seq 10).
+                    type: array
+                    items: {$ref: '#/components/schemas/ParkingRecommendation'}
+                  advisory_notice:
+                    description: >
+                      Accompanies Ranked Parking Recommendations. States that
+                      spaces are not reserved or guaranteed (SR-13).
+                    type: string
+                  trip_summary:
+                    description: >
+                      Accompanies Ranked Parking Recommendations. The six
+                      confirmed trip fields, echoed so the driver can re-check
+                      the request (from I-01, flow 9.13; ADR-0003).
+                    $ref: '#/components/schemas/TripRequest'
+                  selected_parking_information:
+                    description: A0 boundary output E-22 (Seq 12).
+                    type: object
+                  updated_parking_status:
+                    description: A0 boundary output E-24 (Seq 16).
+                    type: object
+                  protected_data_operation_request: {$ref: '#/components/schemas/ProtectedDataOperationRequest'}
+
+  /internal/authorize-protected-data-operations:
+    post:
+      operationId: authorizeProtectedDataOperations
+      summary: A1, A4, A6 -> A5 (FR 1.4.5), flow I-09
+      x-function: authorize_protected_data_operations.authorize_protected_data_operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [protected_data_operation_request, approved_role_permission_matrix]
+              properties:
+                protected_data_operation_request:
+                  x-icom: input
+                  $ref: '#/components/schemas/ProtectedDataOperationRequest'
+                approved_role_permission_matrix:
+                  x-icom: control
+                  $ref: '#/components/schemas/ApprovedRolePermissionMatrix'
+      responses:
+        '200':
+          description: >
+            I-10 Authorization Decision, to A1, A4 and A6. An unknown role, an
+            unlisted operation, or missing or mismatched session information
+            for an own_session operation is a denial (permitted false), not an
+            error (SR-03).
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthorizationDecision'}
+
+  /internal/apply-personal-data-retention-rules:
+    post:
+      operationId: applyPersonalDataRetentionRules
+      summary: A1, A5 -> A6 (FR 1.4.6), flows I-11, I-10
+      description: >
+        Record expiry uses the C.0 system clock, not a request field.
+      x-function: apply_personal_data_retention_rules.apply_personal_data_retention_rules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - personal_records_and_retention_metadata
+                - authorization_decision
+                - approved_data_retention_schedule
+              properties:
+                personal_records_and_retention_metadata:
+                  x-icom: input
+                  $ref: '#/components/schemas/PersonalRecordsAndRetentionMetadata'
+                authorization_decision:
+                  x-icom: control
+                  $ref: '#/components/schemas/AuthorizationDecision'
+                approved_data_retention_schedule:
+                  x-icom: control
+                  $ref: '#/components/schemas/ApprovedDataRetentionSchedule'
+      responses:
+        '200':
+          description: A6 outputs I-09 (to A5) and I-12 (to A1, A4).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [protected_data_operation_request, personal_record_disposition_result]
+                properties:
+                  protected_data_operation_request: {$ref: '#/components/schemas/ProtectedDataOperationRequest'}
+                  personal_record_disposition_result: {$ref: '#/components/schemas/PersonalRecordDispositionResult'}
+
+components:
+  schemas:
+    # ---- Internal flows I-01 to I-12 (A1-A6) ----
+    NormalizedTripRequirements:
+      description: I-01. A1 -> A2, A3, A4 (9.1, 9.9, 9.13).
+      $ref: '#/components/schemas/TripRequest'
+
+    ValidatedParkingData:
+      description: >
+        I-02. A1 -> A2, A4 (9.2, 9.14, 15.1). Lot-level observations that
+        passed validation (SPEC Data Contract section 2). During a status
+        recheck it carries the validated updated observation.
+      type: array
+      items:
+        type: object
+        required: [lot_id, occupied, capacity, observed_at]
+        properties:
+          lot_id: {type: string}
+          occupied: {type: integer, minimum: 0, x-unit: spaces}
+          capacity: {type: integer, minimum: 1, x-unit: spaces}
+          observed_at: {type: string, format: date-time}
+
+    ValidatedContextInformation:
+      description: I-03. A1 -> A2, A3, A4 (9.3, 9.10, 9.15).
+      type: array
+      items: {$ref: '#/components/schemas/WalkingTime'}
+
+    DataQualityAndFreshnessStatus:
+      description: >
+        I-04. A1 -> A2, A3, A4 (9.4, 9.11, 9.16, 15.2). Keyed by lot_id. An
+        observation older than 120 seconds, or without a valid timestamp, is
+        stale (SR-09).
+      type: object
+      additionalProperties:
+        type: string
+        enum: [current, stale]
+
+    EligibleParkingAreas:
+      description: >
+        I-05. A1 -> A2, A3, A4 (9.5, 9.12, 9.17, 15.3). Areas that pass every
+        confirmed permit, accessibility, closure and time rule for the trip
+        (SR-10).
+      type: array
+      items:
+        type: object
+        required: [lot_id]
+        properties:
+          lot_id: {type: string}
+
+    ArrivalTimeAvailabilityEstimates:
+      description: >
+        I-06. A2 -> A3, A4 (9.6, 9.18). Only areas with a supported forecast.
+        Each estimate carries its area capacity (model description). Must
+        satisfy capacity > 0, 0 <= available_spaces <= capacity and
+        0 <= interval_lower <= interval_upper <= capacity (SR-13); the
+        interval is the 80% prediction interval (SR-14).
+      type: array
+      items:
+        type: object
+        required: [lot_id, available_spaces, interval_lower, interval_upper, capacity]
+        properties:
+          lot_id: {type: string}
+          available_spaces: {type: number, minimum: 0, x-unit: spaces}
+          interval_lower: {type: number, minimum: 0, x-unit: spaces}
+          interval_upper: {type: number, minimum: 0, x-unit: spaces}
+          capacity: {type: integer, minimum: 1, x-unit: spaces}
+
+    ForecastValidityStatus:
+      description: I-07. A2 -> A3, A4 (9.7, 9.19). Keyed by lot_id.
+      type: object
+      additionalProperties:
+        type: string
+        enum: [supported, unsupported]
+
+    RankedParkingOptions:
+      description: >
+        I-08. A3 -> A4 (9.8). At most two options in rank order. ranking_basis
+        is "score" when every eligible area has a supported forecast (score
+        rounded half-up to six decimals), otherwise "fallback_walking_time"
+        with score null (SR-13).
+      type: array
+      maxItems: 2
+      items:
+        type: object
+        required: [lot_id, walking_time_minutes, score, ranking_basis]
+        properties:
+          lot_id: {type: string}
+          walking_time_minutes: {type: number, minimum: 0, x-unit: minutes}
+          score: {type: number, nullable: true, minimum: 0, maximum: 1}
+          ranking_basis:
+            type: string
+            enum: [score, fallback_walking_time]
+
+    ProtectedDataOperationRequest:
+      description: >
+        I-09. A1, A4, A6 -> A5. caller_session_id and record_session_id are
+        required for own_session operations (SR-03); record_ids lists the
+        records a retention_service deletion covers (ADR-0003).
+      type: object
+      required: [role, operation]
+      properties:
+        role: {type: string}
+        operation: {type: string}
+        caller_session_id: {type: string}
+        record_session_id: {type: string}
+        record_ids:
+          type: array
+          items: {type: string}
+
+    AuthorizationDecision:
+      description: I-10. A5 -> A1, A4, A6 (control at each receiver).
+      type: object
+      required: [permitted]
+      properties:
+        permitted: {type: boolean}
+
+    PersonalRecordsAndRetentionMetadata:
+      description: I-11. A1 -> A6.
+      type: array
+      items:
+        type: object
+        required: [record_id, submitted_at]
+        properties:
+          record_id: {type: string}
+          submitted_at: {type: string, format: date-time}
+
+    PersonalRecordDispositionResult:
+      description: >
+        I-12. A6 -> A1, A4. Records authorized for deletion; physical deletion
+        arrives with the Chapter 8 storage adapter.
+      type: object
+      properties:
+        authorized_for_deletion:
+          type: array
+          items: {type: string}
+
+    # ---- A0 boundary inputs carried down (SPEC Data Contract) ----
+    TripRequest:
+      description: The six-field confirmed trip request (SPEC Data Contract section 5, SR-12).
+      type: object
+      required: [destination, arrival_time, departure_time, vehicle_category, declared_eligibility, access_needs]
+      properties:
+        destination: {type: string}
+        arrival_time: {type: string, format: date-time}
+        departure_time: {type: string, format: date-time}
+        vehicle_category: {type: string}
+        declared_eligibility: {type: string}
+        access_needs: {type: boolean}
+
+    TripInformationAndParkingRequest:
+      description: >
+        E-01, Seq 1. The driver's message and its submission time, from which
+        data freshness is computed (ADR-0003).
+      type: object
+      properties:
+        message: {type: string}
+        submitted_at: {type: string, format: date-time}
+
+    SensorEvent:
+      description: E-03, Seq 7. One space-level observation (SPEC Data Contract section 1).
+      type: object
+      required: [space_id, lot_id, zone, status, timestamp]
+      properties:
+        space_id: {type: string}
+        lot_id: {type: string}
+        zone: {type: string}
+        status:
+          type: string
+          enum: [occupied, vacant, unknown]
+        timestamp: {type: string, format: date-time}
+
+    UpdatedParkingAvailability:
+      description: E-07, Seq 15. Empty when no recheck is in progress.
+      type: object
+
+    WalkingTime:
+      description: E-04 Contextual Information, Seq 8; also the item of I-03.
+      type: object
+      required: [lot_id, walking_time_minutes]
+      properties:
+        lot_id: {type: string}
+        walking_time_minutes: {type: number, minimum: 0, x-unit: minutes}
+
+    StatusRecheckRequest:
+      description: E-06, Seq 13. Empty when no recheck is in progress.
+      type: object
+
+    SelectedParkingOption:
+      description: E-05, Seq 11. Empty when no option has been selected.
+      type: object
+
+    ParkingRecommendation:
+      description: One item of Ranked Parking Recommendations (E-21).
+      type: object
+      required: [lot_id, explanation, stale, last_observed_at]
+      properties:
+        lot_id: {type: string}
+        explanation: {type: string}
+        stale: {type: boolean}
+        last_observed_at: {type: string, format: date-time}
+
+    # ---- Controls ----
+    TripRequestValidationRules:
+      type: object
+      properties:
+        arrival_window_minutes: {type: integer, x-unit: minutes}
+    InformationAcquisitionAndRefreshRules:
+      type: object
+      properties:
+        refresh_interval_seconds: {type: integer, x-unit: seconds}
+    DataValidationAndFreshnessRules:
+      type: object
+      properties:
+        stale_after_seconds: {type: integer, x-unit: seconds}
+    ParkingPolicyConstraints:
+      description: E-12, Seq 9. Confirmed rule table (SPEC Data Contract section 4).
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            type: object
+            required: [lot_id, eligibility_class, allowed, closure]
+            properties:
+              lot_id: {type: string}
+              eligibility_class: {type: string}
+              allowed: {type: boolean}
+              closure: {type: boolean}
+    ForecastValidityCriteria:
+      type: object
+      properties:
+        max_observation_age_seconds: {type: integer, x-unit: seconds}
+        horizons_minutes:
+          type: array
+          items: {type: integer, x-unit: minutes}
+    RankingAndFallbackRules:
+      type: object
+      required: [weights]
+      properties:
+        weights:
+          type: object
+          required: [walking_time, availability, uncertainty]
+          properties:
+            walking_time: {type: number}
+            availability: {type: number}
+            uncertainty: {type: number}
+    PresentationAndExplanationRules:
+      type: object
+      properties:
+        stale_after_seconds: {type: integer, x-unit: seconds}
+    ApprovedRolePermissionMatrix:
+      description: role -> operation -> scope (SR-03 three-role matrix).
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties:
+          type: string
+          enum: [any, own_session]
+    ApprovedDataRetentionSchedule:
+      type: object
+      required: [retention_hours]
+      properties:
+        retention_hours: {type: number, x-unit: hours}

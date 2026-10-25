@@ -36,3 +36,11 @@ later increments implement the corresponding behavior.
 functional requirement (1.4.1–1.4.6). The tests for A3, A5, and A6 pass; the
 tests for A1, A2, and A4 fail until those modules are implemented. See
 `docs/traceability.md` for the function-to-module-to-test map.
+
+`tests/test_interface_contract.py` checks that each A1–A6 module matches the
+internal interface contract in `contracts/api-v1.yaml`. After changing the
+contract, regenerate the stubs with:
+
+```bash
+python contracts/generate_stubs.py
+```

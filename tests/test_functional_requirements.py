@@ -228,7 +228,12 @@ def test_FR_1_4_4_presents_parking_recommendations_and_status():
         {"lot_id": "LOT-2", "occupied": 10, "capacity": 50,
          "observed_at": "2026-10-02T10:27:00-04:00"},
     ]
-    ranked = [{"lot_id": "LOT-1"}, {"lot_id": "LOT-2"}]
+    ranked = [
+        {"lot_id": "LOT-1", "walking_time_minutes": 5, "score": None,
+         "ranking_basis": "fallback_walking_time"},
+        {"lot_id": "LOT-2", "walking_time_minutes": 10, "score": None,
+         "ranking_basis": "fallback_walking_time"},
+    ]
 
     result = present_parking_recommendations_and_status(
         {},

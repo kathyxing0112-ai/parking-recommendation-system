@@ -66,10 +66,14 @@ def find_suitable_parking(trip_request: dict) -> dict:
             f"{option['available_spaces']} spaces observed (synthetic)."
         )
 
+    # The confirmed request is echoed back so the driver can re-check it on the
+    # results screen (A4 receives Normalized Trip Requirements, flow 9.13).
+    trip_summary = {field: trip_request[field] for field in REQUIRED_FIELDS}
+
     return {
         "destination": trip_request["destination"],
         "ranked_options": ranked_options,
-        "inputs": {"availability": availability, "context": context, "rules": rules},
+        "trip_summary": trip_summary,
         "data_mode": "synthetic",
     }
 
