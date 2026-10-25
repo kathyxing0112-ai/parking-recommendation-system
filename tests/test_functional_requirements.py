@@ -41,8 +41,9 @@ WALKING = [
 def test_FR_1_4_1_prepares_eligible_parking_information():
     """1.4.1: The system shall Prepare Eligible Parking Information.
 
-    Traced: SR-12 (confirmed six-field request), SR-10 (closures excluded),
-    SR-09 (observation older than 120 seconds is stale).
+    Traced: SR-12 (confirmed six-field request), SR-10 (closed areas and
+    areas whose confirmed rule does not allow the declared permit are
+    excluded), SR-09 (observation older than 120 seconds is stale).
     """
     submitted_at = "2026-10-02T10:30:00-04:00"
     observations = [
@@ -52,11 +53,15 @@ def test_FR_1_4_1_prepares_eligible_parking_information():
          "status": "vacant", "timestamp": "2026-10-02T10:29:30-04:00"},
         {"space_id": "L3-001", "lot_id": "LOT-3", "zone": "permit_O",
          "status": "vacant", "timestamp": "2026-10-02T10:27:00-04:00"},
+        {"space_id": "L4-001", "lot_id": "LOT-4", "zone": "permit_O",
+         "status": "vacant", "timestamp": "2026-10-02T10:29:30-04:00"},
     ]
+    walking = WALKING + [{"lot_id": "LOT-4", "walking_time_minutes": 8}]
     rules = {"rules": [
         {"lot_id": "LOT-1", "eligibility_class": "permit_O", "allowed": True, "closure": False},
         {"lot_id": "LOT-2", "eligibility_class": "permit_O", "allowed": True, "closure": True},
         {"lot_id": "LOT-3", "eligibility_class": "permit_O", "allowed": True, "closure": False},
+        {"lot_id": "LOT-4", "eligibility_class": "permit_O", "allowed": False, "closure": False},
     ]}
 
     result = prepare_eligible_parking_information(
@@ -66,7 +71,7 @@ def test_FR_1_4_1_prepares_eligible_parking_information():
         {},
         observations,
         {},
-        WALKING,
+        walking,
         {},
         trip_request_validation_rules={"arrival_window_minutes": 60},
         information_acquisition_and_refresh_rules={"refresh_interval_seconds": 60},
@@ -161,6 +166,54 @@ def test_FR_1_4_3_ranks_parking_options():
     assert none == []
 
 
+def test_FR_1_4_3_tie_breaks_follow_sr13():
+    """1.4.3: The system shall Rank Parking Options.
+
+    Traced: SR-13 (rank by descending score, then ascending walking time,
+    then area ID).
+    """
+    rules = {"weights": {"walking_time": 0.40, "availability": 0.40, "uncertainty": 0.20}}
+
+    # Case 1: equal scores (0.5), walking time decides.
+    walking = [
+        {"lot_id": "LOT-A", "walking_time_minutes": 10},
+        {"lot_id": "LOT-B", "walking_time_minutes": 5},
+    ]
+    estimates = [
+        {"lot_id": "LOT-A", "capacity": 100, "available_spaces": 100,
+         "interval_lower": 25, "interval_upper": 75},
+        {"lot_id": "LOT-B", "capacity": 100, "available_spaces": 0,
+         "interval_lower": 0, "interval_upper": 50},
+    ]
+    ranked = rank_parking_options(
+        TRIP, walking, [{"lot_id": "LOT-A"}, {"lot_id": "LOT-B"}],
+        {"LOT-A": "current", "LOT-B": "current"}, estimates,
+        {"LOT-A": "supported", "LOT-B": "supported"},
+        ranking_and_fallback_rules=rules,
+    )
+    assert [option["lot_id"] for option in ranked] == ["LOT-B", "LOT-A"]
+    assert [option["score"] for option in ranked] == [0.5, 0.5]
+
+    # Case 2: equal scores and walking times, area ID decides.
+    walking = [
+        {"lot_id": "LOT-B", "walking_time_minutes": 5},
+        {"lot_id": "LOT-A", "walking_time_minutes": 5},
+    ]
+    estimates = [
+        {"lot_id": "LOT-B", "capacity": 100, "available_spaces": 40,
+         "interval_lower": 30, "interval_upper": 50},
+        {"lot_id": "LOT-A", "capacity": 100, "available_spaces": 40,
+         "interval_lower": 30, "interval_upper": 50},
+    ]
+    ranked = rank_parking_options(
+        TRIP, walking, [{"lot_id": "LOT-B"}, {"lot_id": "LOT-A"}],
+        {"LOT-A": "current", "LOT-B": "current"}, estimates,
+        {"LOT-A": "supported", "LOT-B": "supported"},
+        ranking_and_fallback_rules=rules,
+    )
+    assert [option["lot_id"] for option in ranked] == ["LOT-A", "LOT-B"]
+
+
 def test_FR_1_4_4_presents_parking_recommendations_and_status():
     """1.4.4: The system shall Present Parking Recommendations and Status.
 
@@ -175,7 +228,12 @@ def test_FR_1_4_4_presents_parking_recommendations_and_status():
         {"lot_id": "LOT-2", "occupied": 10, "capacity": 50,
          "observed_at": "2026-10-02T10:27:00-04:00"},
     ]
-    ranked = [{"lot_id": "LOT-1"}, {"lot_id": "LOT-2"}]
+    ranked = [
+        {"lot_id": "LOT-1", "walking_time_minutes": 5, "score": None,
+         "ranking_basis": "fallback_walking_time"},
+        {"lot_id": "LOT-2", "walking_time_minutes": 10, "score": None,
+         "ranking_basis": "fallback_walking_time"},
+    ]
 
     result = present_parking_recommendations_and_status(
         {},

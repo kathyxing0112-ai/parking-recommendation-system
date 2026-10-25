@@ -51,5 +51,8 @@ allocation (report Table 2) and `SPEC.md`. Tests are in
 - A6 identifies expired records and authorizes their deletion. Physical
   deletion from storage arrives with the storage adapter in Chapter 8, so
   SR-04 is only partly satisfied in this increment.
+- Since Chapter 7 the internal flows between A1–A6 are defined by
+  `contracts/api-v1.yaml`, and `tests/test_interface_contract.py` checks each
+  module's signature against its generated stub (ADR-0003).
 - A5 checks role, operation, and session ownership. Identity establishment
   is an open decision in the report and is not implemented.

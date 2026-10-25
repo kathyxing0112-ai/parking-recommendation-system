@@ -117,3 +117,47 @@
 - Accepted: (1) A5 did not enforce SR-03's own-session rule, because session-ownership checks had been placed out of scope in the first A5 prompt. The 1.4.5 test now covers same-session access, cross-session access, and missing session information, and the matrix records an `own_session` or `any` scope for each operation; A5 was fixed to match. (2) A6 returned its expired records as `deleted` although nothing is deleted from storage in this increment. The field is now `authorized_for_deletion`, the 1.4.6 test adds the 23 h 59 min and 24 h 1 min boundaries, and `docs/traceability.md` states that SR-04 is only partly satisfied until the storage adapter in Chapter 8. (3) The 1.4.4 test rejected any explanation containing "reserved" or "guaranteed", which would fail a compliant disclaimer such as "Spaces are not reserved or guaranteed." The test now requires an `advisory_notice` and rejects affirmative claims such as "is reserved" and "guaranteed space". This corrects the verification criterion; A4 is not yet implemented, so no implementation was accommodated. (4) `docs/traceability.md` claimed that 1.4 was verified through the acceptance suite, which does not yet call the system; it now states that verification of 1.4 is planned and not complete, and that A1.1–A1.4 are allocated to A1 with implementation pending
 - Rejected or removed: Implementing an in-memory personal-record store so that A6 performs a physical deletion now, because the model has no storage mechanism yet and storage arrives with the Chapter 8 adapter. Identity establishment in A5, because it remains an open decision in the report
 - Assistant assumptions: The `own_session` and `any` scope values in the role-permission matrix and the `caller_session_id` and `record_session_id` request fields were chosen by the assistant; they are to be confirmed in the Chapter 7 interface contract
+
+## 2026-10-24 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: Requirements 1.4.1 and 1.4.3; SR-10 and SR-13 (`SPEC.md`); the existing `tests/test_functional_requirements.py`; Lab 6–7 verification work
+- Prompt: Asked the assistant, without changing any module body, to create branch `lab6-lab7-architecture-definition`, add a permit-not-allowed case to the 1.4.1 test, add a new SR-13 tie-break test for 1.4.3, run the functional-requirement suite, record the actual results in `docs/verification/ch7-actual-results.md`, and commit and push
+- Changed: (1) `test_FR_1_4_1_prepares_eligible_parking_information` adds LOT-4, whose confirmed rule does not allow the declared permit, using a local walking list so the shared `WALKING` constant is unchanged; the existing assertion that only LOT-1 and LOT-3 are eligible still applies, so LOT-4 must be excluded (SR-10). (2) New `test_FR_1_4_3_tie_breaks_follow_sr13`: equal scores of 0.5 are ordered by ascending walking time, and equal scores and walking times by area ID (SR-13). (3) New `docs/verification/ch7-actual-results.md` recording the run. No existing assertion and no module body was changed
+- Verification run: `python -m pytest tests/test_functional_requirements.py -v` on 2026-10-24 with Python 3.13.9 and pytest 8.4.2 — 3 failed, 4 passed. 1.4.3 (both tests), 1.4.5, and 1.4.6 pass; 1.4.1, 1.4.2, and 1.4.4 fail with `NotImplementedError` because those bodies are not yet implemented
+- Reviewed by: Katherine Xing
+- Assistant assumptions: None. Test data and expected orders were specified in the prompt; the assistant checked by hand that both Case 1 areas score 0.5 under the SR-13 formula
+
+## 2026-10-25 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: `docs/route-table.md` (this increment's audit); `B2_Trace_Mapping.xlsx` and report Table 1 for the use-case mapping; Innoslate V2 model (`Team26_V2_Model.xml`)
+- Prompt: see `prompts/2026-10-24-entry-point-enumeration.md`. The assistant enumerated the entry points and their callers read-only. In a follow-up, it was asked to compare that list with the report and to transcribe the team's existing B2/Table 1 mapping into `docs/route-table.md`
+- Reviewed by: Katherine Xing. Accepted the enumeration as read: five entry points (`app.main` and the four `cornell_driver_interface` functions), all tracing to UC.1; no orphan entry points
+- Changed: The audit found one orphan payload. `find_suitable_parking()` returned an `"inputs"` field carrying the raw X.C.2–X.C.4 responses to the driver; it arrived in commit `a38e516` and traces to no model output. The team removed it and kept `"data_mode"` (SPEC requires simulated data to be labeled). In its place the team added `"trip_summary"` with the six confirmed fields, justified by flow 9.13 (Normalized Trip Requirements into A4). This is a team decision, not an assistant proposal
+- Recorded: SYS.2 Delete Expired Personal Records and SYS.1 Authorize Protected Data Operations have no entry point and are planned for Chapter 8. UC.1.15, UC.1.22 and UC.1.23 are driver-only actions and need none. `python -m pytest` is classified as a verification harness rather than a product entry point; the team confirmed this classification
+- P2 resolved by the team: the assistant flagged that the report's statement that UC.1 triggers no protected-data operation conflicted with SR-03/SR-04 trip-record retention. The team chose decision (b): storing the confirmed trip record at UC.1.3 is a protected operation, but it stays outside the selected UC.1 trace and is realized by SYS.1/SYS.2 in Chapter 8. Report §2.1.1 and the SYS.1 row of `docs/route-table.md` were updated to match
+- Assistant assumptions: None in the mapping, which was transcribed from the team's B2 workbook
+
+## 2026-10-25 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: Internal flows I-01–I-12 (`B2_Trace_Mapping.xlsx`, sheet 02 I-O Coverage; Innoslate V2); the `SPEC.md` Data Contract; `contracts/api-v1.yaml`
+- Prompt: see `prompts/2026-10-25-interface-contract.md`
+- Reviewed by: Katherine Xing. The team chose the contract structure (one operation per receiving function), the lot-level Validated Parking Data shape, the A5 session fields, `trip_summary`, and generated stubs with a conformance test, before the contract was written
+- Changed:
+  - New `contracts/api-v1.yaml`
+  - New `contracts/generate_stubs.py` and `contracts/generated/`
+  - New `tests/test_interface_contract.py`
+  - `pyyaml` added to `requirements.txt`
+  - New ADR-0003
+- Divergences the stubs exposed:
+  - (1) The A1 signature took `trip_information_and_parking_request: str | dict`. The contract defines an object, so the type was narrowed to `dict`.
+  - (2) The 1.4.4 test passed Ranked Parking Options as `{lot_id}` only. That violates I-08, so the fixture now carries the four required fields. No assertion changed. Katherine Xing reviewed and approved this test change.
+  - A2–A6 already matched their stubs.
+- Not resolved, recorded in ADR-0003:
+  - `smart_parking_service` is not yet behind the contract.
+  - The X.C.2 stubs return lot-level data rather than SPEC sensor events (Chapter 8 adapters).
+  - SR-15 eligibility basis has no field in I-05.
+  - Eight of the twelve flow entities have empty descriptions in the V2 model.
+- Verification run:
+  - `python -m pytest tests/test_functional_requirements.py tests/test_interface_contract.py -q`: 3 failed, 19 passed. The three failures are the unchanged `NotImplementedError` cases for 1.4.1, 1.4.2 and 1.4.4.
+  - `python app.py` runs.
+- Assistant assumptions: The control shapes (for example `stale_after_seconds` and `weights`) were taken from the existing accepted test fixtures. They are recorded in the contract as v1 and should be checked against the model's control entities

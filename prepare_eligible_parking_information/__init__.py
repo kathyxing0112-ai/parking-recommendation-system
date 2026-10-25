@@ -9,12 +9,14 @@ this module implements A1 at its boundary.
 Mechanism: C.0 Cornell Smart Parking Availability & Recommendation System
 (the system itself), so no dependency is injected.
 
-Signature from the ICOMs only; the body arrives in Chapter 5.
+Signature from the ICOMs only; the body arrives in Chapter 5. Conforms to
+contracts/api-v1.yaml (prepareEligibleParkingInformation) since Chapter 7;
+see docs/adr/0003-internal-interface-contract.md.
 """
 
 
 def prepare_eligible_parking_information(
-    trip_information_and_parking_request: str | dict,
+    trip_information_and_parking_request: dict,
     confirmed_trip_requirements: dict,
     status_recheck_request: dict,
     parking_availability_data: list[dict],

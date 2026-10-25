@@ -1,3 +1,6 @@
 # The walking skeleton uses the Python standard library at runtime.
 # Chapter 3's red acceptance suite runs with pytest.
 pytest
+# Chapter 7: contracts/generate_stubs.py and tests/test_interface_contract.py
+# read contracts/api-v1.yaml.
+pyyaml
