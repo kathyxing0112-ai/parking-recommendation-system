@@ -29,14 +29,22 @@ allocation (report Table 2) and `SPEC.md`. Tests are in
   Parking Areas. These child functions are allocated to
   `prepare_eligible_parking_information/` and have no module of their own;
   their implementation is pending with A1.
-- The mechanism of every function is C.0, the system itself, so no
-  signature has an injected dependency.
+- The mechanism of every function was C.0 through Chapter 7. From Chapter 8
+  each first-level function has its own subsystem C.1–C.6, and A1.1–A1.4 have
+  C.1.1–C.1.4 (`docs/deployment.md`). No signature gained an injected
+  dependency.
+- Chapter 8 adds the C.1.2 data access component (`parking_data_access/`,
+  `tests/test_data_access.py`) and the C.1.1 model adapter
+  (`language_model/`, `docs/model-adapter.md`, `tests/test_model_adapter.py`).
+  They implement A1's boundary exchanges with X.C.2 and the local model.
+  A1's own body is still pending.
 - The following modules are not functions on the IDEF0 and have no row:
   `smart_parking_service/` (orchestrates the UC.1 messages),
   `cornell_driver_interface/` (the system's interface to X.C.1),
-  `language_model/` (the local language model used for trip-request
-  interpretation, per ADR-0002), and the external-participant stubs
-  `parking_availability_data_sources/` (X.C.2),
+  `language_model/` (the C.1.1 adapter to the local language model, per
+  ADR-0002), `parking_data_access/` (the C.1.2 data access component), the
+  simulated X.C.2 feed `parking_availability_data_sources/`, and the
+  external-participant stubs
   `contextual_information_sources/` (X.C.3),
   `cornell_transportation_and_parking_services/` (X.C.4), and
   `cloud_and_network_infrastructure/` (X.C.5).

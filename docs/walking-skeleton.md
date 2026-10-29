@@ -16,7 +16,7 @@ diagram.
 | UC.1.1 Submit Trip Request | Cornell Driver → SoI | `cornell_driver_interface.submit_trip_request()` |
 | UC.1.2 Interpret and Confirm Trip Request | SoI → Cornell Driver | `smart_parking_service.interpret_trip_request()` → `language_model.interpret_trip_request()` |
 | UC.1.3 Confirm Trip Requirements | Cornell Driver → SoI | `cornell_driver_interface.confirm_trip_requirements()` |
-| UC.1.4 Request Parking Availability | SoI → X.C.2 | `parking_availability_data_sources.get_current_parking_availability()` |
+| UC.1.4 Request Parking Availability | SoI → X.C.2 | `parking_data_access.ParkingDataStore.request_parking_availability()` → `parking_availability_data_sources.get_current_parking_availability()` |
 | UC.1.6 Request Context Information | SoI → X.C.3 | `contextual_information_sources.get_contextual_information()` |
 | UC.1.8 Request Parking Rules and Closures | SoI → X.C.4 | `cornell_transportation_and_parking_services.get_parking_rules_and_closures()` |
 | UC.1.5 Provide Current Parking Availability | X.C.2 → SoI | return value of the X.C.2 call |
@@ -27,7 +27,7 @@ diagram.
 | UC.1.16 Select Parking Option | Cornell Driver → SoI | `cornell_driver_interface.select_parking_option()` |
 | UC.1.17 Present Selected Parking Information | SoI → Cornell Driver | `smart_parking_service.get_selected_parking_information()` |
 | UC.1.18 Request Pre-Arrival Status Recheck | Cornell Driver → SoI | `cornell_driver_interface.request_pre_arrival_recheck()` |
-| UC.1.19 Request Updated Parking Availability | SoI → X.C.2 | `parking_availability_data_sources.get_updated_parking_availability()` |
+| UC.1.19 Request Updated Parking Availability | SoI → X.C.2 | `parking_data_access.ParkingDataStore.request_updated_parking_availability()` → `parking_availability_data_sources.get_updated_parking_availability()` |
 | UC.1.20 Provide Updated Parking Availability | X.C.2 → SoI | return value of the X.C.2 call |
 | UC.1.21 Present Updated Parking Status | SoI → Cornell Driver | return value of `smart_parking_service.recheck_parking_status()` |
 
@@ -62,8 +62,12 @@ explanations from the factors it used (SR-15).
 
 ## Scope and Placeholders
 
-- Every external participant and the Language Model return hard-coded,
-  synthetic values of the right shape; outputs are labeled `synthetic`.
+- Since Chapter 8, X.C.2 is a seeded simulated sensor feed reached through
+  the data access component, and the Language Model is the local Qwen3 4B
+  reached through its adapter (`docs/deployment.md`). When the model is not
+  running or its output violates the contract, UC.1.2 returns the six-field
+  form. X.C.3 and X.C.4 still return hard-coded, synthetic values labeled
+  `synthetic`.
 - UC.1.10–UC.1.13 (validate inputs, filter ineligible areas, estimate
   arrival-time availability, rank primary and backup options) are a single
   placeholder: the primary and backup options are hard-coded, not computed.

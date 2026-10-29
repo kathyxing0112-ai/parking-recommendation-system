@@ -18,9 +18,21 @@ At this increment, the command walks the Cornell Driver through UC.1 Find
 Suitable Parking, following the updated UC.1 sequence diagram: submitting and
 confirming a trip request, receiving ranked primary and backup recommendations,
 selecting an option, and requesting a pre-arrival status recheck. Each step is
-printed with its UC.1 message identifier. All data sources, the language model,
-and the ranking are hard-coded stubs returning synthetic values; see
-`docs/walking-skeleton.md` for the message-to-code mapping.
+printed with its UC.1 message identifier. Parking availability comes from a
+seeded, simulated sensor feed through the data access component, and the
+driver's message is interpreted by the local Qwen3 4B model through its
+adapter (`docs/deployment.md`). The ranking and the X.C.3/X.C.4 sources are
+still hard-coded stubs; see `docs/walking-skeleton.md` for the
+message-to-code mapping.
+
+To use the language model, install [Ollama](https://ollama.com) and run:
+
+```bash
+ollama pull qwen3:4b
+```
+
+Without a running model, the app falls back to the six-field form, as
+`SPEC.md` specifies.
 
 ## Running the Acceptance Tests
 
@@ -36,6 +48,10 @@ later increments implement the corresponding behavior.
 functional requirement (1.4.1–1.4.6). The tests for A3, A5, and A6 pass; the
 tests for A1, A2, and A4 fail until those modules are implemented. See
 `docs/traceability.md` for the function-to-module-to-test map.
+
+`tests/test_data_access.py` and `tests/test_model_adapter.py` cover the
+Chapter 8 data access component and model adapter, including every
+schema-violation fallback. They need no running model.
 
 `tests/test_interface_contract.py` checks that each A1–A6 module matches the
 internal interface contract in `contracts/api-v1.yaml`. After changing the

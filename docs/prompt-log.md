@@ -161,3 +161,64 @@
   - `python -m pytest tests/test_functional_requirements.py tests/test_interface_contract.py -q`: 3 failed, 19 passed. The three failures are the unchanged `NotImplementedError` cases for 1.4.1, 1.4.2 and 1.4.4.
   - `python app.py` runs.
 - Assistant assumptions: The control shapes (for example `stale_after_seconds` and `weights`) were taken from the existing accepted test fixtures. They are recorded in the contract as v1 and should be checked against the model's control entities
+
+## 2026-10-28 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from:
+  - Lab Manual §8.5
+  - `SPEC.md`: Data Contract sections 1, 3 and 5, and the Model Response Contract
+  - `contracts/api-v1.yaml`: `SensorEvent`, `UpdatedParkingAvailability`
+  - ADR-0002, ADR-0003
+  - The team's asset naming for C.1–C.6 and C.1.1–C.1.4 (Ch8–9 task sheet)
+- Prompt: see `prompts/2026-10-28-data-and-model-adapters.md`. The adapter
+  specification `docs/model-adapter.md` was written before the adapter was
+  generated.
+- Changed:
+  - New `docs/deployment.md` (K1).
+  - `parking_availability_data_sources/` is now a seeded simulated X.C.2
+    feed of space-level sensor events.
+  - New `parking_data_access/`, with `schema.sql` and the data access
+    component (K3).
+  - `language_model/` is now the Qwen3 adapter with the schema-violation
+    fallback (K4).
+  - `smart_parking_service` replaces the two stubs, one at a time.
+  - `app.py` falls back to the six-field form.
+  - New `tests/test_data_access.py` and `tests/test_model_adapter.py`.
+  - `docs/walking-skeleton.md`, `docs/traceability.md`, `README.md` and the
+    ADR-0003 divergence note are updated.
+  - Drafts prepared for K6, with no generation yet:
+    `prompts/2026-10-31-c14-eligibility-filter.md` and
+    `docs/deviation-log.md`.
+- Verification run: `python -m pytest tests/ -q` on 2026-10-28 with Python
+  3.13.9 and pytest 8.4.2 gave 22 failed and 65 passed.
+  - The 22 failures are the same pre-existing red tests: 19 acceptance
+    placeholders, plus 1.4.1, 1.4.2 and 1.4.4 with `NotImplementedError`.
+  - All 46 new tests pass, and the 19 tests that passed before still pass.
+  - `python app.py` runs end to end.
+- Not yet verified: the live model call. Ollama is not installed on this
+  machine, so the app took the `model_unavailable` fallback path. Done-When
+  item 2 ("the product's model returns a response through the adapter")
+  stays open until `ollama pull qwen3:4b` is run and the result is recorded
+  here.
+- Reviewed by: pending. Xichen Wang reviews against the §8.5 Done When list
+  in the PR (K5).
+- Assistant assumptions, to be confirmed by the team:
+  - (1) Simulator values: lot capacities, coordinates, the hourly occupancy
+    profile, the 1% unknown rate and seed 5151. All are labeled simulated.
+  - (2) The provisional supported destinations, vehicle categories and
+    eligibility values in `smart_parking_service.PROVISIONAL_SUPPORTED_VALUES`.
+    Deferred item 3 is still open.
+  - (3) The adapter parameters: 60 s timeout, 512 output tokens, 4096
+    context and a 2000-character input limit.
+  - (4) A model that cannot be reached is treated like a schema violation,
+    so the driver falls back to the six-field form. SPEC's Fallback
+    paragraph names only malformed, unsupported or invalid output.
+  - (5) Extra keys in a model reply are a violation, because the contract
+    says "exactly one of the following JSON objects".
+  - (6) The adapter applies the Data Contract §5 arrival-window and
+    departure checks to `complete` replies.
+  - (7) The database is in memory and holds no rule table, modeling table
+    or trip records yet.
+  - (8) The orchestration still uses the hard-coded ranking placeholder.
+    It fetches availability through the component but does not use it to
+    rank. Ranking waits for the A1, A2 and A4 bodies (ADR-0003).

@@ -2,9 +2,14 @@
 
 Plays the Cornell Driver (X.C.1) through UC.1 Find Suitable Parking, one
 message at a time, in the order of the updated UC.1 sequence diagram
-(docs/walking-skeleton.md). Every participant is a stub returning synthetic,
-hard-coded values.
+(docs/walking-skeleton.md). Parking availability comes from the simulated
+X.C.2 feed through the data access component, and the message is interpreted
+by the local Qwen3 model through its adapter; if the model is not running or
+its output violates the Model Response Contract, the driver fills in the
+six-field form instead. Ranking is still a hard-coded placeholder.
 """
+
+from datetime import datetime, timedelta
 
 import cornell_driver_interface as driver_interface
 
@@ -15,13 +20,27 @@ def show(step: str, payload) -> None:
 
 
 def main() -> None:
-    message = "I need to park near Duffield Hall from 10 to 12 tomorrow with my O permit."
+    message = ("I need to park near Duffield Hall in 30 minutes and stay two hours. "
+               "I drive a sedan, have an O permit, and don't need an accessible space.")
 
     interpreted = driver_interface.submit_trip_request(message)
     show("UC.1.1 Submit Trip Request -> UC.1.2 Interpret and Confirm Trip Request", interpreted)
 
-    # The driver confirms the interpreted six-field request unchanged.
-    confirmed = interpreted["trip_request"]
+    if interpreted["status"] == "complete":
+        # The driver confirms the interpreted six-field request unchanged.
+        confirmed = interpreted["trip_request"]
+    else:
+        # The six-field form: the driver types the values in directly.
+        now = datetime.now().astimezone().replace(microsecond=0)
+        confirmed = {
+            "destination": "Duffield Hall",
+            "arrival_time": (now + timedelta(minutes=30)).isoformat(),
+            "departure_time": (now + timedelta(minutes=150)).isoformat(),
+            "vehicle_category": "sedan",
+            "declared_eligibility": "permit_O",
+            "access_needs": False,
+        }
+        show("Six-field form completed by the driver", confirmed)
     recommendations = driver_interface.confirm_trip_requirements(confirmed)
     show("UC.1.3 Confirm Trip Requirements -> UC.1.4-UC.1.9 -> UC.1.14 Present Ranked Parking Recommendations",
          recommendations["ranked_options"])
@@ -31,7 +50,9 @@ def main() -> None:
 
     status = driver_interface.request_pre_arrival_recheck(selected["lot_id"])
     show("UC.1.18 Request Pre-Arrival Status Recheck -> UC.1.19/UC.1.20 -> UC.1.21 Present Updated Parking Status",
-         status)
+         {"lot_id": status["lot_id"], "data_mode": status["data_mode"],
+          "space_observations": len(status["observations"]),
+          "observed_at": max((o["timestamp"] for o in status["observations"]), default=None)})
 
 
 if __name__ == "__main__":
