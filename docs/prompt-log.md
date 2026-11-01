@@ -467,3 +467,23 @@
     export is still to be attached.
 - Verification on 2026-11-01: `python -m pytest tests/ -q` gave 22 failed
   and 99 passed. The 22 are the same pre-existing red tests.
+
+## 2026-11-01 — Katherine Xing — ChatGPT web, separate session (model: GPT-6.1 Sol)
+
+- Built from: `prompts/2026-11-01-c14-independent-tests.md`. Only the part
+  below its paste marker was used: the requirements, interface, decisions
+  and rule table. The C.1.4 code and its first tests were not given to the
+  session.
+- Prompt: write requirement-based pytest tests for
+  `determine_eligible_parking_areas` without seeing it. This remediates the
+  process deviation in deviation-log row 7 (Lab Manual p.21).
+- Output: `tests/test_eligibility_filter_independent.py`, 16 test
+  functions.
+- Verification on 2026-11-01, run by Claude Code in Katherine Xing's
+  session:
+  - The independent tests: 73 passed and 0 failed against commit `db85650`
+    plus this file.
+  - The full suite: 22 failed and 172 passed. The 22 are the same
+    pre-existing red tests.
+- Reviewed by: pending. A team member who did not run either generation
+  must review it.
