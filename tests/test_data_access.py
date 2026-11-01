@@ -34,7 +34,7 @@ def test_real_flow_from_simulated_source_through_component():
     store = ParkingDataStore()
     events = store.request_parking_availability({"lot_ids": ["LOT-1", "LOT-2"], "as_of": AS_OF.isoformat()})
     assert {e["lot_id"] for e in events} == {"LOT-1", "LOT-2"}
-    assert len(events) == 44 + 30
+    assert len(events) == 200 + 120
     assert set(events[0]) == {"space_id", "lot_id", "zone", "status", "timestamp"}
     assert all(e["status"] in ("occupied", "vacant", "unknown") for e in events)
 

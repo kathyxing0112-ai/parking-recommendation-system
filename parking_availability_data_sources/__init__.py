@@ -21,15 +21,19 @@ UNKNOWN_RATE = 0.01          # share of readings a simulated sensor reports as u
 ZONE_CODES = {"permit_O": "O", "visitor": "V", "accessible": "A"}
 
 # Simulator assumptions, labeled as such (SPEC Data Contract section 3).
+# Names are real Cornell parking areas; zone mix follows public Cornell
+# sources where found (Peterson Lot is an hourly pay lot in the August 2026
+# Parkmobile map). Capacities and coordinates are simulated, not Cornell
+# inventory. The mapping was agreed by the team on 2026-11-01.
 PILOT_LOTS = [
-    {"lot_id": "LOT-1", "name": "Simulated pilot lot 1", "latitude": 42.4440, "longitude": -76.4820,
-     "capacity_by_zone": {"permit_O": 30, "visitor": 10, "accessible": 4},
+    {"lot_id": "LOT-1", "name": "Hoy Road Garage", "latitude": 42.4440, "longitude": -76.4820,
+     "capacity_by_zone": {"permit_O": 150, "visitor": 40, "accessible": 10},
      "occupancy_offset": 0.05},
-    {"lot_id": "LOT-2", "name": "Simulated pilot lot 2", "latitude": 42.4460, "longitude": -76.4790,
-     "capacity_by_zone": {"permit_O": 20, "visitor": 8, "accessible": 2},
+    {"lot_id": "LOT-2", "name": "Peterson Lot", "latitude": 42.4460, "longitude": -76.4790,
+     "capacity_by_zone": {"permit_O": 0, "visitor": 110, "accessible": 10},
      "occupancy_offset": 0.0},
-    {"lot_id": "LOT-3", "name": "Simulated pilot lot 3", "latitude": 42.4490, "longitude": -76.4760,
-     "capacity_by_zone": {"permit_O": 40, "visitor": 0, "accessible": 4},
+    {"lot_id": "LOT-3", "name": "Campus Road O Area", "latitude": 42.4490, "longitude": -76.4760,
+     "capacity_by_zone": {"permit_O": 140, "visitor": 0, "accessible": 10},
      "occupancy_offset": -0.10},
 ]
 INVENTORY_REVIEWED_AT = "2026-10-28T09:00:00-04:00"

@@ -30,22 +30,25 @@ requires, the application supplies the message, the current date and time,
 and the supported values.
 
 ```
-Current date and time: {submitted_at}
+Current local date and time: {YYYY-MM-DD HH:MM} (UTC{±HH:MM})
 Supported destinations: {destinations}
 Supported vehicle categories: {vehicle_categories}
 Supported eligibility values: {eligibility_values}
+Meaning of eligibility values: permit_O = the driver holds an O permit; visitor = visitor or hourly parking
 Driver message: {message}
 ```
 
 The system prompt tells the model to do the following:
 
-- Return exactly one of the two contract objects.
-- Copy destination, vehicle category and eligibility from the supported
-  values.
-- Write times as offset-aware ISO 8601.
-- List `access_needs` as missing when the message does not say whether
-  accessible parking is needed.
-- Never guess a value.
+- Reply with one JSON object that has exactly the six field names.
+- Use `null` for any field the driver did not state, and never guess.
+- For destination, vehicle category and eligibility, write the supported
+  value only when the driver clearly names it. Otherwise copy the driver's
+  own words. A permit counts only if the driver names that exact permit.
+- Write times as 24-hour `HH:MM`. Convert am/pm. When the driver gives no
+  am/pm or time-of-day word, write the hour as given ("3:40" becomes
+  `03:40`). Turn a length of stay into a departure time.
+- Set `access_needs` to true or false only when the driver says so.
 
 The full text is `SYSTEM_PROMPT` in the adapter.
 
@@ -60,43 +63,70 @@ the lists (prompt log 2026-10-04, deferred item 3).
 | `temperature` | 0 | Interpretation should be repeatable |
 | `seed` | 5151 | Repeatable runs for testing |
 | `think` | false | Qwen3's reasoning text would break the JSON-only reply |
-| `format` | JSON schema with `status` ∈ {complete, incomplete}, `trip_request`, `missing_fields` | Ollama constrains decoding to this schema. The adapter still validates the reply, because the constraint is not trusted |
+| `format` | JSON schema: the six fields, all required, each a string or null (`access_needs` a boolean or null). No enum | Ollama constrains decoding to this schema. An enum was tried and dropped: it forced unsupported values onto supported ones (prompt log 2026-10-28, live run) |
 | `stream` | false | One reply object |
-| `num_predict` (output token limit) | 512 | A complete reply is about 120 tokens |
+| `num_predict` (output token limit) | 512 | A reply is about 60 tokens |
 | `num_ctx` (context limit) | 4096 | Fits the prompt plus the longest allowed message |
 | Input limit | 2000 characters | A longer message is not sent. The adapter returns a fallback |
 | Timeout | 60 s | Covers loading the model the first time on a laptop CPU. SR-13's 5 s budget starts after the request is confirmed, so it does not include this call |
 
-## Required response schema
+## Model reply format
 
-The schema is the SPEC.md Model Response Contract, applied strictly:
+The model does not return the Model Response Contract object itself. It
+returns the six fields, and the adapter builds the contract object from them
+(SPEC.md Model Response Contract, Output schema):
 
-- **`complete`.** The keys are exactly `status` and `trip_request`.
-  `trip_request` has exactly the six fields, and each field must pass these
-  checks:
-  - `destination`, `vehicle_category` and `declared_eligibility` are in the
-    supported values.
-  - `access_needs` is a boolean.
-  - Both times are offset-aware ISO 8601.
-  - `submitted_at ≤ arrival_time ≤ submitted_at + 60 min`.
-  - `departure_time > arrival_time` (Data Contract §5).
-- **`incomplete`.** The keys are exactly `status` and `missing_fields`.
-  `missing_fields` is a non-empty list of distinct names, all taken from the
-  six fields.
+```json
+{
+  "destination": "Upson Hall",
+  "arrival_time": "11:20",
+  "departure_time": null,
+  "vehicle_category": "SUV",
+  "declared_eligibility": "faculty CU permit",
+  "access_needs": null
+}
+```
 
-## Behavior when the model does not return that schema
+## How the adapter assembles the contract
 
-The adapter does not raise an error. It returns
-`{"status": "fallback", "reason": <code>}`, and the application discards the
-model output and shows the six-field form. The reason code is for tests and
-diagnostics only. The driver never sees it, the raw model output, or an
-internal error.
+Each field is checked on its own. A value that fails its check is listed in
+`missing_fields`, and the driver supplies it on the confirmation step. The
+adapter never replaces it with another value.
+
+| Field | Kept when | Otherwise |
+|---|---|---|
+| `destination`, `vehicle_category`, `declared_eligibility` | It matches a supported value, ignoring case. The approved spelling is kept | Missing |
+| `arrival_time` | It is `HH:MM`, and that time on the submission date, with the submission's UTC offset, is no earlier than the submission minute and at most 60 minutes later (Data Contract §5) | Missing |
+| `departure_time` | `arrival_time` is kept, and this `HH:MM` on the same date is later than the arrival | Missing |
+| `access_needs` | It is true or false | Set to `false` (SPEC.md Model Response Contract). The confirmation step shows the value, and the driver can change it |
+
+If no field is missing, the result is
+`{"status": "complete", "trip_request": {...six fields...}}`, with offset-aware
+ISO 8601 times. Otherwise it is
+`{"status": "incomplete", "missing_fields": [...]}`, in the six-field order.
+
+Known limits:
+
+- A time with no am/pm is taken as written. "3:20" sent at 15:00 becomes
+  03:20, which is outside the arrival window, so `arrival_time` is listed as
+  missing.
+- Times are not carried past midnight. An arrival after midnight sent before
+  midnight, or a departure on the next day, is listed as missing.
+- The 60-minute arrival window is under team review (meeting planned for
+  the week of 2026-11-02).
+
+## When the reply is discarded
+
+The adapter does not raise an error. When the reply cannot be used at all, it
+returns `{"status": "fallback", "reason": <code>}`. The application then
+discards the model output and shows the empty six-field form. The reason code
+is for tests and diagnostics only. The driver never sees it, the raw model
+output, or an internal error.
 
 | Reason | Trigger |
 |---|---|
 | `malformed_json` | The reply is not JSON, is not an object, or the Ollama envelope has no `message` |
-| `unsupported_status` | `status` is missing or is not `complete` or `incomplete` |
-| `invalid_fields` | Any of the field checks above fails, including extra keys |
+| `wrong_fields` | The object does not have exactly the six field names |
 | `output_truncated` | Ollama reports `done_reason: "length"` |
 | `model_unavailable` | Connection refused, timeout, or another transport error |
 | `message_too_long` | The message is longer than 2000 characters. The model is not called |
@@ -105,3 +135,10 @@ A `complete` result still goes to the driver for confirmation, and the
 confirmed or edited values are validated again before prediction (SPEC.md).
 An `incomplete` result asks the driver for the missing fields. It never
 triggers a prediction.
+
+## Checking the real model
+
+The pytest suite uses a fake transport. To see what the real model returns,
+run `python scripts/live_model_check.py` with Ollama running (README). It
+sends four ordinary and two non-standard messages and prints each raw reply
+and adapter result.

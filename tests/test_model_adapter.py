@@ -1,9 +1,10 @@
 """Chapter 8 language model adapter, including the schema-violation path.
 
 The transport is replaced by a fake Ollama reply, so these tests do not need
-a running model. Every reply that violates the SPEC.md Model Response
-Contract must come back as a fallback, which sends the driver to the
-six-field form (Model Response Contract, Fallback).
+a running model. A value the adapter cannot use must come back as a
+missing field, never as a substituted value. A reply without exactly the six
+fields must come back as a fallback, which sends the driver to the six-field
+form (SPEC.md Model Response Contract, Fallback).
 """
 
 import json
@@ -22,6 +23,16 @@ SUPPORTED = {
     "vehicle_categories": ["sedan", "suv"],
     "eligibility_values": ["permit_O", "visitor"],
 }
+# What the model replies: copied values, null when not stated, "HH:MM" times.
+REPLY = {
+    "destination": "Upson Hall",
+    "arrival_time": "11:20",
+    "departure_time": "13:00",
+    "vehicle_category": "sedan",
+    "declared_eligibility": "permit_O",
+    "access_needs": False,
+}
+# The Model Response Contract trip request the adapter assembles from REPLY.
 TRIP = {
     "destination": "Upson Hall",
     "arrival_time": "2026-10-02T11:20:00-04:00",
@@ -50,62 +61,103 @@ def interpret(transport, message="Upson Hall at 11:20 until 1 pm, sedan, O permi
                                   transport=transport)
 
 
-def test_complete_response_passes_through_adapter():
-    result = interpret(replying({"status": "complete", "trip_request": TRIP}))
+def test_complete_reply_is_assembled_into_contract():
+    assert interpret(replying(REPLY)) == {"status": "complete", "trip_request": TRIP}
+
+
+def test_listed_values_match_without_case():
+    result = interpret(replying({**REPLY, "vehicle_category": "SUV", "destination": "upson hall"}))
+    assert result["trip_request"]["vehicle_category"] == "suv"
+    assert result["trip_request"]["destination"] == "Upson Hall"
+
+
+def test_unstated_access_needs_defaults_to_false():
+    result = interpret(replying({**REPLY, "access_needs": None}))
     assert result == {"status": "complete", "trip_request": TRIP}
 
 
-def test_incomplete_response_lists_missing_fields():
-    result = interpret(replying({"status": "incomplete", "missing_fields": ["access_needs"]}))
-    assert result == {"status": "incomplete", "missing_fields": ["access_needs"]}
+def test_unstated_fields_are_listed_as_missing():
+    reply = {**REPLY, "vehicle_category": None, "declared_eligibility": None, "departure_time": None}
+    assert interpret(replying(reply)) == {
+        "status": "incomplete",
+        "missing_fields": ["departure_time", "vehicle_category", "declared_eligibility"],
+    }
+
+
+@pytest.mark.parametrize("field, value", [
+    ("destination", "Statler Hall"),              # not a supported destination
+    ("vehicle_category", "bus"),                  # not an approved category
+    ("declared_eligibility", "faculty CU permit"),  # not an approved eligibility value
+    ("arrival_time", "11:20 am"),                 # not HH:MM
+    ("arrival_time", "2026-10-02T11:20:00-04:00"),  # not HH:MM
+    ("arrival_time", "10:00"),                    # before submission
+    ("arrival_time", "11:31"),                    # more than 60 minutes after submission
+    ("arrival_time", "25:00"),                    # not a clock time
+    ("departure_time", "11:20"),                  # not after arrival
+    ("destination", 7),                           # wrong type
+])
+def test_unusable_value_is_listed_as_missing_not_substituted(field, value):
+    result = interpret(replying({**REPLY, field: value}))
+    assert result["status"] == "incomplete"
+    assert field in result["missing_fields"]
+
+
+def test_departure_is_missing_when_arrival_is_missing():
+    result = interpret(replying({**REPLY, "arrival_time": None}))
+    assert result == {"status": "incomplete", "missing_fields": ["arrival_time", "departure_time"]}
+
+
+def test_access_needs_of_wrong_type_defaults_to_false():
+    result = interpret(replying({**REPLY, "access_needs": "no"}))
+    assert result == {"status": "complete", "trip_request": TRIP}
+
+
+def test_times_use_the_submission_date_and_offset():
+    result = interpret_trip_request(
+        "x", submitted_at="2026-11-02T15:00:00-05:00", supported_values=SUPPORTED,
+        transport=replying({**REPLY, "arrival_time": "15:30", "departure_time": "18:00"}))
+    assert result["trip_request"]["arrival_time"] == "2026-11-02T15:30:00-05:00"
+    assert result["trip_request"]["departure_time"] == "2026-11-02T18:00:00-05:00"
+
+
+def test_arrival_in_the_submission_minute_is_accepted():
+    result = interpret_trip_request(
+        "x", submitted_at="2026-10-02T11:20:40-04:00", supported_values=SUPPORTED,
+        transport=replying(REPLY))
+    assert result["status"] == "complete"
 
 
 def test_request_follows_adapter_specification():
-    transport = replying({"status": "incomplete", "missing_fields": ["destination"]})
+    transport = replying(REPLY)
     interpret(transport, message="park please")
     body, timeout = transport.sent[0]
     assert body["model"] == "qwen3:4b"
     assert body["stream"] is False and body["think"] is False
     assert body["options"] == {"temperature": 0, "seed": 5151, "num_predict": 512, "num_ctx": 4096}
-    assert body["format"]["properties"]["status"]["enum"] == ["complete", "incomplete"]
-    assert "Driver message: park please" in body["messages"][1]["content"]
-    assert f"Current date and time: {SUBMITTED_AT}" in body["messages"][1]["content"]
+    assert body["format"]["required"] == list(language_model.REQUIRED_FIELDS)
+    assert "enum" not in json.dumps(body["format"])
+    user_prompt = body["messages"][1]["content"]
+    assert "Driver message: park please" in user_prompt
+    assert "Current local date and time: 2026-10-02 10:30 (UTC-04:00)" in user_prompt
+    assert "Supported eligibility values: permit_O, visitor" in user_prompt
     assert timeout == 60
 
 
 @pytest.mark.parametrize("content, reason", [
     ("not json at all", "malformed_json"),
-    ("<think>hmm</think>{\"status\": \"complete\"}", "malformed_json"),
-    (["complete"], "malformed_json"),
-    ({"status": "done", "trip_request": TRIP}, "unsupported_status"),
-    ({"trip_request": TRIP}, "unsupported_status"),
-    ({"status": "complete", "trip_request": {k: v for k, v in TRIP.items() if k != "access_needs"}},
-     "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "group_size": 2}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": TRIP, "explanation": "LOT-1 is best"}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "destination": "Mars"}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "vehicle_category": "bus"}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "declared_eligibility": "unknown"}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "access_needs": "no"}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "arrival_time": "11:20"}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "arrival_time": "2026-10-02T11:20:00"}}, "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "arrival_time": "2026-10-02T10:00:00-04:00"}},
-     "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "arrival_time": "2026-10-02T11:31:00-04:00"}},
-     "invalid_fields"),
-    ({"status": "complete", "trip_request": {**TRIP, "departure_time": "2026-10-02T11:20:00-04:00"}},
-     "invalid_fields"),
-    ({"status": "incomplete", "missing_fields": []}, "invalid_fields"),
-    ({"status": "incomplete", "missing_fields": ["group_size"]}, "invalid_fields"),
-    ({"status": "incomplete", "missing_fields": ["destination", "destination"]}, "invalid_fields"),
-    ({"status": "incomplete", "missing_fields": ["destination"], "trip_request": TRIP}, "invalid_fields"),
+    ("<think>hmm</think>{\"destination\": null}", "malformed_json"),
+    (["Upson Hall"], "malformed_json"),
+    ({k: v for k, v in REPLY.items() if k != "access_needs"}, "wrong_fields"),
+    ({**REPLY, "group_size": 2}, "wrong_fields"),
+    ({**REPLY, "explanation": "LOT-1 is best"}, "wrong_fields"),
+    ({"status": "complete", "trip_request": TRIP}, "wrong_fields"),
 ])
-def test_schema_violations_fall_back(content, reason):
+def test_reply_without_the_six_fields_falls_back(content, reason):
     assert interpret(replying(content)) == {"status": "fallback", "reason": reason}
 
 
 def test_truncated_output_falls_back():
-    result = interpret(replying({"status": "complete", "trip_request": TRIP}, done_reason="length"))
+    result = interpret(replying(REPLY, done_reason="length"))
     assert result == {"status": "fallback", "reason": "output_truncated"}
 
 
@@ -122,7 +174,7 @@ def test_unexpected_ollama_envelope_falls_back():
 
 
 def test_overlong_message_is_not_sent_to_model():
-    transport = replying({"status": "complete", "trip_request": TRIP})
+    transport = replying(REPLY)
     result = interpret(transport, message="x" * 2001)
     assert result == {"status": "fallback", "reason": "message_too_long"}
     assert transport.sent == []

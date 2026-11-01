@@ -84,7 +84,7 @@ def find_suitable_parking(trip_request: dict) -> dict:
     # the shape SR-13 asks for. No ranking is computed from the inputs above.
     ranked_options = [
         {"rank": 1, "role": "primary", "lot_id": "LOT-1", "available_spaces": 10, "walking_time_minutes": 5},
-        {"rank": 2, "role": "backup", "lot_id": "LOT-2", "available_spaces": 4, "walking_time_minutes": 9},
+        {"rank": 2, "role": "backup", "lot_id": "LOT-3", "available_spaces": 4, "walking_time_minutes": 9},
     ]
 
     # UC.1.14: the application, not the language model, derives each

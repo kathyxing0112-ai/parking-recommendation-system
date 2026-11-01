@@ -195,11 +195,46 @@
     placeholders, plus 1.4.1, 1.4.2 and 1.4.4 with `NotImplementedError`.
   - All 46 new tests pass, and the 19 tests that passed before still pass.
   - `python app.py` runs end to end.
-- Not yet verified: the live model call. Ollama is not installed on this
-  machine, so the app took the `model_unavailable` fallback path. Done-When
-  item 2 ("the product's model returns a response through the adapter")
-  stays open until `ollama pull qwen3:4b` is run and the result is recorded
-  here.
+- Live model call, 2026-10-30: Ollama 0.40.13 with `qwen3:4b` (Q4_K_M,
+  digest `359d7dd4…`), served on `127.0.0.1:11434`. Done-When item 2 is
+  met: the model returned a response through the adapter, and the
+  schema-violation path fired on real output.
+  - Three simulated messages were sent with `submitted_at`
+    2026-10-30T15:00-04:00. Each call took 3.6–8.2 s (the first call
+    loads the model) and produced about 120 output tokens, with
+    `done_reason` `stop`.
+  - All three replies were rejected as `invalid_fields`, and the driver
+    got the six-field form:
+    - A full request ("3:30 pm … leaving at 6 pm") came back with
+      `departure_time` `2026-10-30T1:00:00-04:00`, which is not a valid
+      timestamp.
+    - A request with only the destination ("parking near Gates Hall
+      soon") came back as `complete`. The model invented the vehicle,
+      eligibility and access values, and set departure equal to arrival.
+      The adapter caught this only because departure was not after
+      arrival.
+    - A full request ("3:45pm and stay two hours") came back with the
+      offset `-04:0:00`.
+  - `python app.py` ran end to end through the form fallback in 4.1 s.
+  - Not in the repository: a scratch trial (not committed) asked the model
+    for nullable fields, enum-limited values and `HH:MM` times, with the
+    adapter assembling the contract object. That trial got four of four
+    messages right, including `null` for the unstated fields. This changes
+    what the model itself returns, which SPEC.md's Model Response Contract
+    fixes. It waits for a team decision and is not applied.
+    A second scratch trial on four harder messages found that design's own
+    problems:
+    - The enum forced the unsupported "Statler Hall" onto "Gates Hall".
+    - The enum forced a "faculty CU permit" onto `permit_O`.
+    - "Arriving 3:20" became `03:20`.
+    - An explicit "no accessibility needs" became `null`.
+  - `scripts/live_model_check.py` was added, so the team can rerun these
+    checks. Its first run, on 2026-10-30 with the current adapter, gave
+    2 of 8 messages as expected. Two wrong values passed the adapter as
+    `complete`:
+    - An unstated `access_needs` became `false`, against the Model
+      Response Contract.
+    - A "faculty CU permit" became `permit_O`.
 - Reviewed by: pending. Xichen Wang reviews against the §8.5 Done When list
   in the PR (K5).
 - Assistant assumptions, to be confirmed by the team:
@@ -222,3 +257,159 @@
   - (8) The orchestration still uses the hard-coded ranking placeholder.
     It fetches availability through the component but does not use it to
     rank. Ranking waits for the A1, A2 and A4 bodies (ADR-0003).
+
+## 2026-11-01 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from:
+  - The 2026-10-30 live run recorded in the 2026-10-28 entry.
+  - The team's decisions on the Model Response Contract, already entered
+    in `SPEC.md` by Katherine Xing:
+    - The interpretation step, meaning the model and its adapter, returns
+      the contract object.
+    - An unstated `access_needs` is `false`.
+    - Other unstated or unsupported values are listed in `missing_fields`.
+    - The Fallback paragraph covers only replies without the six fields.
+  - Katherine Xing's further decisions in this session:
+    - The model writes `HH:MM` times, and the adapter adds the date and
+      offset.
+    - A time with no am/pm is read as 24-hour.
+    - The reply schema has no enum.
+    - The live check keeps four ordinary and two non-standard messages.
+- Prompt: Asked the assistant to implement those decisions in the C.1.1
+  adapter, its tests, `docs/model-adapter.md` and the live check.
+- Output:
+  - `language_model/__init__.py`: new system prompt, user prompt, nullable
+    reply schema, and `assemble_contract`.
+  - `tests/test_model_adapter.py` was rewritten.
+  - `scripts/live_model_check.py` now has six cases.
+  - `docs/model-adapter.md` and the adapter paragraph of
+    `docs/deployment.md` were updated.
+- Trials before the code change, run in a scratch script and not committed:
+  - With supported eligibility meanings in parentheses, the model copied
+    the parentheses, and still mapped "faculty CU permit" to `permit_O`.
+  - Two changes fixed both: the meanings were moved to their own prompt
+    line, and the prompt now says a permit counts only if the driver names
+    that exact permit.
+- Verification, on 2026-11-01:
+  - `python -m pytest tests/ -q` gave 22 failed and 67 passed. The 22 are
+    the same pre-existing red tests. All 34 adapter tests pass.
+  - `python scripts/live_model_check.py`, with Ollama 0.40.13 and
+    `qwen3:4b`, gave 6 of 6 as expected. Each call took 1.6–2.3 s.
+    - Both full requests came back complete, with the right times.
+    - "Gates Hall soon" listed the four unstated fields.
+    - "Statler Hall" listed `destination` as missing.
+    - "Faculty CU permit" listed `declared_eligibility` as missing.
+- Not verified:
+  - Messages outside these six cases. The team chose not to test harder
+    phrasings.
+  - The confirmation card that shows missing fields, which belongs to A4
+    and is not built.
+- Reviewed by: pending. Xichen Wang reviews in the K5 PR.
+- Open:
+  - The 60-minute arrival window is under team review.
+  - An `incomplete` result carries only `missing_fields`, so the
+    confirmation card cannot pre-fill the values the model did recognize.
+    Pre-filling would need the SPEC example for `incomplete` to also carry
+    the known values.
+
+## 2026-11-01 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from:
+  - Bochao Liang's review comments to Katherine Xing.
+    - Mark the ingestion checks as defensive.
+    - Define the fields of `UpdatedParkingAvailability`.
+  - Katherine Xing's request for a draft §4 rule table, researched online,
+    because the data-and-rules owner has left the team.
+  - Public Cornell Transportation pages, retrieved 2026-11-01:
+    - https://fcs.cornell.edu/node/2296: night and weekend open parking.
+      The page is undated.
+    - https://fcs.cornell.edu/sites/default/files/2026-08/ParkmobileMap26.pdf:
+      the August 2026 hourly-parking map.
+- Output:
+  - `docs/deployment.md`: the ingestion checks are described as defensive.
+    A1.3 still owns validity and freshness, and no ADR is needed.
+  - `contracts/api-v1.yaml`: `UpdatedParkingAvailability` now has the
+    `lot_id` and `observations` fields, matching the data access component.
+    The generated stubs did not change.
+  - New `cornell_transportation_and_parking_services/parking_rules_draft.json`
+    with nine draft rules, R-01 to R-09, and a `get_rule_table()` loader.
+  - New `tests/test_rule_table.py`, which checks structure only.
+- What is sourced and what is assumed:
+  - Sourced:
+    - Weekday enforcement 07:30–17:00.
+    - Hoy Road Garage is open parking on weekday evenings and weekends
+      (R-03, R-04).
+    - Accessible spaces are restricted at all times (R-07, R-08).
+  - Assumed and labeled in each rule's `source`:
+    - Which permit each zone accepts (R-01, R-05, R-06).
+    - That LOT-1 is Hoy Road Garage.
+    - The event-day closure (R-09).
+  - Not found online: whether O permits are valid at Hoy Road Garage or
+    Peterson Lot. A contractor page groups Hoy G with a "Mid" permit
+    group, not O.
+- Verification: `python -m pytest tests/ -q` on 2026-11-01 gave 22 failed
+  and 78 passed. The 22 are the same pre-existing red tests.
+- Reviewed by: pending. The rules need team confirmation before evaluation
+  (SR-10). Responsibility for data and rules needs a new owner under SR-07.
+- Open: the mapping from lot IDs to real lot names. "Sage Garage" in the
+  October slides does not appear in Cornell's sources. Peterson Lot is
+  listed as an hourly pay lot, which does not match the slides' O-permit
+  use.
+
+## 2026-11-01 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from:
+  - Katherine Xing's approval of the lot mapping:
+    - LOT-1 Hoy Road Garage: 150 O-permit / 40 visitor / 10 accessible.
+    - LOT-2 Peterson Lot: 0 / 110 / 10.
+    - LOT-3 Campus Road O Area: 140 / 0 / 10.
+  - The Innoslate export `5151 Team Project- Nov1.xml`. Its contents:
+    - The C.1 Component Specification.
+    - DO-04.
+    - The A1.4 ICOM relationships, NFR.4 and SR-10.
+- Output:
+  - The simulator inventory was renamed and resized, to 470 spaces.
+  - The walking-time and rule stubs and the placeholder ranking now use
+    LOT-3 instead of LOT-2 as the O-permit backup.
+  - The draft rule table moved to version `draft-2026-11-01b`:
+    - Lot wildcards were replaced with explicit lots, so an O-permit rule
+      no longer reaches Peterson Lot, which has no O zone.
+    - The rules that disallow placard holders were dropped.
+    - The simulated closure moved to Wednesday 2026-11-04, LOT-3.
+  - `prompts/2026-10-31-c14-eligibility-filter.md` is filled from the
+    export and is ready for team review. It has not been sent or generated
+    yet.
+- Verification: `python -m pytest tests/ -q` on 2026-11-01 gave 22 failed
+  and 81 passed. The 22 are the same pre-existing red tests.
+- Inconsistencies found and left for the team's Innoslate review meeting:
+  - "1.4.4" is used for two different requirements: C.1's "Determine
+    Eligible Parking Areas" and the system-level "Present Parking
+    Recommendations and Status".
+  - Contract E-12 `ParkingPolicyConstraints` has only four rule fields,
+    while SPEC §4 has the full set.
+  - The C.1 specification has no number for its response-time budget
+    (2.3.1).
+- Reviewed by: pending.
+
+## 2026-11-01 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: `prompts/2026-10-31-c14-eligibility-filter.md`, whose four
+  decisions Katherine Xing confirmed on 2026-11-01.
+  - Decision 1 matches her reading. A lot must accept the declared permit,
+    and it must also have accessible spaces the trip may use.
+- Prompt: the component prompt, sent once (Lab Manual §9.4, task K6).
+- Output, generated once and not modified since:
+  - `prepare_eligible_parking_information/determine_eligible_parking_areas.py`
+  - `tests/test_eligibility_filter.py`
+- Verification on 2026-11-01:
+  - The ten DO-04 scenarios: 10 of 10 passed.
+  - The full suite: 22 failed and 91 passed. The 22 are the same
+    pre-existing red tests.
+- Deviations: see `docs/deviation-log.md`. It lists six specification
+  defects, all at the input boundary, and no assistant errors or
+  unrequested additions. The most serious is row 2: a trip whose departure
+  is not after its arrival returns every candidate.
+- Reviewed by: pending. Xichen Wang reviews in the K5 PR. The reviewer must
+  not be the person who ran the generation.
+- Not done: A1 does not call the module yet. The deviation-log corrections
+  wait for the team to promote the requirements.

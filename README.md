@@ -52,6 +52,21 @@ tests for A1, A2, and A4 fail until those modules are implemented. See
 `tests/test_data_access.py` and `tests/test_model_adapter.py` cover the
 Chapter 8 data access component and model adapter, including every
 schema-violation fallback. They need no running model.
+`tests/test_rule_table.py` checks that the draft parking-rule table has the
+SPEC Data Contract section 4 shape. The rules themselves are unconfirmed.
+`tests/test_eligibility_filter.py` runs the DO-04 scenarios against the C.1.4
+Eligibility Filter Module (Lab 9.4; see `docs/deviation-log.md`).
+
+To see what the real model returns, run the manual live check. It needs
+Ollama running with `qwen3:4b` pulled, and CI does not run it:
+
+```bash
+python scripts/live_model_check.py
+```
+
+For each simulated driver message it prints the model's raw reply, the
+adapter result, and whether that result is the expected one. Use
+`--message "..."` to try a message of your own.
 
 `tests/test_interface_contract.py` checks that each A1–A6 module matches the
 internal interface contract in `contracts/api-v1.yaml`. After changing the
