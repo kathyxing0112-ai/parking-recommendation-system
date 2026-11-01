@@ -413,3 +413,27 @@
   not be the person who ran the generation.
 - Not done: A1 does not call the module yet. The deviation-log corrections
   wait for the team to promote the requirements.
+
+## 2026-11-01 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: `docs/deviation-log.md` rows 1–6, with Katherine Xing's
+  dispositions from 2026-11-01.
+  - Rows 2, 3 and 5 are promoted to requirements and corrected in the code.
+  - Rows 4 and 6 are accepted as they are.
+  - Row 1 is replaced by a real non-matching-permit test.
+  - Permit holders may also use pay/visitor areas, by Katherine Xing's
+    decision.
+- Output:
+  - `determine_eligible_parking_areas.py` now returns `[]` in two cases:
+    when departure is not after arrival, and when `access_needs` is not a
+    boolean. A rule window that starts and ends at the same time is now
+    unreadable.
+  - `tests/test_eligibility_filter.py` was updated; it has 15 tests.
+  - The rule table moved to `draft-2026-11-01c`. R-07 and R-08 now use
+    `eligibility_class` `*`.
+  - The `SPEC.md` §4 window definition was updated.
+- Verification on 2026-11-01: `python -m pytest tests/ -q` gave 22 failed
+  and 96 passed. The 22 are the same pre-existing red tests.
+- Innoslate changes, made by Katherine Xing: the DO-04 sentence for rows 2
+  and 3, and the Parking Policy Constraints sentence for row 5.
+- Reviewed by: pending. Xichen Wang reviews in the K5 PR.

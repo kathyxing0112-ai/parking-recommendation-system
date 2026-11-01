@@ -201,7 +201,7 @@ Represent each confirmed rule as a dated record for a lot or zone, eligibility c
 | `lot_id`, `zone`                                     | Matching pilot lot and physical zone; an explicit wildcard may represent a lot-wide rule. |
 | `eligibility_class`                                  | Declared permit/visitor class or accessibility qualification covered by the rule. |
 | `valid_from`, `valid_until`, `time_zone`             | Effective date range and local time zone.                    |
-| `days_of_week`, `start_local_time`, `end_local_time` | Applicable days and daily window; define how overnight windows work. |
+| `days_of_week`, `start_local_time`, `end_local_time` | Applicable days and daily window. The window recurs on every date from `valid_from` to `valid_until` whose weekday is listed. A start later than the end runs past midnight into the next date and belongs to the date it starts on; a start equal to the end is invalid and the rule resolves nothing. |
 | `allowed`, `closure`                                 | Whether the class may park and whether the area is closed in that window. A confirmed closure overrides an allowance. |
 | `source`, `owner`, `reviewed_at`                     | Policy provenance, responsible owner, and last review time.  |
 

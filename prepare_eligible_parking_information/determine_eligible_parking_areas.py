@@ -1,7 +1,7 @@
 """C.1.4 Eligibility Filter Module -- A1.4 Determine Eligible Parking Areas.
 
 Generated once from prompts/2026-10-31-c14-eligibility-filter.md (Lab Manual
-§9.4). Requirements: C.1 1.4.4, 1.1.7, 1.2.8, 2.1.2; DO-04; NFR.4; SR-10.
+§9.4, commit d90bf3f), then corrected per docs/deviation-log.md. Requirements: C.1 1.4.4, 1.1.7, 1.2.8, 2.1.2; DO-04; NFR.4; SR-10.
 
 An area is returned only when confirmed rules allow every class the trip
 needs (its declared eligibility, plus "accessible" when access_needs is true)
@@ -69,7 +69,8 @@ def _rule_windows(rule: dict, start: datetime, end: datetime) -> list[tuple[date
         return None
     opens = _clock_minutes(rule.get("start_local_time", "00:00"))
     closes = _clock_minutes(rule.get("end_local_time", "24:00"))
-    if opens is None or closes is None:
+    # A window that starts and ends at the same time is invalid (deviation log row 5).
+    if opens is None or closes is None or opens == closes:
         return None
 
     windows = []
@@ -152,10 +153,12 @@ def determine_eligible_parking_areas(
         return []
     start = _offset_aware(trip["arrival_time"])
     end = _offset_aware(trip["departure_time"])
-    if start is None or end is None:
+    # An empty or reversed interval, or a non-boolean access_needs, is an
+    # invalid request: nothing is eligible (deviation log rows 2 and 3).
+    if start is None or end is None or end <= start or not isinstance(trip["access_needs"], bool):
         return []
     trip_classes = [trip["declared_eligibility"]]
-    if trip["access_needs"] is True:
+    if trip["access_needs"]:
         trip_classes.append("accessible")
 
     candidates = []
