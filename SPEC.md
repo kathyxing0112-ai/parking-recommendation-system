@@ -201,7 +201,7 @@ Represent each confirmed rule as a dated record for a lot or zone, eligibility c
 | `lot_id`, `zone`                                     | Matching pilot lot and physical zone; an explicit wildcard may represent a lot-wide rule. |
 | `eligibility_class`                                  | Declared permit/visitor class or accessibility qualification covered by the rule. |
 | `valid_from`, `valid_until`, `time_zone`             | Effective date range and local time zone.                    |
-| `days_of_week`, `start_local_time`, `end_local_time` | Applicable days and daily window; define how overnight windows work. |
+| `days_of_week`, `start_local_time`, `end_local_time` | Applicable days and daily window. The window recurs on every date from `valid_from` to `valid_until` whose weekday is listed. A start later than the end runs past midnight into the next date and belongs to the date it starts on; a start equal to the end is invalid and the rule resolves nothing. |
 | `allowed`, `closure`                                 | Whether the class may park and whether the area is closed in that window. A confirmed closure overrides an allowance. |
 | `source`, `owner`, `reviewed_at`                     | Policy provenance, responsible owner, and last review time.  |
 
@@ -244,7 +244,7 @@ Simulated sensor streams, non-identifying modeling tables, lot metadata, rule ve
 
 The local language model configured in `docs/environment.md` interprets a user's chatbot message as a trip request. It does not predict parking availability or rank parking areas. The application provides the message, current date and time, and the supported destination, vehicle-category, and eligibility values.
 
-**Output schema:** The model returns exactly one of the following JSON objects.
+**Output schema:** The interpretation step returns exactly one of the following JSON objects. The model itself copies the values the user stated and uses null for any field the message does not state; its adapter checks those values and assembles this result. The model's reply format is specified in docs/model-adapter.md.
 
 A complete interpretation contains all six required fields:
 
@@ -261,10 +261,9 @@ A complete interpretation contains all six required fields:
   }
 }
 ```
-If the message does not state whether accessible parking is needed, the model lists access_needs in missing_fields rather than assuming `false`.
+If the message does not state whether accessible parking is needed, access_needs is set to false. The confirmation step shows this value, and the user can change it.
 
-If any required field is missing or cannot be determined reliably, the model identifies the missing fields instead of inventing values:
-
+If any other required field is not stated, is not a supported value, or cannot be determined reliably, the result lists it in missing_fields instead of inventing or substituting a value:
 ```json
 {
   "status": "incomplete",
@@ -274,4 +273,4 @@ If any required field is missing or cannot be determined reliably, the model ide
 
 The application validates a `complete` trip request against the six-field Data Contract and asks the user to confirm it. The user may edit any field before confirming. The values the user confirms, not the raw model output, enter the parking prediction and ranking pipeline. Edited values are validated again against the Data Contract, and an invalid value blocks the request until it is corrected. Only a confirmed request with all six valid fields may enter the parking prediction and ranking pipeline. An `incomplete` response prompts the user to provide the missing fields; it never triggers a prediction.
 
-**Fallback:** If the model returns malformed JSON, an unsupported status, or invalid fields, the application discards the model response and presents the six-field form for the user to complete. It never sends an incomplete request to the forecasting model or displays raw model output or an internal error to the user.
+**Fallback:** If the model's reply is malformed JSON or does not contain the six fields, or the model cannot be reached, the application discards the model response and presents the six-field form for the user to complete. It never sends an incomplete request to the forecasting model or displays raw model output or an internal error to the user.

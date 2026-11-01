@@ -9,5 +9,6 @@ def get_contextual_information(destination: str) -> list:
     """Stub: hard-coded, synthetic walking times of the right shape."""
     return [
         {"lot_id": "LOT-1", "walking_time_minutes": 5},
-        {"lot_id": "LOT-2", "walking_time_minutes": 9},
+        {"lot_id": "LOT-2", "walking_time_minutes": 12},
+        {"lot_id": "LOT-3", "walking_time_minutes": 9},
     ]

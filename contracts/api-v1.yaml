@@ -578,8 +578,20 @@ components:
         timestamp: {type: string, format: date-time}
 
     UpdatedParkingAvailability:
-      description: E-07, Seq 15. Empty when no recheck is in progress.
+      description: >-
+        E-07, Seq 15. The latest space-level observations for the one lot the
+        driver selected, returned by
+        ParkingDataStore.request_updated_parking_availability. Empty when no
+        recheck is in progress; otherwise both fields are present.
       type: object
+      properties:
+        lot_id: {type: string, description: The selected lot being rechecked.}
+        observations:
+          type: array
+          description: >-
+            The latest accepted event at or before the recheck time for each
+            space in the lot. Freshness is judged by A1.3, not here.
+          items: {$ref: '#/components/schemas/SensorEvent'}
 
     WalkingTime:
       description: E-04 Contextual Information, Seq 8; also the item of I-03.

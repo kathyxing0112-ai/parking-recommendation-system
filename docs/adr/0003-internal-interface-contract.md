@@ -97,6 +97,8 @@ guaranteed (done, 2026-10-25).
   the space-level `SensorEvent` that SPEC Data Contract section 1 and the
   contract's A1 request define. These are A0 boundary inputs, not internal
   flows. Alignment belongs to the Chapter 8 data adapters (§8.5).
+  *Resolved in Chapter 8:* the data access component now returns
+  `SensorEvent` lists from the simulated X.C.2 feed (`docs/deployment.md`).
 - **SR-15 eligibility basis has no field.** SR-15 asks each option to show its
   eligibility basis. I-05 Eligible Parking Areas carries only `lot_id`, and
   the model defines no basis field. The contract does not invent one; it is

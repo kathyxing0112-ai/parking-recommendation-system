@@ -5,17 +5,19 @@ Smart Parking system as a single element; this module coordinates the UC.1
 messages inside it, in the order of the updated UC.1 sequence diagram
 (see docs/walking-skeleton.md).
 
-Internal Actions UC.1.10-UC.1.13 are placeholders: no validation, filtering,
+Since Chapter 8, parking availability comes from the simulated X.C.2 feed
+through the data access component, and trip interpretation goes through the
+local language model adapter (docs/deployment.md). Internal Actions
+UC.1.10-UC.1.13 are still placeholders: no validation, filtering,
 forecasting, or scoring is computed in this increment.
 """
+
+from datetime import datetime
 
 from contextual_information_sources import get_contextual_information
 from cornell_transportation_and_parking_services import get_parking_rules_and_closures
 from language_model import interpret_trip_request as model_interpret
-from parking_availability_data_sources import (
-    get_current_parking_availability,
-    get_updated_parking_availability,
-)
+from parking_data_access import ParkingDataStore
 
 REQUIRED_FIELDS = (
     "destination",
@@ -26,25 +28,53 @@ REQUIRED_FIELDS = (
     "access_needs",
 )
 
+PILOT_LOT_IDS = ["LOT-1", "LOT-2", "LOT-3"]
+
+# Provisional values the application gives the model (Model Response Contract).
+# The approved lists are still open (prompt-log 2026-10-04, deferred item 3).
+PROVISIONAL_SUPPORTED_VALUES = {
+    "destinations": ["Duffield Hall", "Upson Hall", "Gates Hall"],
+    "vehicle_categories": ["sedan", "suv", "van"],
+    "eligibility_values": ["permit_O", "visitor"],
+}
+
+_data_store = None
+
+
+def _store() -> ParkingDataStore:
+    global _data_store
+    if _data_store is None:
+        _data_store = ParkingDataStore()
+    return _data_store
+
+
+def _now() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
 
 def interpret_trip_request(message: str) -> dict:
     """UC.1.2 Interpret and Confirm Trip Request.
 
-    The language model interprets the message (ADR-0002); the application
-    checks that all six required fields are present before asking the driver
-    to confirm them.
+    The language model interprets the message through the adapter (ADR-0002),
+    which has already checked the output against the Model Response Contract.
+    A "fallback" result means the model output was discarded: the driver is
+    shown the six-field form instead, with no raw output or internal error.
     """
-    response = model_interpret(message)
-    trip_request = response.get("trip_request", {})
-    missing = [f for f in REQUIRED_FIELDS if f not in trip_request]
-    return {"status": "incomplete" if missing else "complete",
-            "trip_request": trip_request, "missing_fields": missing}
+    response = model_interpret(message, submitted_at=_now(),
+                               supported_values=PROVISIONAL_SUPPORTED_VALUES)
+    if response["status"] == "complete":
+        return {"status": "complete", "trip_request": response["trip_request"], "missing_fields": []}
+    if response["status"] == "incomplete":
+        return {"status": "incomplete", "trip_request": {}, "missing_fields": response["missing_fields"]}
+    return {"status": "form_required", "trip_request": {}, "missing_fields": list(REQUIRED_FIELDS)}
 
 
 def find_suitable_parking(trip_request: dict) -> dict:
     """UC.1.4-UC.1.14: gather inputs, rank options, and return recommendations."""
     # UC.1.4-UC.1.9: request and receive data from the three external sources.
-    availability = get_current_parking_availability(trip_request["destination"])
+    availability = _store().request_parking_availability(
+        {"lot_ids": PILOT_LOT_IDS, "as_of": _now()}
+    )
     context = get_contextual_information(trip_request["destination"])
     rules = get_parking_rules_and_closures(
         trip_request["declared_eligibility"], trip_request["access_needs"]
@@ -54,7 +84,7 @@ def find_suitable_parking(trip_request: dict) -> dict:
     # the shape SR-13 asks for. No ranking is computed from the inputs above.
     ranked_options = [
         {"rank": 1, "role": "primary", "lot_id": "LOT-1", "available_spaces": 10, "walking_time_minutes": 5},
-        {"rank": 2, "role": "backup", "lot_id": "LOT-2", "available_spaces": 4, "walking_time_minutes": 9},
+        {"rank": 2, "role": "backup", "lot_id": "LOT-3", "available_spaces": 4, "walking_time_minutes": 9},
     ]
 
     # UC.1.14: the application, not the language model, derives each
@@ -88,5 +118,7 @@ def get_selected_parking_information(recommendations: dict, lot_id: str) -> dict
 
 def recheck_parking_status(lot_id: str) -> dict:
     """UC.1.18-UC.1.21: pre-arrival recheck of the selected option."""
-    updated = get_updated_parking_availability(lot_id)  # UC.1.19 / UC.1.20
-    return {**updated, "data_mode": "synthetic"}      # UC.1.21
+    updated = _store().request_updated_parking_availability(  # UC.1.19 / UC.1.20
+        {"lot_id": lot_id, "as_of": _now()}
+    )
+    return {**updated, "data_mode": "simulated"}  # UC.1.21

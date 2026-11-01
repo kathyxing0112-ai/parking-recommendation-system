@@ -1,0 +1,55 @@
+{
+  "data_mode": "simulated",
+  "note": "Simulated trip records for the SR-04 / NFR.9 retention analysis. Not real driver data.",
+  "inspection_time": "2026-10-30T12:00:00-04:00",
+  "retention_hours": 24,
+  "records": [
+    {
+      "record_id": "TR-SIM-001",
+      "session_id": "S-SIM-A",
+      "submitted_at": "2026-10-29T11:59:00-04:00",
+      "trip_request": {
+        "destination": "Duffield Hall",
+        "arrival_time": "2026-10-29T12:30:00-04:00",
+        "departure_time": "2026-10-29T14:30:00-04:00",
+        "vehicle_category": "sedan",
+        "declared_eligibility": "permit_O",
+        "access_needs": false
+      },
+      "recommendation_output": [
+        {"lot_id": "LOT-1", "walking_time_minutes": 5, "score": 0.712345, "ranking_basis": "score"},
+        {"lot_id": "LOT-2", "walking_time_minutes": 9, "score": 0.504321, "ranking_basis": "score"}
+      ]
+    },
+    {
+      "record_id": "TR-SIM-002",
+      "session_id": "S-SIM-B",
+      "submitted_at": "2026-10-29T12:01:00-04:00",
+      "trip_request": {
+        "destination": "Upson Hall",
+        "arrival_time": "2026-10-29T12:45:00-04:00",
+        "departure_time": "2026-10-29T13:45:00-04:00",
+        "vehicle_category": "suv",
+        "declared_eligibility": "visitor",
+        "access_needs": false
+      },
+      "recommendation_output": [
+        {"lot_id": "LOT-2", "walking_time_minutes": 9, "score": null, "ranking_basis": "fallback_walking_time"}
+      ]
+    },
+    {
+      "record_id": "TR-SIM-003",
+      "session_id": "S-SIM-A",
+      "submitted_at": "2026-10-30T10:30:00-04:00",
+      "trip_request": {
+        "destination": "Gates Hall",
+        "arrival_time": "2026-10-30T11:15:00-04:00",
+        "departure_time": "2026-10-30T12:00:00-04:00",
+        "vehicle_category": "van",
+        "declared_eligibility": "visitor",
+        "access_needs": true
+      },
+      "recommendation_output": []
+    }
+  ]
+}
