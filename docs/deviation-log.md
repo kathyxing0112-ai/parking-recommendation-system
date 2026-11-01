@@ -19,8 +19,9 @@ corrections followed in the next commit.
   - `prepare_eligible_parking_information/determine_eligible_parking_areas.py`
   - `tests/test_eligibility_filter.py`
 - **Generated commit:** `d90bf3f`, which holds the two files unmodified.
-- **Reviewed by:** to be filled in. The reviewer must be someone who did not
-  run the generation; Xichen Wang is proposed, in the K5 PR.
+- **Reviewed by:** not yet reviewed. Lab Manual p.20 requires a team member
+  who did not run the generation, so Katherine Xing, who ran it, cannot
+  review it. Record the reviewer's name, the date and the conclusion here.
 
 ## Test result of the unmodified generation
 
@@ -42,37 +43,47 @@ Classification:
 
 | # | Requirement / spec section | What the specification said | What the code did | Why the gap appeared | Classification | Disposition |
 |---|---|---|---|---|---|---|
-| 1 | DO-04 verification ("a non-matching permit"); Success criteria, scenario 2 | Scenario 2 was given the same trip and expected set as scenario 1, with "LOT-2 has no applicable rule" as its label | The test runs the same inputs twice. Scenario 2 adds no coverage of its own | The specification merged two DO-04 cases into one row. Scenario 3 (a visitor rejected by LOT-3's disallowing rule) is the only real non-matching case | Specification defect *Corrected* (test only). Scenario 2 is now a visitor trip at the O-permit-only LOT-3, expecting `[]`, and a separate test covers an area with no applicable rule. Katherine Xing decided that a permit holder may still use a pay or visitor area, so the rule table now opens visitor zones to every class (`draft-2026-11-01c`). That changes the expected sets in scenarios 1, 4, 6, 7 and 8 |
-| 2 | Interfaces, `normalized_trip_requirements` ("`departure_time` is later than `arrival_time`") | Stated as a precondition. No behavior was given for when it does not hold | With departure not after arrival, the interval is empty, so every class is "covered" and **every candidate is returned**, including LOT-2 for permit_O | The specification assumed A1.1 and A1.3 always deliver a valid interval and did not say what to do otherwise. An empty interval makes the coverage check true by default | Specification defect. **Highest risk**: a bad upstream value would break SR-10 / NFR.4 *Promoted* and *corrected*. The code returns `[]`, and a test covers it. Katherine Xing adds the requirement to DO-04 in Innoslate |
-| 3 | Interfaces, `access_needs` | "`access_needs` is true", with no word on values that are not booleans | Only `True` adds the accessible class. A non-boolean such as `"yes"` is treated as "no accessible need" | The type was assumed, not specified | Specification defect, low risk (the C.1.1 adapter only produces booleans) *Promoted* and *corrected*. The code returns `[]`, and a test covers it. Added to DO-04 together with row 2 |
-| 4 | Interfaces, `declared_eligibility`; Normalized Trip Requirements ("unknown eligibility does not imply parking permission") | Nothing on a value outside the approved list | With `declared_eligibility` `None` on a Saturday, LOT-1 is returned, because rules R-05 and R-06 use `"*"` (open parking) | Open-parking rules apply to any class by design. The specification did not say whether an unknown eligibility should still be stopped before rules are applied | Specification defect, team decision *Accepted, no change*. Katherine Xing confirmed on 2026-11-01 that an open-parking window lifts the permit requirement for its hours |
-| 5 | Interfaces, rule times ("an end earlier than the start means the window runs past midnight") | Nothing for start equal to end | `start_local_time` equal to `end_local_time` is read as a full 24-hour window | The case was not specified, and the code followed the "past midnight" branch | Specification defect, low risk (no draft rule has equal times) *Promoted* and *corrected*. SPEC.md §4 now defines recurring, overnight and equal-time windows. The code treats start equal to end as unreadable, and a test covers it. Katherine Xing adds the same sentence to Parking Policy Constraints in Innoslate |
-| 6 | Error conditions ("Raise no exceptions for these cases") | No exceptions for a bad trip or bad rules. Nothing on `parking_policy_constraints` that is not a dict | `parking_policy_constraints=None` raises `AttributeError` | Not listed in the error conditions | Specification defect, low risk (A1 always passes the E-12 object) *Accepted, no change*. A1 always passes the E-12 object |
+| 1 | DO-04 verification ("a non-matching permit"); Success criteria, scenario 2 | Scenario 2 was given the same trip and expected set as scenario 1, with "LOT-2 has no applicable rule" as its label | The test runs the same inputs twice. Scenario 2 adds no coverage of its own | The specification merged two DO-04 cases into one row. Scenario 3 (a visitor rejected by LOT-3's disallowing rule) is the only real non-matching case | Specification defect | *Corrected* (test only). Scenario 2 is now a visitor trip at the O-permit-only LOT-3, expecting `[]`, and a separate test covers an area with no applicable rule. Katherine Xing decided that a permit holder may still use a pay or visitor area, so the rule table now opens visitor zones to every class (`draft-2026-11-01c`). That changes the expected sets in scenarios 1, 4, 6, 7 and 8 |
+| 2 | Interfaces, `normalized_trip_requirements` ("`departure_time` is later than `arrival_time`") | Stated as a precondition. No behavior was given for when it does not hold | With departure not after arrival, the interval is empty, so every class is "covered" and **every candidate is returned**, including LOT-2 for permit_O | The specification assumed A1.1 and A1.3 always deliver a valid interval and did not say what to do otherwise. An empty interval makes the coverage check true by default | Specification defect. | **Highest risk**: a bad upstream value would break SR-10 / NFR.4 *Promoted* and *corrected*. The code returns `[]`, and a test covers it. DO-04 in Innoslate updated by Katherine Xing on 2026-11-01 (see Requirement back-fill below) |
+| 3 | Interfaces, `access_needs` | "`access_needs` is true", with no word on values that are not booleans | Only `True` adds the accessible class. A non-boolean such as `"yes"` is treated as "no accessible need" | The type was assumed, not specified | Specification defect, low risk (the C.1.1 adapter only produces booleans) | *Promoted* and *corrected*. The code returns `[]`, and a test covers it. DO-04 in Innoslate updated together with row 2 |
+| 4 | Interfaces, `declared_eligibility`; Normalized Trip Requirements ("unknown eligibility does not imply parking permission") | Nothing on a value outside the approved list | With `declared_eligibility` `None` on a Saturday, LOT-1 is returned, because rules R-05 and R-06 use `"*"` (open parking) | Open-parking rules apply to any class by design. The specification did not say whether an unknown eligibility should still be stopped before rules are applied | Specification defect, team decision | *Accepted, no change*. Katherine Xing confirmed on 2026-11-01 that an open-parking window lifts the permit requirement for its hours |
+| 5 | Interfaces, rule times ("an end earlier than the start means the window runs past midnight") | Nothing for start equal to end | `start_local_time` equal to `end_local_time` is read as a full 24-hour window | The case was not specified, and the code followed the "past midnight" branch | Specification defect, low risk (no draft rule has equal times) | *Promoted* and *corrected*. SPEC.md §4 now defines recurring, overnight and equal-time windows. The code treats start equal to end as unreadable, and a test covers it. Parking Policy Constraints in Innoslate updated by Katherine Xing on 2026-11-01 (see Requirement back-fill below) |
+| 6 | Error conditions ("Raise no exceptions for these cases") | No exceptions for a bad trip or bad rules. Nothing on `parking_policy_constraints` that is not a dict | `parking_policy_constraints=None` raises `AttributeError` | Not listed in the error conditions | Specification defect, low risk (A1 always passes the E-12 object) | *Accepted, no change*. A1 always passes the E-12 object |
+| 7 | Lab Manual p.21, "Never let one generation write both the code and its test" (process, not a requirement) | Not a specification item. The component prompt asked for the module and `tests/test_eligibility_filter.py` in the same generation | One generation wrote both files. Their 10/10 agreement does not show on its own that the code meets DO-04 | The prompt's Output format asked for both files, against the manual's rule. The expected eligible sets were written into the specification by a person before generation, which limits but does not remove the bias | Process deviation, found in review on 2026-11-01 | *Open*. The original generation and this log stay as they are. A team member who did not run the generation will write requirement-derived tests from DO-04 and the rule table, without reading the generated tests, in `tests/test_eligibility_filter_independent.py`, run them against `d90bf3f` and the corrected code, and record the result here |
 
 No **assistant errors** and no **unrequested additions** were found. Every
 helper (`_clock_minutes`, `_rule_windows`, `_covers`, `_is_readable` and
 `_class_satisfied`) implements a step the specification named. The code adds
 no logging, caching, configuration, classes or dependencies.
 
+## Requirement back-fill (Lab Manual §9.4 "Reconcile")
+
+| Row | Model element (Innoslate) | Text added | Date and by whom | Evidence |
+|---|---|---|---|---|
+| 2, 3 | Requirement **DO-04 Eligible Parking Area Output**: Description, and the Verification part of Rationale | Description: "If the trip's departure time is not later than its arrival time, or access needs is not true or false, the Eligibility Filter Module shall return no parking areas." Verification: "...an area with no applicable rule and an invalid trip interval..." | 2026-11-01, Katherine Xing | Innoslate export taken after the edit: to be attached (the 2026-11-01 export `5151 Team Project- Nov1.xml` predates it) |
+| 5 | Input/Output **Parking Policy Constraints**: Description | "Each rule window recurs on its listed weekdays between its valid-from and valid-until dates. A window whose start time is later than its end time runs past midnight into the next day; a window whose start time equals its end time is invalid and resolves no eligibility." | 2026-11-01, Katherine Xing | Same export |
+| 5 | `SPEC.md` Data Contract §4, row `days_of_week`, `start_local_time`, `end_local_time` | The same rule in SPEC wording | 2026-11-01, commit `c0db0ae` | Git history |
+
 ## Summary
 
 After the corrections, on 2026-11-01, `tests/test_eligibility_filter.py` gave
-15 of 15 passed. The full suite gave 22 failed and 96 passed; the 22 are the
-same pre-existing red tests.
+15 of 15 passed, and the full suite gave 22 failed and 99 passed (the 22 are
+the pre-existing red tests). Because of row 7, these tests were written in
+the same generation as the code. They show that the code matches the
+scenarios in the specification. They do not on their own show that the code
+meets DO-04, until the independent tests in row 7 are written and run.
 
-
-- **Count by class:** 6 specification defects, 0 assistant errors and 0
-  unrequested additions.
-- **Requirements that survived intact:**
-  - 1.4.4, 1.1.7, 1.2.8 and 2.1.2.
-  - DO-04's decision rule.
-  - NFR.4 and SR-10, for valid inputs.
-  - All ten scenarios pass, as does the minimal-contract case that mirrors
-    FR 1.4.1.
+- **Count by class:** 6 specification defects, 0 assistant errors, 0
+  unrequested additions and 1 process deviation.
+- **Requirements that survived intact, for valid inputs:** 1.4.4, 1.1.7,
+  1.2.8, 2.1.2, DO-04's decision rule, NFR.4 and SR-10. This is subject to
+  the independent tests in row 7.
 - **What the count says about the specification:** the decision rule was
-  specified tightly enough to generate correctly in one pass. Every gap is
+  specified tightly enough to generate correctly in one pass. Every gap was
   at the input boundary: what C.1.4 should do when the upstream trip
-  request is invalid. Row 2 matters most. C.1.4 trusts A1.1 and A1.3, and
-  the C.1 specification never assigns this check to anyone. Rows 2, 3 and 5
-  should become C.1 requirements before the code is corrected. Row 4 needs
-  a policy decision from the team.
+  request is invalid, a responsibility the C.1 specification never assigned.
+  - Rows 2, 3 and 5 are now requirements in DO-04, in Parking Policy
+    Constraints and in SPEC §4.
+  - Row 4 was accepted by team decision.
+  - The prompt's Output format caused the process deviation in row 7. The
+    next component prompt must ask for code only.

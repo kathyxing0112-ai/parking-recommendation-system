@@ -98,7 +98,7 @@ adapter never replaces it with another value.
 | `destination`, `vehicle_category`, `declared_eligibility` | It matches a supported value, ignoring case. The approved spelling is kept | Missing |
 | `arrival_time` | It is `HH:MM`, and that time on the submission date, with the submission's UTC offset, is no earlier than the submission minute and at most 60 minutes later (Data Contract §5) | Missing |
 | `departure_time` | `arrival_time` is kept, and this `HH:MM` on the same date is later than the arrival | Missing |
-| `access_needs` | It is true or false | Set to `false` (SPEC.md Model Response Contract). The confirmation step shows the value, and the driver can change it |
+| `access_needs` | It is true or false | `null` (not stated) is set to `false` (SPEC.md Model Response Contract); the confirmation step shows the value, and the driver can change it. Any other value, such as `"yes"` or `1`, is listed as missing |
 
 If no field is missing, the result is
 `{"status": "complete", "trip_request": {...six fields...}}`, with offset-aware

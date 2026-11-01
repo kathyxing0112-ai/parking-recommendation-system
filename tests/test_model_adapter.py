@@ -107,9 +107,11 @@ def test_departure_is_missing_when_arrival_is_missing():
     assert result == {"status": "incomplete", "missing_fields": ["arrival_time", "departure_time"]}
 
 
-def test_access_needs_of_wrong_type_defaults_to_false():
-    result = interpret(replying({**REPLY, "access_needs": "no"}))
-    assert result == {"status": "complete", "trip_request": TRIP}
+@pytest.mark.parametrize("value", ["yes", "no", 1, {"needed": True}])
+def test_access_needs_of_wrong_type_is_missing_not_false(value):
+    """A wrong type is not an unstated value; only null defaults to false."""
+    result = interpret(replying({**REPLY, "access_needs": value}))
+    assert result == {"status": "incomplete", "missing_fields": ["access_needs"]}
 
 
 def test_times_use_the_submission_date_and_offset():

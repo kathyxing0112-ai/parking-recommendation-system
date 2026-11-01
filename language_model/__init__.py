@@ -144,7 +144,7 @@ def assemble_contract(content: str, submitted_at: str, supported_values: dict) -
     A field the model left null, or whose value fails its Data Contract
     section 5 check, is listed in missing_fields; the driver supplies it on the
     confirmation step. access_needs left null becomes false (SPEC.md Model
-    Response Contract). Returns {"status": "fallback", "reason": ...} only when
+    Response Contract); any other non-boolean access_needs is missing. Returns {"status": "fallback", "reason": ...} only when
     the reply is not a JSON object with exactly the six fields.
     """
     try:
@@ -170,8 +170,10 @@ def assemble_contract(content: str, submitted_at: str, supported_values: dict) -
     trip["arrival_time"] = arrival.isoformat() if arrival is not None else None
     trip["departure_time"] = departure.isoformat() if departure is not None else None
 
+    # Only an unstated value (null) defaults to false. A value of the wrong
+    # type is not "no accessible need": the driver is asked for it instead.
     access = reply["access_needs"]
-    trip["access_needs"] = access if isinstance(access, bool) else False
+    trip["access_needs"] = False if access is None else access if isinstance(access, bool) else None
 
     missing = [field for field in REQUIRED_FIELDS if trip[field] is None]
     if missing:

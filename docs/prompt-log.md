@@ -437,3 +437,33 @@
 - Innoslate changes, made by Katherine Xing: the DO-04 sentence for rows 2
   and 3, and the Parking Policy Constraints sentence for row 5.
 - Reviewed by: pending. Xichen Wang reviews in the K5 PR.
+
+## 2026-11-01 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: a team member's review of the K5 PR, five points. Katherine
+  Xing asked the assistant to check them.
+- Checked against the Lab Manual and the code:
+  - **Point 1 is confirmed.** Lab Manual p.21 says "Never let one
+    generation write both the code and its test". The K6 prompt asked for
+    both. This is recorded as deviation-log row 7, a process deviation. It
+    stays open until a member who did not run the generation writes
+    independent tests.
+  - **Point 2 is confirmed.** Lab Manual p.20 says the reviewer "must be a
+    team member who did not run the generation". Katherine Xing ran it, so
+    "Reviewed by" stays open for another member.
+  - **Point 3 was confirmed as an adapter defect, introduced on
+    2026-11-01.** `assemble_contract` turned any non-boolean `access_needs`
+    into `false`, and a test asserted that behavior. It is fixed:
+    - Only `null` defaults to `false`.
+    - Any other value is listed as missing.
+    - The test now asserts the new behavior, and `docs/model-adapter.md`
+      is updated.
+  - **Point 4 is valid.** The CI signal is mixed with the 22 intended red
+    tests. The CI change is left to the testing/CI owner, Xichen Wang
+    (SR-07).
+  - **Point 5 is confirmed.** `docs/deviation-log.md` now has a single
+    final status and a "Requirement back-fill" table listing each element,
+    the text added, the date and the person. The post-edit Innoslate
+    export is still to be attached.
+- Verification on 2026-11-01: `python -m pytest tests/ -q` gave 22 failed
+  and 99 passed. The 22 are the same pre-existing red tests.
