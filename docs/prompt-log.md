@@ -487,3 +487,40 @@
     pre-existing red tests.
 - Reviewed by: pending. A team member who did not run either generation
   must review it.
+
+## 2026-11-03 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from:
+  - The requirements for the recorded demo: a working function, code
+    traceability and a passing CI run.
+  - DO-01, DO-02 and DO-03; C.1 Spec 1.4.1 to 1.4.4; the A1.1 to A1.4 ICOMs.
+  - Katherine Xing's decisions on 2026-11-03: split CI into two workflows, and
+    generate the module tests in a separate AI session.
+- Prompt: implement A1 and its second-level modules, connect them to the
+  product, and split CI. Do not write the tests for the new modules.
+- Output:
+  - `prepare_eligible_parking_information/`: new A1.1, A1.2 and A1.3 modules,
+    and the A1 body that calls them with the existing A1.4 module.
+  - `smart_parking_service` now calls A1 and A3 instead of returning hard-coded
+    options. X.C.4 returns the draft rule table.
+  - `.github/workflows/tests.yml` covers implemented behavior;
+    `requirement-status.yml` runs the full suite.
+  - `prompts/2026-11-03-a1-modules-independent-tests.md`.
+  - Updated: `docs/traceability.md`, `docs/route-table.md`,
+    `docs/deployment.md`, `docs/walking-skeleton.md`, `README.md`, ADR-0003.
+- Verification on 2026-11-03:
+  - `test_FR_1_4_1_prepares_eligible_parking_information`, written in Chapter 5
+    and not modified, passes.
+  - The `tests.yml` selection gave 173 passed locally; the full suite gave 21
+    failed and 173 passed. The 21 are 19 acceptance placeholders and FR 1.4.2
+    and 1.4.4.
+  - `python app.py` with the live local model ran from the message to the
+    recheck.
+- Assumptions, to be confirmed by the team:
+  - (1) `unknown` spaces count as occupied at lot level (SPEC section 1).
+  - (2) `capacity` is the number of spaces with a valid event, because A1 has no
+    inventory input. DO-03's "occupied outside 0 to capacity" case cannot occur
+    through this interface.
+  - (3) A timestamp up to 5 s ahead counts as valid and current.
+- Not done: the independent module tests, which are not yet generated, and the
+  review by a team member who did not write this code.

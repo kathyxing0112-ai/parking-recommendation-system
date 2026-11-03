@@ -7,9 +7,10 @@ messages inside it, in the order of the updated UC.1 sequence diagram
 
 Since Chapter 8, parking availability comes from the simulated X.C.2 feed
 through the data access component, and trip interpretation goes through the
-local language model adapter (docs/deployment.md). Internal Actions
-UC.1.10-UC.1.13 are still placeholders: no validation, filtering,
-forecasting, or scoring is computed in this increment.
+local language model adapter (docs/deployment.md). UC.1.10 and UC.1.11 run
+through A1, and UC.1.13 ranks through A3. A2 is not implemented, so no forecast
+exists and A3 uses its walking-time fallback (SR-13). A4 is not implemented
+either, so this module still builds the driver-facing result.
 """
 
 from datetime import datetime
@@ -18,6 +19,8 @@ from contextual_information_sources import get_contextual_information
 from cornell_transportation_and_parking_services import get_parking_rules_and_closures
 from language_model import interpret_trip_request as model_interpret
 from parking_data_access import ParkingDataStore
+from prepare_eligible_parking_information import InvalidTripRequest, prepare_eligible_parking_information
+from rank_parking_options import rank_parking_options
 
 REQUIRED_FIELDS = (
     "destination",
@@ -37,6 +40,15 @@ PROVISIONAL_SUPPORTED_VALUES = {
     "vehicle_categories": ["sedan", "suv", "van"],
     "eligibility_values": ["permit_O", "visitor"],
 }
+
+TRIP_REQUEST_VALIDATION_RULES = {
+    "arrival_window_minutes": 60,  # SPEC Data Contract section 5
+    "supported_values": PROVISIONAL_SUPPORTED_VALUES,
+}
+INFORMATION_ACQUISITION_AND_REFRESH_RULES = {"refresh_interval_seconds": 60, "lot_ids": PILOT_LOT_IDS}  # C.1 Spec 2.3.2
+DATA_VALIDATION_AND_FRESHNESS_RULES = {"stale_after_seconds": 120}  # SR-09
+# SR-13. No forecast exists yet, so A3 uses its walking-time fallback.
+RANKING_AND_FALLBACK_RULES = {"weights": {"walking_time": 0.4, "availability": 0.4, "uncertainty": 0.2}}
 
 _data_store = None
 
@@ -70,31 +82,69 @@ def interpret_trip_request(message: str) -> dict:
 
 
 def find_suitable_parking(trip_request: dict) -> dict:
-    """UC.1.4-UC.1.14: gather inputs, rank options, and return recommendations."""
+    """UC.1.4-UC.1.14: gather inputs, run A1 and A3, and return recommendations."""
+    submitted_at = _now()
     # UC.1.4-UC.1.9: request and receive data from the three external sources.
-    availability = _store().request_parking_availability(
-        {"lot_ids": PILOT_LOT_IDS, "as_of": _now()}
-    )
-    context = get_contextual_information(trip_request["destination"])
+    availability = _store().request_parking_availability({"lot_ids": PILOT_LOT_IDS, "as_of": submitted_at})
+    context = get_contextual_information(trip_request.get("destination"))
     rules = get_parking_rules_and_closures(
-        trip_request["declared_eligibility"], trip_request["access_needs"]
+        trip_request.get("declared_eligibility"), trip_request.get("access_needs")
     )
 
-    # UC.1.10-UC.1.13 placeholder: a hard-coded primary and backup option of
-    # the shape SR-13 asks for. No ranking is computed from the inputs above.
-    ranked_options = [
-        {"rank": 1, "role": "primary", "lot_id": "LOT-1", "available_spaces": 10, "walking_time_minutes": 5},
-        {"rank": 2, "role": "backup", "lot_id": "LOT-3", "available_spaces": 4, "walking_time_minutes": 9},
-    ]
+    # UC.1.10-UC.1.11: A1 validates the data and filters the areas.
+    try:
+        prepared = prepare_eligible_parking_information(
+            {"message": "", "submitted_at": submitted_at},
+            trip_request,
+            {},
+            availability,
+            {},
+            context,
+            {},
+            trip_request_validation_rules=TRIP_REQUEST_VALIDATION_RULES,
+            information_acquisition_and_refresh_rules=INFORMATION_ACQUISITION_AND_REFRESH_RULES,
+            data_validation_and_freshness_rules=DATA_VALIDATION_AND_FRESHNESS_RULES,
+            parking_policy_constraints=rules,
+            authorization_decision={"permitted": False},  # A1 performs no protected record operation.
+        )
+    except InvalidTripRequest as error:
+        # SR-12: an invalid request blocks the recommendation until corrected.
+        return {"status": "invalid_trip_request", "reason": str(error), "ranked_options": []}
+
+    # UC.1.13: A3 ranks. A2 is not implemented, so no area has a forecast.
+    ranked = rank_parking_options(
+        prepared["normalized_trip_requirements"],
+        prepared["validated_context_information"],
+        prepared["eligible_parking_areas"],
+        prepared["data_quality_and_freshness_status"],
+        [],
+        {},
+        ranking_and_fallback_rules=RANKING_AND_FALLBACK_RULES,
+    )
+    observed = {lot["lot_id"]: lot for lot in prepared["validated_parking_data"]}
+    freshness = prepared["data_quality_and_freshness_status"]
 
     # UC.1.14: the application, not the language model, derives each
-    # explanation from the factors it used (ADR-0002, SR-15).
-    for option in ranked_options:
-        option["explanation"] = (
-            f"{option['lot_id']} is eligible for {trip_request['declared_eligibility']}, "
-            f"{option['walking_time_minutes']} min walk, "
-            f"{option['available_spaces']} spaces observed (synthetic)."
-        )
+    # explanation from the factors it used (ADR-0002, SR-13, SR-15).
+    ranked_options = []
+    for rank, (option, role) in enumerate(zip(ranked, ("primary", "backup")), start=1):
+        lot = observed[option["lot_id"]]
+        available = lot["capacity"] - lot["occupied"]
+        ranked_options.append({
+            "rank": rank,
+            "role": role,
+            "lot_id": option["lot_id"],
+            "available_spaces": available,
+            "walking_time_minutes": option["walking_time_minutes"],
+            "ranking_basis": option["ranking_basis"],
+            "stale": freshness[option["lot_id"]] == "stale",
+            "explanation": (
+                f"{option['lot_id']} is eligible for {trip_request['declared_eligibility']}, "
+                f"{option['walking_time_minutes']} min walk, "
+                f"{available} spaces observed now (synthetic). "
+                "Forecasts are unavailable, so options are ranked by walking time."
+            ),
+        })
 
     # The confirmed request is echoed back so the driver can re-check it on the
     # results screen (A4 receives Normalized Trip Requirements, flow 9.13).

@@ -55,7 +55,7 @@ directly by an actor. The following modules are reached only through E2–E5:
 | Command or function | Called by | Classification |
 |---|---|---|
 | `python -m pytest tests/ -v` | Developer, or CI (`.github/workflows/tests.yml`) | Verification harness. It is not a use-case entry point. It is the documented test command in SR-06 handoff task 4.  |
-| A1–A6 module functions (`prepare_eligible_parking_information`, `estimate_arrival_time_availability`, `rank_parking_options`, `present_parking_recommendations_and_status`, `authorize_protected_data_operations`, `apply_personal_data_retention_rules`) | `tests/test_functional_requirements.py` and `tests/test_interface_contract.py` only | Internal first-level functions. No actor calls them, and no entry point reaches them yet. Integration behind the Chapter 7 contract is planned. |
+| A1–A6 module functions (`prepare_eligible_parking_information`, `estimate_arrival_time_availability`, `rank_parking_options`, `present_parking_recommendations_and_status`, `authorize_protected_data_operations`, `apply_personal_data_retention_rules`) | `tests/test_functional_requirements.py` and `tests/test_interface_contract.py` only | Internal first-level functions. No actor calls them directly. E3 reaches A1 and A3 through `smart_parking_service`. A2 and A4 have no body yet, and A5 and A6 have no caller because no trip record is stored. |
 
 ## Orphans found and their disposition
 

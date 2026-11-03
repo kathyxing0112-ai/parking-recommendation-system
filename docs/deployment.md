@@ -32,7 +32,7 @@ six first-level subsystems. Each one performs exactly one first-level function.
 
 | Asset | Name | Performs | Code | State in this increment |
 |---|---|---|---|---|
-| C.1 | Parking Information Subsystem | A1 Prepare Eligible Parking Information | `prepare_eligible_parking_information/` | Signature only; body pending. Its data access component and model adapter are built (below) |
+| C.1 | Parking Information Subsystem | A1 Prepare Eligible Parking Information | `prepare_eligible_parking_information/` | Implemented: calls one module per subfunction (below) |
 | C.2 | Availability Forecasting Subsystem | A2 Estimate Arrival Time Availability | `estimate_arrival_time_availability/` | Signature only; waits for the forecast model (ADR-0002) |
 | C.3 | Recommendation Ranking Subsystem | A3 Rank Parking Options | `rank_parking_options/` | Implemented |
 | C.4 | Driver Presentation Subsystem | A4 Present Parking Recommendations and Status | `present_parking_recommendations_and_status/` | Signature only; body pending |
@@ -43,16 +43,17 @@ C.1 is decomposed to the second level:
 
 | Asset | Name | Performs | Code |
 |---|---|---|---|
-| C.1.1 | Trip Request Interpretation Module | A1.1 Interpret and Confirm Parking Requests | **Model adapter** `language_model/` |
-| C.1.2 | External Data Acquisition Module | A1.2 Request Parking, Context, and Policy Information | **Data access component** `parking_data_access/` |
-| C.1.3 | Data Validation Module | A1.3 Validate Parking and Context Information | Not built yet |
-| C.1.4 | Eligibility Filter Module | A1.4 Determine Eligible Parking Areas | `prepare_eligible_parking_information/determine_eligible_parking_areas.py`, generated once from the C.1 specification (Lab 9.4). Not yet called by A1; see `docs/deviation-log.md` |
+| C.1.1 | Trip Request Interpretation Module | A1.1 Interpret and Confirm Parking Requests | `prepare_eligible_parking_information/interpret_and_confirm_parking_requests.py`; **model adapter** `language_model/` |
+| C.1.2 | External Data Acquisition Module | A1.2 Request Parking, Context, and Policy Information | `prepare_eligible_parking_information/request_parking_context_and_policy_information.py`; **data access component** `parking_data_access/` |
+| C.1.3 | Data Validation Module | A1.3 Validate Parking and Context Information | `prepare_eligible_parking_information/validate_parking_and_context_information.py` |
+| C.1.4 | Eligibility Filter Module | A1.4 Determine Eligible Parking Areas | `prepare_eligible_parking_information/determine_eligible_parking_areas.py`, generated once from the C.1 specification (Lab 9.4). Called by A1; see `docs/deviation-log.md` |
 
 Two more packages are part of C.0 but are not functions on the IDEF0
 (`docs/traceability.md`): `smart_parking_service/` puts the UC.1 messages in
-order, and `cornell_driver_interface/` is the system side of X.C.1. Until A1,
-A2 and A4 have bodies, `smart_parking_service` calls the C.1.1 and C.1.2
-components directly (ADR-0003, divergences).
+order, and `cornell_driver_interface/` is the system side of X.C.1.
+`smart_parking_service` runs A1 and A3. Until A2 and A4 have bodies, it has no
+forecast, A3 uses its walking-time fallback, and the service itself builds the
+driver-facing result (ADR-0003, divergences).
 
 ## What talks to what
 
@@ -77,7 +78,7 @@ cornell_driver_interface ──► smart_parking_service
 | C.1.1 model adapter | Ollama / Qwen3 4B | One `/api/chat` request with the driver message, the current time and the supported values. The reply is a JSON object | `docs/model-adapter.md`; SPEC.md Model Response Contract |
 | C.1.2 data access component | X.C.2 simulated feed | Availability Data Request and Updated Availability Request; the reply is space-level sensor events | `contracts/api-v1.yaml` `SensorEvent`, `UpdatedParkingAvailability`; SPEC Data Contract §1 |
 | C.1.2 data access component | SQLite store | Lot and space inventory (§3), accepted and rejected sensor events (§1) | `parking_data_access/schema.sql` |
-| `smart_parking_service` | X.C.3, X.C.4 | Walking times; parking rules and closures | Still Chapter 2 stubs. They are not data sources in Lab 8.5's sense. A draft §4 rule table (`get_rule_table()`) is ready for C.1.4; the stub is replaced when C.1.4 uses it |
+| `smart_parking_service` | X.C.3, X.C.4 | Walking times; parking rules and closures | X.C.3 is still a Chapter 2 stub. X.C.4 returns the draft §4 rule table, which C.1.4 applies. Neither is a data source in Lab 8.5's sense |
 
 ## Data access component (C.1.2)
 

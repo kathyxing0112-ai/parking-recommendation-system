@@ -20,13 +20,11 @@ def get_rule_table() -> dict:
     return json.loads(RULE_TABLE_PATH.read_text(encoding="utf-8"))
 
 
-def get_parking_rules_and_closures(declared_eligibility: str, access_needs: bool) -> list:
-    """Stub: hard-coded, synthetic values of the right shape.
+def get_parking_rules_and_closures(declared_eligibility: str, access_needs: bool) -> dict:
+    """UC.1.9 Provide Parking Rules and Closures: the draft rule table.
 
-    The values do not represent real Cornell parking policy. Replaced when
-    C.1.4 applies get_rule_table() (K6).
+    A1.4 picks the rules that apply to the trip, so the whole table is returned.
+    The values do not represent real Cornell parking policy.
     """
-    return [
-        {"lot_id": "LOT-1", "eligible": True, "closure": False},
-        {"lot_id": "LOT-3", "eligible": True, "closure": False},
-    ]
+    table = get_rule_table()
+    return {"version": table["version"], "rules": table["rules"]}

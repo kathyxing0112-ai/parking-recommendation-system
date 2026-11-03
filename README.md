@@ -21,9 +21,10 @@ selecting an option, and requesting a pre-arrival status recheck. Each step is
 printed with its UC.1 message identifier. Parking availability comes from a
 seeded, simulated sensor feed through the data access component, and the
 driver's message is interpreted by the local Qwen3 4B model through its
-adapter (`docs/deployment.md`). The ranking and the X.C.3/X.C.4 sources are
-still hard-coded stubs; see `docs/walking-skeleton.md` for the
-message-to-code mapping.
+adapter (`docs/deployment.md`). A1 validates the data and filters the areas, and
+A3 ranks them by walking time because A2 has no forecast yet. Walking times are
+still stubs, and the parking rules are an unconfirmed draft. See
+`docs/walking-skeleton.md` for the message-to-code mapping.
 
 To use the language model, install [Ollama](https://ollama.com) and run:
 
@@ -46,7 +47,7 @@ later increments implement the corresponding behavior.
 
 `tests/test_functional_requirements.py` contains one test per system
 functional requirement (1.4.1–1.4.6). The tests for A3, A5, and A6 pass; the
-tests for A1, A2, and A4 fail until those modules are implemented. See
+tests for A2 and A4 fail until those modules are implemented. See
 `docs/traceability.md` for the function-to-module-to-test map.
 
 `tests/test_data_access.py` and `tests/test_model_adapter.py` cover the
@@ -67,6 +68,10 @@ python scripts/live_model_check.py
 For each simulated driver message it prints the model's raw reply, the
 adapter result, and whether that result is the expected one. Use
 `--message "..."` to try a message of your own.
+
+CI has two workflows. `tests.yml` covers implemented behavior and must stay
+green. `requirement-status.yml` runs the full suite, so it stays red until the
+remaining requirements are met.
 
 `tests/test_interface_contract.py` checks that each A1–A6 module matches the
 internal interface contract in `contracts/api-v1.yaml`. After changing the
