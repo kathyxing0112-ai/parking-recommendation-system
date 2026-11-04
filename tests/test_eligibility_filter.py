@@ -3,8 +3,8 @@
 Generated once from prompts/2026-10-31-c14-eligibility-filter.md (commit
 d90bf3f), then corrected per docs/deviation-log.md. DO-04 MOP:
 the output equals the expected eligible set in 100% of scenarios, with zero
-returned areas that violate a confirmed rule. Scenarios 1-8 use the draft
-rule table (not confirmed Cornell policy).
+returned areas that violate a confirmed rule. Scenarios 1-8 use the team-
+confirmed rule table (not Cornell policy).
 """
 
 import pytest
@@ -44,7 +44,7 @@ MON_12 = "2026-11-02T12:00:00-05:00"
 
 @pytest.mark.parametrize("case, trip_request, expected", [
     # Visitor zones are paid parking open to anyone, permit holders included
-    # (rule table draft-2026-11-01c), so an O-permit trip may use LOT-2.
+    # (confirmed by the team on 2026-11-03), so an O-permit trip may use LOT-2.
     ("1 matching permit",
      trip("permit_O", False, MON_10, MON_12), ["LOT-1", "LOT-2", "LOT-3"]),
     ("3 visitor eligibility",

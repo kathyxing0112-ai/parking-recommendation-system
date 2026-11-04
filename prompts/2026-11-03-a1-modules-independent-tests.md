@@ -1,29 +1,29 @@
 # A1.1 to A1.3 independent test prompt
 
 Purpose: Lab Manual p.21, "Never let one generation write both the code and its
-test". The A1.1, A1.2 and A1.3 modules were written by Claude Code. This prompt produces its
+test". The A1.1, A1.2 and A1.3 modules, and the adapter's prefill result, were written by Claude Code. This prompt produces its
 requirement-based tests in a **new, separate AI session**.
 
 How to use it:
 
 1. Open a new conversation in a tool with no access to this repository.
 2. Paste everything below the line that says PASTE BELOW THIS LINE.
-3. Do **not** paste any module from `prepare_eligible_parking_information/`, or any existing test.
+3. Do **not** paste any module from `prepare_eligible_parking_information/` or `language_model/`, or any existing test.
 4. Save the reply as `tests/test_a1_modules_independent.py`.
 5. Run `python -m pytest tests/test_a1_modules_independent.py -v`.
 
 ---- PASTE BELOW THIS LINE ----
 
-You are writing requirement-based tests for three Python functions you have NOT seen.
+You are writing requirement-based tests for four Python functions you have NOT seen.
 Use only the requirements and interfaces below.
 
 ## Requirements for A1.3 (verbatim)
 
 - **C.1 Spec 1.4.3 Validate Parking and Context Information**: "The Parking Information Subsystem shall validate parking availability and contextual information against approved data validation and freshness rules."
-- **DO-03 Observation Validation Status**: "The Data Validation Module shall mark a parking area as current in Data Quality and Freshness Status only when its latest valid observation is no more than 120 seconds old at decision time, and as stale otherwise, and shall leave out of Validated Parking Data any observation with a missing or invalid timestamp, a timestamp more than 5 seconds ahead of the application clock, or an occupied count outside 0 to capacity."
+- **DO-03 Observation Validation Status**: "The Data Validation Module shall mark a parking area as current in Data Quality and Freshness Status only when its latest valid observation is no more than 120 seconds old at decision time, and as stale otherwise, and shall leave out of Validated Parking Data any observation with a missing or invalid timestamp, a timestamp more than 5 seconds ahead of the application clock, or a status other than occupied or vacant."
   - MOP: "Freshness boundary cases labeled correctly: 100% of cases. Invalid observations passed into Validated Parking Data: 0 observations."
-  - Verification (Test): "Pass when observations aged 119 s and 120 s are marked current, one aged 121 s is marked stale, an observation without a timestamp is marked stale and left out, and an observation timestamped 6 s in the future or with occupied equal to capacity plus 1 is left out."
-- **SPEC Data Contract §1**: `status` is `occupied`, `vacant` or `unknown`. "`unknown` is not counted as an available space." For each space, the latest valid event determines its observed state. Late arrivals must not replace a newer observation. Stale observations are not silently converted to vacant spaces.
+  - Verification (Test): "Pass when observations aged 119 s and 120 s are marked current, one aged 121 s is marked stale, an observation without a timestamp is marked stale and left out, and an observation timestamped 6 s in the future or with a status other than occupied or vacant is left out."
+- **SPEC Data Contract §1**: `status` is `occupied` or `vacant`. For each space, the latest valid event determines its observed state. Late arrivals must not replace a newer observation. Stale observations are not silently converted to vacant spaces.
 - **Validated Context Information**: "Missing or invalid context must not be presented as confirmed information." Each record carries `lot_id` and `walking_time_minutes` (a number that is at least 0).
 
 ## Interface of A1.3 (do not implement it)
@@ -54,16 +54,14 @@ It returns a dict with exactly these keys:
 
 - `validated_parking_data`: a list with one record per lot that has at least one valid event: `{lot_id, occupied, capacity, observed_at}`.
   - `capacity` is the number of distinct spaces in that lot with a valid event.
-  - `occupied` counts those spaces whose latest valid status is `occupied` or `unknown`.
+  - `occupied` counts those spaces whose latest valid status is `occupied`.
   - `observed_at` is the newest valid observation time in the lot, as an ISO 8601 string.
 - `validated_context_information`: the valid `{lot_id, walking_time_minutes}` records.
 - `data_quality_and_freshness_status`: `{lot_id: "current" | "stale"}`, with an entry for every lot named by any event, including a lot with no valid event (which is `"stale"`).
 
-A valid event has all five fields as non-empty strings, a `status` from the three allowed values, and a timestamp that parses, has a UTC offset, and is no more than 5 seconds ahead of `decision_time`. A timestamp exactly 5 seconds ahead is valid. Any other event is left out and raises nothing.
+A valid event has all five fields as non-empty strings, a `status` of `occupied` or `vacant`, and a timestamp that parses, has a UTC offset, and is no more than 5 seconds ahead of `decision_time`. A timestamp exactly 5 seconds ahead is valid. Any other event is left out and raises nothing.
 
 A stale lot **stays** in `validated_parking_data`; it is only marked `"stale"`.
-
-**Known limit, do not test it:** `capacity` is derived from the events themselves, so `occupied` cannot exceed `capacity` for this input. DO-03's "occupied equal to capacity plus 1" case cannot be built through this interface.
 
 ## Requirements for A1.1 (verbatim)
 
@@ -118,6 +116,27 @@ def request_parking_context_and_policy_information(
 - `as_of` equals `requested_at`. The other values are copied from the inputs.
 - The 60-second polling interval in DO-02 is not observable in this one call. Do not test it beyond `refresh_interval_seconds`.
 
+## Requirement for the adapter's incomplete result (verbatim, SPEC.md Model Response Contract)
+
+"If any other required field is not stated, is not a supported value, or cannot be determined reliably, the result lists it in missing_fields instead of inventing or substituting a value. The result's trip_request carries only the fields that passed their checks, so the confirmation step shows them filled in and the user completes the missing ones."
+
+"If the message does not state whether accessible parking is needed, access_needs is set to false."
+
+## Interface for the adapter
+
+```python
+from language_model import assemble_contract
+
+def assemble_contract(content: str, submitted_at: str, supported_values: dict) -> dict: ...
+```
+
+- `content`: a JSON string with exactly the six fields. Times are `"HH:MM"`, and null means not stated.
+- `submitted_at`: an offset-aware ISO 8601 string.
+- `supported_values`: `{"destinations": [...], "vehicle_categories": [...], "eligibility_values": [...]}`.
+- An arrival must be no earlier than the submission minute and at most 60 minutes later. A departure is kept only if the arrival is kept and the departure is later.
+- Kept times come back as offset-aware ISO 8601 strings on the submission date.
+- When any field is missing, it returns `{"status": "incomplete", "trip_request": {...}, "missing_fields": [...]}`, with `missing_fields` in this order: destination, arrival_time, departure_time, vehicle_category, declared_eligibility, access_needs.
+
 ## What to write
 
 Write one pytest file, `tests/test_a1_modules_independent.py`. For A1.1, cover each rejection listed above, the window boundaries, and that a valid request returns exactly the six fields. For A1.2, cover the two return shapes. For A1.3, cover:
@@ -126,12 +145,13 @@ Write one pytest file, `tests/test_a1_modules_independent.py`. For A1.1, cover e
 - an event with no timestamp, an unparseable timestamp, and a timestamp with no UTC offset;
 - timestamps 5 s and 6 s ahead of `decision_time`;
 - a missing field and an invalid status;
-- `unknown` counted as not available;
 - two events for one space, where the newer one wins, in either order in the list;
 - a lot whose events are all invalid;
 - a stale lot staying in `validated_parking_data`;
 - recheck observations being validated together with the other events;
 - invalid context records (missing `lot_id`, negative, non-numeric).
+
+For the adapter, cover: recognized fields kept in `trip_request` while unstated ones are only in `missing_fields`; an unsupported value not appearing in `trip_request`; an unstated `access_needs` kept as false; and no field appearing in both.
 
 For every test, write a one-line comment naming the requirement it comes from.
 

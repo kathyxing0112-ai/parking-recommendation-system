@@ -29,8 +29,8 @@ The need and requirement identifiers below match the report: eight effective nee
 **Acceptance criteria**
 
 - **SR-02:** Before first use, every pilot data source has a recorded owner, permitted use, and review date. The inventory covers simulated occupancy, parking rules, calendar, weather, events, and field counts insofar as each is actually used. Permission or licensing evidence covers the actual use; a source without confirmed permission is excluded. The target is **100% permission coverage of used sources**.
-- **SR-03:** Under the approved three-role matrix, a driver may submit a trip, view results, and save, read, or update the trip record of the driver's own session; a maintainer may do the same and may also change parking rules, simulator settings, and model versions; the internal Retention Service may only delete trip records past their 24-hour expiry (SR-04). Any other operation, and any operation by an unrecognized role, is denied. Controlled tests exercise permitted and prohibited operations for all three roles. The expected count of successful prohibited operations is **zero**; decisions and test evidence are retained. Protected maintenance endpoints must enforce the matrix, not merely hide controls in the interface.
-- **SR-04:** The product retains only the minimum structured trip and recommendation data needed to evaluate the pilot, for **no more than 24 hours after request submission**. Raw chatbot messages are not retained. A scheduled deletion removes each retained trip record by its 24-hour expiry; an inspection of the pilot database, cache, logs, and backups finds zero records past expiry. Tests use records just before and just after expiry and retain timestamped deletion evidence. The team lists retained fields and storage locations in the approved schedule before collecting pilot requests; no retention exceptions are permitted in the initial pilot. A privacy notice states the evaluation purpose and 24-hour retention period without promising zero risk.
+- **SR-03:** The initial pilot stores no trip records (SR-04), so the trip-record operations below have nothing to act on until a later version keeps records. Under the approved three-role matrix, a driver may submit a trip, view results, and save, read, or update the trip record of the driver's own session; a maintainer may do the same and may also change parking rules, simulator settings, and model versions; the internal Retention Service may only delete trip records past their 24-hour expiry (SR-04). Any other operation, and any operation by an unrecognized role, is denied. Controlled tests exercise permitted and prohibited operations for all three roles. The expected count of successful prohibited operations is **zero**; decisions and test evidence are retained. Protected maintenance endpoints must enforce the matrix, not merely hide controls in the interface.
+- **SR-04:** The initial pilot stores no personal trip records. A trip request stays in memory only while it is processed. The rest of this requirement applies only if a later version keeps records. The product retains only the minimum structured trip and recommendation data needed to evaluate the pilot, for **no more than 24 hours after request submission**. Raw chatbot messages are not retained. A scheduled deletion removes each retained trip record by its 24-hour expiry; an inspection of the pilot database, cache, logs, and backups finds zero records past expiry. Tests use records just before and just after expiry and retain timestamped deletion evidence. The team lists retained fields and storage locations in the approved schedule before collecting pilot requests; no retention exceptions are permitted in the initial pilot. A privacy notice states the evaluation purpose and 24-hour retention period without promising zero risk.
 
 **Preliminary MOEs:** Used-source permission coverage (SR-02); count of successful prohibited operations (SR-03); count of trip records retained beyond their 24-hour expiry within the assessed scope, target **zero** (SR-04). **Evidence:** source inventory and permissions, role-matrix test results, and timestamped retention/deletion inspections.
 
@@ -54,7 +54,7 @@ The need and requirement identifiers below match the report: eight effective nee
 **Acceptance criteria**
 
 - **SR-06:** By operational handoff, the team provides an approved checklist and documentation covering startup/deployment, configuration, simulated data, parking rules, model or baseline selection, tests, and failure recovery. A receiving teammate who did not author the relevant instructions completes **all five** core tasks without author assistance: (1) start the product from a clean checkout; (2) generate and replay simulated occupancy data; (3) update a pilot-area eligibility rule and confirm its effect; (4) run the documented test command; and (5) switch to the historical baseline and exercise the unavailable-data fallback. Attempts, outcomes, and gaps are recorded.
-- **SR-07:** The responsibility matrix assigns exactly one accountable owner to each of seven pilot activities: needs and Innoslate — **Bochao Liang**; data and rules — **Tingyu Huang**; application development and maintenance — **Katherine Xing**; model evaluation — **Katherine Xing**; testing/CI — **Xichen Wang**; deployment demonstration — **Xichen Wang**; final handoff — **Linzi Gong**. One person may own multiple activities. The team confirms assignments and records later changes; the receiving team can identify the owner for each activity.
+- **SR-07:** The responsibility matrix assigns exactly one accountable owner to each of seven pilot activities: needs and Innoslate — **Bochao Liang**; data and rules — **Katherine Xing**; application development and maintenance — **Katherine Xing**; model evaluation — **Katherine Xing**; testing/CI — **Xichen Wang**; deployment demonstration — **Xichen Wang**; final handoff — **Linzi Gong**. One person may own multiple activities. The team confirms assignments and records later changes; the receiving team can identify the owner for each activity.
 
 **Preliminary MOEs:** Percentage of agreed handoff tasks completed independently, target **5/5** (SR-06); count of pilot activities delayed because no responsible owner can be identified, target **zero** (SR-07). **Evidence:** checklist, independent task record, and dated responsibility matrix.
 
@@ -146,7 +146,7 @@ One event reports the observed state of one physical space. The initial pilot si
 | `space_id`  | Required stable string; must exist in the pilot space inventory. |
 | `lot_id`    | Required stable string; must match the space's configured lot. |
 | `zone`      | Required string; must match the space's configured physical zone. |
-| `status`    | Required enum: `occupied`, `vacant`, or `unknown`. `unknown` is not counted as an available space. |
+| `status`    | Required enum: `occupied` or `vacant`. |
 | `timestamp` | Required offset-aware ISO 8601 observation time. Reject an invalid or future observation timestamp more than **5 seconds** ahead of the application clock. |
 
 For each space, the latest valid event at or before the decision time determines its observed state. Ignore duplicate events and prevent late arrivals from replacing a newer observation. Record ingestion gaps and stale observations; do not silently convert them to vacant spaces. Space-level availability is derived only from valid, sufficiently fresh observations and applicable confirmed rules.
@@ -231,11 +231,11 @@ Both interfaces produce the **same six-field structured request**. A chatbot may
 | `declared_eligibility` | Required confirmed permit/visitor eligibility value. If unknown, request clarification. |
 | `access_needs`         | Required boolean indicating whether accessible parking is requested; any required credential or policy condition must still be confirmed by the rules. |
 
-Missing or invalid required values block recommendations until corrected. The interface shows the six interpreted values for user confirmation. A trip request concerns one vehicle; this version does not allocate multiple vehicles as a group.
+Missing or invalid required values block recommendations until corrected. The interface shows the six interpreted values for user confirmation. A trip request concerns one vehicle; this version does not allocate multiple vehicles as a group. Planning a trip more than 60 minutes ahead is outside this version; the team kept this limit on 2026-11-03.
 
 ## Retention and evaluation boundary
 
-The pilot may retain confirmed structured trip fields, recommendation output, and submission time in the approved application storage for **no more than 24 hours after submission**. Delete each retained trip record by its expiry; the target is **zero identifiable trip records past 24 hours** in the assessed database, cache, logs, and backups. Do not persist raw chatbot messages in application records or logs. No retention exception is permitted in the initial pilot. Document exact retained fields and storage locations before collecting requests, and show users the evaluation purpose and 24-hour period in a privacy notice.
+The initial pilot stores no trip records. If a later version keeps them, it may retain confirmed structured trip fields, recommendation output, and submission time in the approved application storage for **no more than 24 hours after submission**. Delete each retained trip record by its expiry; the target is **zero identifiable trip records past 24 hours** in the assessed database, cache, logs, and backups. Do not persist raw chatbot messages in application records or logs. No retention exception is permitted in the initial pilot. Document exact retained fields and storage locations before collecting requests, and show users the evaluation purpose and 24-hour period in a privacy notice.
 
 Simulated sensor streams, non-identifying modeling tables, lot metadata, rule versions, and aggregate evaluation results are separate from identifiable trip requests; retain them according to their documented source and project schedules. Do not copy trip details into long-lived training or evaluation files. Keep timestamped deletion-test evidence without retaining the tested personal record itself beyond expiry.
 
@@ -263,11 +263,17 @@ A complete interpretation contains all six required fields:
 ```
 If the message does not state whether accessible parking is needed, access_needs is set to false. The confirmation step shows this value, and the user can change it.
 
-If any other required field is not stated, is not a supported value, or cannot be determined reliably, the result lists it in missing_fields instead of inventing or substituting a value:
+If any other required field is not stated, is not a supported value, or cannot be determined reliably, the result lists it in missing_fields instead of inventing or substituting a value. The result's trip_request carries only the fields that passed their checks, so the confirmation step shows them filled in and the user completes the missing ones:
 ```json
 {
   "status": "incomplete",
-  "missing_fields": ["arrival_time", "declared_eligibility"]
+  "trip_request": {
+    "destination": "Upson Hall",
+    "arrival_time": "2026-10-02T11:20:00-04:00",
+    "vehicle_category": "sedan",
+    "access_needs": false
+  },
+  "missing_fields": ["departure_time", "declared_eligibility"]
 }
 ```
 

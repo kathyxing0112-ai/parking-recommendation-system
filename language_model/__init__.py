@@ -8,7 +8,8 @@ parking areas, or write explanations.
 The model copies the six fields from the message, with null for any field the
 driver did not state and clock times as "HH:MM". The adapter then checks each
 value and assembles the SPEC.md Model Response Contract object: "complete"
-with the six-field trip request, or "incomplete" with the missing fields.
+with the six-field trip request, or "incomplete" with the fields that passed
+and the missing fields.
 A reply that is not a JSON object with exactly the six fields is discarded
 and reported as {"status": "fallback", "reason": ...}; the application then
 presents the six-field form. The prompt template, parameters, timeout, token
@@ -177,7 +178,8 @@ def assemble_contract(content: str, submitted_at: str, supported_values: dict) -
 
     missing = [field for field in REQUIRED_FIELDS if trip[field] is None]
     if missing:
-        return {"status": "incomplete", "missing_fields": missing}
+        known = {field: trip[field] for field in REQUIRED_FIELDS if trip[field] is not None}
+        return {"status": "incomplete", "trip_request": known, "missing_fields": missing}
     return {"status": "complete", "trip_request": {field: trip[field] for field in REQUIRED_FIELDS}}
 
 

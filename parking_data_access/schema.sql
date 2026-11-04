@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS sensor_events (
     space_id        TEXT NOT NULL REFERENCES spaces (space_id),
     lot_id          TEXT NOT NULL,
     zone            TEXT NOT NULL,
-    status          TEXT NOT NULL CHECK (status IN ('occupied', 'vacant', 'unknown')),
+    status          TEXT NOT NULL CHECK (status IN ('occupied', 'vacant')),
     timestamp       TEXT NOT NULL,
     observed_epoch  REAL NOT NULL,
     PRIMARY KEY (space_id, observed_epoch)

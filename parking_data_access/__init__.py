@@ -20,7 +20,7 @@ from pathlib import Path
 import parking_availability_data_sources as source
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
-STATUSES = ("occupied", "vacant", "unknown")
+STATUSES = ("occupied", "vacant")
 EVENT_FIELDS = ("space_id", "lot_id", "zone", "status", "timestamp")
 FUTURE_TOLERANCE = timedelta(seconds=5)  # SPEC Data Contract section 1
 

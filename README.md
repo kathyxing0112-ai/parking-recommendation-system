@@ -23,7 +23,8 @@ seeded, simulated sensor feed through the data access component, and the
 driver's message is interpreted by the local Qwen3 4B model through its
 adapter (`docs/deployment.md`). A1 validates the data and filters the areas, and
 A3 ranks them by walking time because A2 has no forecast yet. Walking times are
-still stubs, and the parking rules are an unconfirmed draft. See
+still stubs. The team confirmed the parking rules for the pilot, and they are
+not Cornell policy. See
 `docs/walking-skeleton.md` for the message-to-code mapping.
 
 To use the language model, install [Ollama](https://ollama.com) and run:
@@ -53,8 +54,9 @@ tests for A2 and A4 fail until those modules are implemented. See
 `tests/test_data_access.py` and `tests/test_model_adapter.py` cover the
 Chapter 8 data access component and model adapter, including every
 schema-violation fallback. They need no running model.
-`tests/test_rule_table.py` checks that the draft parking-rule table has the
-SPEC Data Contract section 4 shape. The rules themselves are unconfirmed.
+`tests/test_rule_table.py` checks that the parking-rule table has the
+SPEC Data Contract section 4 shape. Whether a rule is right is a team review
+question, not a test.
 `tests/test_eligibility_filter.py` runs the DO-04 scenarios against the C.1.4
 Eligibility Filter Module (Lab 9.4; see `docs/deviation-log.md`).
 

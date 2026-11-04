@@ -77,7 +77,8 @@ def interpret_trip_request(message: str) -> dict:
     if response["status"] == "complete":
         return {"status": "complete", "trip_request": response["trip_request"], "missing_fields": []}
     if response["status"] == "incomplete":
-        return {"status": "incomplete", "trip_request": {}, "missing_fields": response["missing_fields"]}
+        return {"status": "incomplete", "trip_request": response["trip_request"],
+                "missing_fields": response["missing_fields"]}
     return {"status": "form_required", "trip_request": {}, "missing_fields": list(REQUIRED_FIELDS)}
 
 

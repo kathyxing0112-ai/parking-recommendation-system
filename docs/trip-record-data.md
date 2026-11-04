@@ -3,6 +3,10 @@
 This file answers the review of ISS-RET-01 and ISS-RET-02 (SR-04, NFR.9,
 DO-09, C.1 spec 2.3.5).
 
+**Team decision, 2026-11-03: the pilot stores no trip records.** A6 and C.6
+stay in the design with nothing to delete. The fields below describe what a
+later version could keep.
+
 - **What it covers:** runtime data the product creates while a driver uses
   it. It does **not** cover model training data. Qwen3 is never trained or
   fine-tuned (ADR-0002). The parking occupancy data is non-identifying and

@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 SIMULATOR_SEED = 5151
 FEED_INTERVAL_SECONDS = 30   # SR-08: the simulated feed targets one update every 30 s
 OCCUPANCY_SLOT_MINUTES = 15  # occupancy is redrawn per 15-minute slot
-UNKNOWN_RATE = 0.01          # share of readings a simulated sensor reports as unknown
 
 ZONE_CODES = {"permit_O": "O", "visitor": "V", "accessible": "A"}
 
@@ -102,9 +101,7 @@ def get_current_parking_availability(lot_ids: list[str], as_of: datetime) -> lis
         if space["lot_id"] not in lot_ids:
             continue
         draw = random.Random(f"{SIMULATOR_SEED}|{space['space_id']}|{slot_start.isoformat()}")
-        if draw.random() < UNKNOWN_RATE:
-            status = "unknown"
-        elif draw.random() < _occupancy_rate(lots[space["lot_id"]], slot_start):
+        if draw.random() < _occupancy_rate(lots[space["lot_id"]], slot_start):
             status = "occupied"
         else:
             status = "vacant"

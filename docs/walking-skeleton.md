@@ -67,7 +67,7 @@ explanations from the factors it used (SR-15).
   reached through its adapter (`docs/deployment.md`). When the model is not
   running or its output violates the contract, UC.1.2 returns the six-field
   form. X.C.3 still returns hard-coded, synthetic walking times, and X.C.4
-  returns the draft rule table, which is not confirmed Cornell policy.
+  returns the team-confirmed rule table, which is not Cornell policy.
 - UC.1.10 and UC.1.11 (validate inputs, filter ineligible areas) run through A1.
   UC.1.12 (estimate arrival-time availability) has no implementation, so UC.1.13
   ranks through A3's walking-time fallback and the explanation says forecasts

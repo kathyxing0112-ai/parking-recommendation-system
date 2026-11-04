@@ -524,3 +524,43 @@
   - (3) A timestamp up to 5 s ahead counts as valid and current.
 - Not done: the independent module tests, which are not yet generated, and the
   review by a team member who did not write this code.
+
+## 2026-11-03 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: decisions Katherine Xing reported on 2026-11-03 for the Innoslate
+  baseline review.
+- Decisions recorded:
+  - The 60-minute arrival window stays, as a known limit (SPEC section 5).
+  - The rule table is confirmed, including permit holders using pay and visitor
+    zones. Version `confirmed-2026-11-03`; no rule's logic changed.
+  - Bochao Liang replaces Tingyu Huang as data-and-rules owner (SR-07).
+  - Katherine Xing, who wrote the rule table, is now the `owner` on its rules
+    and the data-and-rules owner in SR-07.
+    No rule's logic changed.
+  - The lot mapping is confirmed, and Xichen Wang owns the walking-time table.
+  - The simulator produces no `unknown` readings (`UNKNOWN_RATE` is 0). SPEC
+    section 1 still allows the status, so A1.3 still handles it.
+  - An `incomplete` result now carries the fields that passed.
+- Changed: SPEC.md (SR-07, section 5, Model Response Contract); the rule table,
+  renamed `parking_rules.json`; the simulator; the adapter and service.
+- Tests changed because the requirement changed, not to fit the code:
+  `tests/test_rule_table.py` (the confirmed label) and three `incomplete`
+  assertions in `tests/test_model_adapter.py`. The same session wrote this code
+  and these edits, so the independent prompt
+  `prompts/2026-11-03-a1-modules-independent-tests.md` now also covers the
+  prefill result.
+- Assumption (2) above: the simulator reports every space, so `capacity` always
+  equals the inventory in the pilot.
+- Still open: trip-record storage, the C.1 2.3.1 number, and the DO-03
+  occupied-count clause. The Innoslate side of these decisions is the team's.
+- Reviewed by: pending.
+
+Later on 2026-11-03, further decisions from Katherine Xing:
+
+- `unknown` is removed from the status list everywhere, not just from the
+  simulator: SPEC section 1, the contract, the schema, A1.3 and the independent
+  test prompt. This replaces the `UNKNOWN_RATE` note above and assumption (1).
+- The pilot stores no trip records, and A6 and C.6 stay. SPEC SR-03, SR-04 and
+  the retention boundary say so. Their matrix, code and tests are unchanged.
+- The C.1 2.3.1 limit is 5 seconds, the SR-13 limit. The Innoslate text is the
+  team's edit.

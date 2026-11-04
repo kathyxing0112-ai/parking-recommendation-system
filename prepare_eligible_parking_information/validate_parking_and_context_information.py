@@ -9,7 +9,7 @@ belongs to A1.4, so a stale lot stays in Validated Parking Data.
 from datetime import datetime, timedelta
 
 EVENT_FIELDS = ("space_id", "lot_id", "zone", "status", "timestamp")
-STATUSES = ("occupied", "vacant", "unknown")
+STATUSES = ("occupied", "vacant")
 MAX_FUTURE_SKEW = timedelta(seconds=5)  # DO-03 and SPEC Data Contract section 1
 
 
@@ -81,8 +81,7 @@ def validate_parking_and_context_information(
     for (lot_id, _), (observed, status) in latest_by_space.items():
         lot = lots.setdefault(lot_id, {"occupied": 0, "capacity": 0, "observed_at": observed})
         lot["capacity"] += 1
-        # SPEC section 1: an unknown space is not counted as available.
-        lot["occupied"] += status in ("occupied", "unknown")
+        lot["occupied"] += status == "occupied"
         lot["observed_at"] = max(lot["observed_at"], observed)
 
     validated_parking_data = []

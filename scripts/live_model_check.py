@@ -97,7 +97,7 @@ def judge(result: dict, case: dict) -> bool:
     expect = case["expect"]
     if "complete" in expect:
         return result == {"status": "complete", "trip_request": expect["complete"]}
-    return result == {"status": "incomplete", "missing_fields": expect["missing"]}
+    return result["status"] == "incomplete" and result["missing_fields"] == expect["missing"]
 
 
 def model_is_ready() -> bool:
