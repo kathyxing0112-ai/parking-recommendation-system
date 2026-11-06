@@ -114,6 +114,11 @@ Known limits:
   missing.
 - Times are not carried past midnight. An arrival after midnight sent before
   midnight, or a departure on the next day, is listed as missing.
+- Relative times are unreliable. On 2026-11-03, messages saying "in 30 minutes"
+  often kept the current time, or came back as missing, so the driver must check
+  them on the confirmation step. Clock times such as "3:45 PM" gave the right
+  result in 9 of 10 runs, and the other run came back incomplete. `web/index.html`
+  offers a sample message with clock times.
 - A trip more than 60 minutes ahead is outside this version. The team kept
   this limit on 2026-11-03.
 

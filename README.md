@@ -27,6 +27,17 @@ still stubs. The team confirmed the parking rules for the pilot, and they are
 not Cornell policy. See
 `docs/walking-skeleton.md` for the message-to-code mapping.
 
+To walk through the same use case in a browser, run:
+
+```bash
+python web_app.py
+```
+
+Then open `http://127.0.0.1:8000`. The home page shows simulated live status for
+the three lots and refreshes every 30 seconds. Occupancy changes every 5 minutes,
+and each lot has its own page. This page is a supplementary feature. The Plan Your Trip popup shows what A1.1–A1.4 produce for the
+trip, then the A3 ranking, labeled as walking-time only until A2 exists.
+
 To use the language model, install [Ollama](https://ollama.com) and run:
 
 ```bash

@@ -11,7 +11,7 @@ The pilot runs on one developer machine. Nothing in the pilot is hosted.
 
 | Node | What runs there | Talks to |
 |---|---|---|
-| Developer machine, Python 3.13 process (`python app.py`) | C.0 and all six subsystems C.1–C.6 as in-process Python packages; the simulated X.C.2 feed; the SQLite parking data store | Ollama over loopback HTTP |
+| Developer machine, Python 3.13 process (`python app.py` or `python web_app.py`, which serves one page on `127.0.0.1:8000`) | C.0 and all six subsystems C.1–C.6 as in-process Python packages; the simulated X.C.2 feed; the SQLite parking data store | Ollama over loopback HTTP |
 | Same machine, Ollama server (`127.0.0.1:11434`) | Qwen3 4B (`qwen3:4b`) | Nothing. It only answers the Python process |
 | GitHub Actions runner | `python -m pytest tests/` | Nothing. CI does not start Ollama; the adapter tests use a fake transport |
 
@@ -89,7 +89,7 @@ cornell_driver_interface ──► smart_parking_service
 - **Source.** The source is the seeded simulator in
   `parking_availability_data_sources/` (seed 5151). It has three pilot lots
   and 470 spaces, and it reports every 30 seconds. The lots are named Hoy
-  Road Garage (LOT-1), Peterson Lot (LOT-2) and Campus Road O Area (LOT-3). Lots, capacities and
+  Road Garage (LOT-1), Peterson Lot (LOT-2) and Robert Purcell Community Center Parking Lot (LOT-3). Lots, capacities and
   occupancy are all simulator assumptions, labeled `simulated_inventory`.
 - **Checks at ingestion (SPEC Data Contract §1, §3):**
   - The space must exist, and its lot and zone must match the inventory.
@@ -118,6 +118,10 @@ cornell_driver_interface ──► smart_parking_service
   - Trip records. The team decided on 2026-11-03 that the pilot stores none.
     A6 and C.6 stay in the design with nothing to delete.
   - The database is in memory and is rebuilt on each run.
+- **Simulated occupancy.** Each space keeps one random number for the whole day,
+  and a small per-slot change is added to it. A car therefore stays parked between
+  5-minute slots, and the rate moves in a straight line between hourly values.
+  Earlier rounds are recalculated from the seed, not stored.
 
 ## Model adapter (C.1.1)
 

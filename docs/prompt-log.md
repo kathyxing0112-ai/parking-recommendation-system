@@ -564,3 +564,38 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   the retention boundary say so. Their matrix, code and tests are unchanged.
 - The C.1 2.3.1 limit is 5 seconds, the SR-13 limit. The Innoslate text is the
   team's edit.
+
+## 2026-11-03 — Browser page for UC.1 (PMC2 demo)
+
+- Tool: Claude Code (Claude Opus 5.5).
+- Built from: Katherine Xing's request for a thin page that follows A1.1–A1.4
+  on the real product, for the classroom demo on 2026-11-04.
+- Added: `web_app.py` (standard library), `web/index.html`, and route-table
+  entry E6. The service now returns `a1_outputs`, and the driver interface has
+  `get_trip_form_options()`.
+- The page follows the team's UI sample (`Cornell Smart Parking.pptx`, slides 6
+  and 7): a form and an assistant tab, a confirmation card in the chat, and
+  primary and backup cards. Group size and chance of a free space are left out,
+  because group size is outside SPEC section 5 and A2 has no forecast yet. Date
+  and time text is built in English, not by native browser inputs.
+- Later the same evening, at Katherine Xing's request: a live status home page,
+  a page per lot, and the trip screens moved into a Plan Your Trip popup
+  (slides 4 and 5 of the sample). A Replay button was tried and removed at her
+  request: the page now follows the real clock. It refreshes every 30 seconds
+  (SR-08, NFR.2), and occupancy changes every 5 minutes. The SPEC 15-minute modeling
+  table is unaffected: it can sample these slots every 15 minutes.
+  The sample's forecast preview and parking levels are left out: A2 has no forecast,
+  and the data has no levels.
+- The simulator changed so cars stay parked between rounds. Each space had been
+  drawn independently every slot, which looked like noise on the lot page.
+- Assumption: a lot is shown as closed only from a confirmed `closure` rule.
+- Route-table entry E7, the live status page, has no UC.1 message. Katherine Xing
+  decided to keep it as a supplementary feature.
+- LOT-3 is renamed Robert Purcell Community Center Parking Lot, because Campus Road
+  O Area cannot be found on a map. Katherine Xing chose the name from Google Maps. Its capacity, zones and rules are still simulator assumptions.
+- A1.4 returns only the eligible areas, so the page gives one general reason for
+  an excluded lot. It does not name the rule.
+- Checked by hand in a browser with `qwen3:4b`: a complete message, an incomplete
+  message, a missing form field, an arrival outside the window, the replay and the popup. Wednesday daytime rules were checked through the service.
+  No test covers the page itself.
+- Reviewed by: pending.

@@ -40,7 +40,7 @@ class ParkingDataStore:
 
     def __init__(self, path: str = ":memory:", data_source=source):
         self._source = data_source
-        self._db = sqlite3.connect(path)
+        self._db = sqlite3.connect(path, check_same_thread=False)  # web_app.py serves from threads
         self._db.execute("PRAGMA foreign_keys = ON")
         self._db.executescript(SCHEMA_PATH.read_text())
         self.load_inventory(data_source.get_lot_inventory(), data_source.get_space_inventory())

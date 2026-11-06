@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartPark Cornell</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  :root {
+    --red: #b31b1b; --red-dark: #961616; --ink: #1a1d23; --body: #4b5260; --muted: #6b717c;
+    --line: #e6e2da; --field: #cfcbc2; --page: #f5f3ee; --surface: #fcfcfa; --bar: #f3f1ec;
+    --chat: #f0edea; --green: #2f8556; --green-bg: #ddefe3; --green-ink: #1f5e3b;
+    --amber: #8a4a12; --amber-bg: #fbe7d3; --why-red: #f6edea; --why-blue: #eef1f5; --blue: #2b3a55; --blue-bg: #e3e7ee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.45 "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+  [hidden] { display: none !important; }
+  h1, h2, h3 { font-family: "Space Grotesk", "DM Sans", -apple-system, Arial, sans-serif; margin: 0; }
+
+  .top { display: flex; align-items: center; gap: 12px; padding: 12px 28px; background: var(--surface); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .logo { width: 30px; height: 30px; border-radius: 5px; background: var(--red); color: #fff; font: 700 18px/30px "Space Grotesk", Arial, sans-serif; text-align: center; }
+  .brand { font: 700 19px "Space Grotesk", Arial, sans-serif; }
+  .top nav { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+  .nav-now { font-weight: 700; padding: 4px 0; border-bottom: 2px solid var(--red); }
+  .chip-sim { background: var(--amber-bg); color: var(--amber); font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 4px; white-space: nowrap; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 26px 24px 48px; }
+  .panel { background: var(--surface); border: 1px solid #d9d5cc; border-radius: 10px; overflow: hidden; }
+  .nav-plan { appearance: none; background: none; border: 0; padding: 4px 0; font: inherit; color: var(--muted); cursor: pointer; }
+  .nav-plan:hover { color: var(--ink); }
+
+  .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .page-title { font-size: 28px; }
+  .page-sub { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+  .updated { margin-left: auto; font-size: 14px; color: var(--body); display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+  .updated.old { color: var(--amber); font-weight: 700; }
+  .updated.old .dot { background: var(--amber); }
+
+  .campus { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 16px 22px; margin-bottom: 16px; font-size: 17px; color: var(--body); }
+  .campus b { font: 700 30px/1.1 "Space Grotesk", Arial, sans-serif; color: var(--ink); }
+  .lots { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .lot { appearance: none; text-align: left; font: inherit; color: inherit; background: #fffefc; border: 1px solid #d9d5cc; border-radius: 12px; padding: 22px 24px; cursor: pointer; }
+  .lot:hover { border-color: #a9a59c; }
+  .lot.closed { background: #f9f8f5; border-style: dashed; }
+  .state { display: inline-block; font-size: 13px; font-weight: 700; border-radius: 99px; padding: 2px 11px; }
+  .state.good { background: var(--green-bg); color: var(--green-ink); }
+  .state.busy { background: var(--amber-bg); color: var(--amber); }
+  .state.shut { background: #e9e6df; color: var(--body); }
+  .lot h3 { font-size: 24px; line-height: 1.2; min-height: 2.4em; margin: 12px 0 6px; }
+  .lot .count b { font-size: 64px; }
+  .lot .count span { font-size: 16px; }
+  .spark { display: block; width: 100%; height: 56px; margin: 12px 0 2px; }
+  .spark-label { font-size: 13px; color: var(--muted); }
+  .lot.closed .count b { color: var(--muted); }
+  .bar { height: 12px; border-radius: 99px; background: #e6e3dc; overflow: hidden; margin: 10px 0 9px; }
+  .bar i { display: block; height: 100%; background: var(--body); border-radius: 99px; transition: width .4s; }
+  .lot-line { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; color: var(--body); }
+  .lot-line strong { color: var(--ink); }
+  .zones-line { margin: 9px 0 0; font-size: 15px; color: var(--body); }
+  .cta { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 18px; padding: 18px 22px; font-size: 17px; }
+  .cta span { color: var(--body); }
+
+  .back { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); cursor: pointer; }
+  .back:hover { color: var(--ink); }
+  .lot-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .lot-head h1 { font-size: 24px; }
+  .lot-head span { color: var(--body); }
+  .detail { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
+  .detail .panel { padding: 20px 22px; }
+  .detail h2 { font-size: 17px; }
+  .grid-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .legend { display: flex; gap: 13px; font-size: 13px; color: var(--body); }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend .sp { width: 13px; height: 16px; }
+  .zone-row { padding: 10px 0; border-top: 1px solid var(--line); }
+  .zone-row > div:first-child { font-size: 14px; margin-bottom: 7px; color: var(--body); }
+  .zone-row strong { color: var(--ink); }
+  .spaces { display: flex; flex-wrap: wrap; gap: 3px; }
+  .sp { width: 18px; height: 24px; border-radius: 3px; background: #d3d6db; transition: background .3s; }
+  .sp.free { background: var(--green); }
+  .sp.ada { box-shadow: inset 0 0 0 2px #2b5faa; }
+  .chart-wrap { position: relative; margin-top: 8px; }
+  .chart-wrap svg { width: 100%; height: auto; display: block; }
+  .chart-tip { position: absolute; transform: translate(-50%, -110%); background: var(--ink); color: #fff; font-size: 13px; border-radius: 5px; padding: 3px 8px; white-space: nowrap; pointer-events: none; }
+  .chart-note { margin: 8px 0 0; padding: 9px 11px; border-radius: 6px; background: var(--why-red); font-size: 14px; }
+  .chart-sub { margin: 2px 0 0; font-size: 14px; color: var(--body); }
+  .foot-note { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+
+  .overlay { position: fixed; inset: 0; background: rgba(26, 29, 35, .45); display: flex; align-items: flex-start; justify-content: center; padding: 28px 16px; overflow-y: auto; z-index: 10; }
+  .dialog { width: 100%; max-width: 620px; background: var(--surface); border-radius: 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .28); overflow: hidden; }
+  .dialog.wide { max-width: 920px; }
+  .dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px 0; }
+  .dialog-head h2 { font-size: 20px; }
+  .close { appearance: none; background: none; border: 0; font-size: 24px; line-height: 1; color: var(--muted); cursor: pointer; padding: 2px 6px; }
+  .close:hover { color: var(--ink); }
+
+  .tabs { display: flex; gap: 26px; padding: 0 22px; border-bottom: 1px solid var(--line); }
+  .tab { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 14px 0 11px; font: inherit; font-size: 15px; color: var(--muted); cursor: pointer; }
+  .tab[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--red); }
+  .tab-body { padding: 20px 22px 22px; }
+
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .wide { grid-column: 1 / -1; }
+  .field > span { display: block; font-size: 14px; color: var(--muted); margin-bottom: 5px; }
+  select, textarea { width: 100%; font: inherit; font-size: 15px; color: var(--ink); background: #fff; border: 1px solid var(--field); border-radius: 6px; padding: 8px 10px; }
+  .pair { display: grid; grid-template-columns: 1.15fr 1fr; gap: 6px; }
+  .field.need select { border: 2px solid var(--amber); background: #fff7ee; }
+  .field small { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); }
+  .field.need small { color: var(--amber); font-weight: 700; }
+
+  .btn { font: inherit; font-weight: 700; font-size: 15px; border-radius: 6px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--red); background: var(--red); color: #fff; }
+  .btn:hover { background: var(--red-dark); border-color: var(--red-dark); }
+  .btn:disabled { opacity: .55; cursor: progress; }
+  .btn.plain { background: transparent; border-color: var(--field); color: var(--ink); }
+  .btn.plain:hover { background: var(--bar); border-color: var(--field); }
+  .actions { margin-top: 18px; }
+  .error { margin: 12px 0 0; color: var(--red); font-size: 14px; }
+
+  .chat { display: flex; flex-direction: column; gap: 12px; height: min(46vh, 380px); overflow-y: auto; padding-right: 6px; margin-bottom: 14px; }
+  .bubble { flex-shrink: 0; max-width: 82%; border-radius: 10px; padding: 11px 14px; font-size: 15px; }
+  .bubble.me { align-self: flex-end; background: var(--ink); color: #f3f0ea; }
+  .bubble.bot { align-self: flex-start; background: var(--chat); }
+  .bubble.bot p { margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .chip { background: var(--surface); border: 1px solid var(--field); border-radius: 6px; padding: 3px 9px; font-size: 14px; }
+  .still { margin: 0 0 10px; font-size: 14px; color: var(--amber); font-weight: 700; }
+  .time-rule { margin: -6px 0 10px !important; font-size: 13px; color: var(--body); }
+  .bubble-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bubble-actions .btn { font-size: 14px; padding: 7px 12px; }
+  .composer { display: flex; gap: 8px; align-items: flex-end; }
+  .composer textarea { min-height: 76px; resize: vertical; }
+  .note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+
+  .summary { display: flex; align-items: center; gap: 12px; padding: 11px 20px; background: var(--bar); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .summary strong { font-size: 15px; }
+  .link { margin-left: auto; background: none; border: 0; padding: 0; font: inherit; font-size: 15px; color: var(--red); cursor: pointer; }
+  .results { padding: 18px 20px 16px; }
+  .banner { margin: 0 0 14px; padding: 9px 12px; border-radius: 6px; background: var(--amber-bg); color: var(--amber); font-size: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+  .card { background: #fffefc; border: 1px solid #d9d5cc; border-radius: 10px; padding: 15px 16px; }
+  .card.primary { border-color: var(--red); }
+  .card-top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--body); }
+  .role { font-size: 13px; font-weight: 700; border-radius: 5px; padding: 2px 10px; letter-spacing: .02em; }
+  .primary .role { background: var(--red); color: #fff; }
+  .backup .role { background: var(--blue-bg); color: var(--blue); }
+  .card h3 { font-size: 20px; margin: 9px 0 3px; }
+  .count { display: flex; align-items: baseline; gap: 8px; }
+  .count b { font: 700 38px/1.15 "Space Grotesk", Arial, sans-serif; color: var(--green); }
+  .count span { color: var(--body); font-size: 14px; }
+  .why { margin: 10px 0; padding: 9px 11px; border-radius: 6px; font-size: 14px; }
+  .primary .why { background: var(--why-red); }
+  .backup .why { background: var(--why-blue); }
+  .fresh { margin: 0; font-size: 13px; color: var(--muted); }
+  .stale { color: var(--amber); font-weight: 700; }
+  .below { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 12px 2px 0; font-size: 14px; color: var(--body); }
+
+  .a1 { padding: 0 20px 20px; }
+  .a1 > h2 { font-size: 18px; margin-bottom: 2px; }
+  .a1 > p { margin: 0 0 12px; font-size: 14px; color: var(--muted); }
+  .stage { display: grid; grid-template-columns: 64px 1fr; gap: 4px 12px; padding: 13px 18px; border-bottom: 1px solid var(--line); }
+  .stage:last-child { border-bottom: 0; }
+  .stage-id { color: var(--red); font: 700 15px "Space Grotesk", Arial, sans-serif; }
+  .stage h3 { font-size: 15px; font-family: inherit; font-weight: 700; }
+  .stage > div > p { margin: 2px 0 0; font-size: 14px; color: var(--body); }
+  .table-wrap { overflow-x: auto; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 500; font-size: 13px; color: var(--muted); }
+  th, td { padding: 5px 12px 5px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.wrap { white-space: normal; }
+  .num { font-variant-numeric: tabular-nums; }
+  .tag { font-size: 13px; font-weight: 700; padding: 1px 9px; border-radius: 99px; }
+  .tag.ok { background: var(--green-bg); color: var(--green-ink); }
+  .tag.no { background: var(--why-red); color: var(--red); }
+  .tag.old { background: var(--amber-bg); color: var(--amber); }
+
+  @media (max-width: 760px) { .detail { grid-template-columns: 1fr; } .updated { margin-left: 0; } }
+  @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } .top { padding: 12px 16px; } .tab-body { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo" aria-hidden="true">P</div>
+  <div class="brand">SmartPark Cornell</div>
+  <nav><span class="nav-now">Live status</span><button class="nav-plan" type="button" data-open-plan>Plan Your Trip</button><span class="chip-sim">SIMULATED DATA</span></nav>
+</div>
+
+<main>
+  <div class="controls">
+    <div>
+      <h1 class="page-title">Live parking status</h1>
+      <p class="page-sub">Space counts update every 5 minutes.</p>
+    </div>
+    <span class="updated" id="updated"><i class="dot"></i><span id="updated-text">Loading...</span></span>
+  </div>
+
+  <section id="home-view">
+    <div class="panel campus" id="campus"></div>
+    <div class="lots" id="lots"></div>
+    <div class="panel cta">
+      <span>Arriving later, or need a space that fits your permit?</span>
+      <button class="btn" type="button" data-open-plan>Plan Your Trip →</button>
+    </div>
+  </section>
+
+  <section id="lot-view" hidden>
+    <div class="lot-head">
+      <button class="back" id="back" type="button">← All lots</button>
+      <h1 id="lot-name"></h1>
+      <span id="lot-summary"></span>
+    </div>
+    <div class="detail">
+      <div class="panel">
+        <div class="grid-head">
+          <h2>Spaces</h2>
+          <div class="legend">
+            <span><i class="sp free"></i>Free</span><span><i class="sp"></i>Taken</span><span><i class="sp ada"></i>Accessible</span>
+          </div>
+        </div>
+        <div id="zones"></div>
+      </div>
+      <div class="panel">
+        <h2>Last 3 hours</h2>
+        <p class="chart-sub">Share of spaces taken, every 5 minutes</p>
+        <div class="chart-wrap" id="chart"></div>
+        <p class="chart-note" id="chart-note"></p>
+        <p class="foot-note">Simulated occupancy, not a forecast. The forecast goes here once A2 is finished.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="plan-overlay" hidden>
+  <div class="dialog" id="plan-dialog" role="dialog" aria-modal="true" aria-labelledby="plan-title">
+    <div class="dialog-head">
+      <h2 id="plan-title">Plan your trip</h2>
+      <button class="close" id="plan-close" type="button" aria-label="Close">×</button>
+    </div>
+    <section id="plan-view">
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-form" role="tab" aria-selected="true" aria-controls="form-panel">Form</button>
+      <button class="tab" id="tab-chat" role="tab" aria-selected="false" aria-controls="chat-panel">Ask the assistant</button>
+    </div>
+
+    <div class="tab-body" id="form-panel" role="tabpanel" aria-labelledby="tab-form">
+      <form id="trip-form" novalidate>
+        <div class="fields" id="fields"></div>
+        <div class="actions"><button class="btn" id="find" type="submit">Find parking →</button></div>
+        <p class="error" id="form-error" hidden></p>
+      </form>
+    </div>
+
+    <div class="tab-body" id="chat-panel" role="tabpanel" aria-labelledby="tab-chat" hidden>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="composer">
+        <textarea id="message" aria-label="Your trip, in your own words"></textarea>
+        <button class="btn" id="send" type="button">Send</button>
+      </div>
+      <p class="note">The assistant only fills in the form. Eligibility and ranking run in our backend.</p>
+    </div>
+  </section>
+
+    <div id="results-view" hidden>
+      <div class="summary">
+        <strong id="trip-line"></strong>
+        <button class="link" id="edit-trip" type="button">Edit trip</button>
+      </div>
+      <div class="results">
+        <p class="banner">No forecast yet: A2 and its model are not finished, so options are ranked by walking time.</p>
+        <div class="cards" id="cards"></div>
+        <div class="below">
+          <span id="not-shown"></span>
+          <span>Advice only, not a reservation</span>
+        </div>
+      </div>
+      <section class="a1">
+        <h2>How A1 prepared this result</h2>
+        <p>A1 Prepare Eligible Parking Information, step by step.</p>
+        <div class="panel" id="a1-stages"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PERMIT_NAMES = { permit_O: "O permit", visitor: "Visitor" };
+const FIELD_NAMES = {
+  destination: "Destination", arrival_time: "Arrive", departure_time: "Leave",
+  vehicle_category: "Vehicle", declared_eligibility: "Permit", access_needs: "Accessible space",
+};
+const REASONS = {
+  "arrival_time is outside the arrival window": "Arrival must be within the next 60 minutes.",
+  "departure_time is not later than arrival_time": "Leave time must be later than arrival time.",
+};
+let options = { destinations: [], vehicle_categories: [], eligibility_values: [] };
+let lastTrip = null;
+
+function esc(value) {
+  const element = document.createElement("div");
+  element.textContent = String(value);
+  return element.innerHTML;
+}
+
+async function post(path, body) {
+  const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!response.ok) throw new Error("request failed");
+  return response.json();
+}
+
+// All date and time text is built here in English. Native date inputs would
+// follow the language of the viewer's operating system.
+const pad = (n) => String(n).padStart(2, "0");
+const localDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+function timeLabel(hhmm) {
+  const [hour, minute] = hhmm.split(":").map(Number);
+  return `${hour % 12 || 12}:${pad(minute)} ${hour < 12 ? "AM" : "PM"}`;
+}
+
+function dayLabel(yyyymmdd) {
+  const [y, m, d] = yyyymmdd.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+function isoFrom(date, time) {
+  const [y, mo, d] = date.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  const minutes = -new Date(y, mo - 1, d, h, mi).getTimezoneOffset();
+  const size = Math.abs(minutes);
+  return `${date}T${time}:00${minutes < 0 ? "-" : "+"}${pad(Math.floor(size / 60))}:${pad(size % 60)}`;
+}
+
+function nearestFive(ms) {
+  const d = new Date(ms);
+  d.setMinutes(d.getMinutes() - d.getMinutes() % 5, 0, 0);
+  return d;
+}
+
+function choices(values, labelOf) {
+  return `<option value="">Choose...</option>` + values.map((v) => `<option value="${esc(v)}">${esc(labelOf(v))}</option>`).join("");
+}
+
+function dayChoices() {
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 86400000);
+  return [localDate(today), localDate(tomorrow)].map((v) => `<option value="${v}">${esc(dayLabel(v))}</option>`).join("");
+}
+
+function timeChoices() {
+  let html = "";
+  for (let m = 0; m < 1440; m += 5) {
+    const value = `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+    html += `<option value="${value}">${timeLabel(value)}</option>`;
+  }
+  return html;
+}
+
+function buildForm() {
+  const select = (name, html) => `<select name="${name}" aria-label="${FIELD_NAMES[name]}">${html}</select>`;
+  const dateTime = (name) => `<div class="pair">
+      <select name="${name}_day" aria-label="${FIELD_NAMES[name]} day">${dayChoices()}</select>
+      <select name="${name}_clock" aria-label="${FIELD_NAMES[name]} time">${timeChoices()}</select></div>`;
+  const field = (name, control, extra = "") =>
+    `<div class="field ${extra}" data-field="${name}"><span>${FIELD_NAMES[name]}</span>${control}<small></small></div>`;
+  $("fields").innerHTML = [
+    field("destination", select("destination", choices(options.destinations, (v) => v)), "wide"),
+    field("arrival_time", dateTime("arrival_time")),
+    field("departure_time", dateTime("departure_time")),
+    field("vehicle_category", select("vehicle_category", choices(options.vehicle_categories, (v) => v[0].toUpperCase() + v.slice(1)))),
+    field("declared_eligibility", select("declared_eligibility", choices(options.eligibility_values, (v) => PERMIT_NAMES[v] || v))),
+    field("access_needs", select("access_needs", `<option value="false">Not needed</option><option value="true">Needed</option>`), "wide"),
+  ].join("");
+  setDefaultTimes();
+}
+
+function setDefaultTimes() {
+  const arrival = nearestFive(Date.now() + 30 * 60000);
+  setDateTime("arrival_time", localDate(arrival), localTime(arrival));
+  const departure = new Date(arrival.getTime() + 2 * 3600000);
+  setDateTime("departure_time", localDate(departure), localTime(departure));
+}
+
+function setDateTime(name, date, time) {
+  const form = $("trip-form");
+  const day = form.elements[`${name}_day`];
+  const clock = form.elements[`${name}_clock`];
+  if (![...day.options].some((o) => o.value === date)) day.add(new Option(dayLabel(date), date));
+  if (![...clock.options].some((o) => o.value === time)) clock.add(new Option(timeLabel(time), time));
+  day.value = date;
+  clock.value = time;
+}
+
+function markField(name, text) {
+  const field = document.querySelector(`[data-field="${name}"]`);
+  field.classList.toggle("need", Boolean(text));
+  field.querySelector("small").textContent = text || "";
+}
+
+function fillForm(trip, missing) {
+  const form = $("trip-form");
+  ["destination", "vehicle_category", "declared_eligibility"].forEach((name) => { form.elements[name].value = trip[name] ?? ""; });
+  form.elements.access_needs.value = trip.access_needs === true ? "true" : "false";
+  ["arrival_time", "departure_time"].forEach((name) => {
+    if (trip[name]) setDateTime(name, trip[name].slice(0, 10), trip[name].slice(11, 16));
+  });
+  Object.keys(FIELD_NAMES).forEach((name) => markField(name, missing.includes(name) ? "Please fill in" : ""));
+}
+
+function readForm() {
+  const form = $("trip-form").elements;
+  return {
+    destination: form.destination.value,
+    arrival_time: isoFrom(form.arrival_time_day.value, form.arrival_time_clock.value),
+    departure_time: isoFrom(form.departure_time_day.value, form.departure_time_clock.value),
+    vehicle_category: form.vehicle_category.value,
+    declared_eligibility: form.declared_eligibility.value,
+    access_needs: form.access_needs.value === "true",
+  };
+}
+
+function showTab(name) {
+  const isForm = name === "form";
+  $("tab-form").setAttribute("aria-selected", isForm);
+  $("tab-chat").setAttribute("aria-selected", !isForm);
+  $("form-panel").hidden = !isForm;
+  $("chat-panel").hidden = isForm;
+}
+
+function tripTimes(trip) {
+  return `${dayLabel(trip.arrival_time.slice(0, 10)).split(",")[0]} ${timeLabel(trip.arrival_time.slice(11, 16))} → ${timeLabel(trip.departure_time.slice(11, 16))}`;
+}
+
+function tripChips(trip) {
+  const chips = [];
+  if (trip.destination) chips.push(trip.destination);
+  if (trip.arrival_time && trip.departure_time) chips.push(tripTimes(trip));
+  else if (trip.arrival_time) chips.push(`Arrive ${timeLabel(trip.arrival_time.slice(11, 16))}`);
+  if (trip.vehicle_category) chips.push(trip.vehicle_category);
+  if (trip.declared_eligibility) chips.push(PERMIT_NAMES[trip.declared_eligibility] || trip.declared_eligibility);
+  chips.push(trip.access_needs === true ? "Accessible space needed" : "Accessible space not needed");
+  return `<div class="chips">${chips.map((c) => `<span class="chip">${esc(c)}</span>`).join("")}</div>`;
+}
+
+function addBubble(kind, html) {
+  const bubble = document.createElement("div");
+  bubble.className = `bubble ${kind}`;
+  bubble.innerHTML = html;
+  $("chat").appendChild(bubble);
+  $("chat").scrollTop = $("chat").scrollHeight;
+  return bubble;
+}
+
+function renderReply(bubble, result) {
+  const trip = result.trip_request;
+  if (result.status === "complete") {
+    bubble.innerHTML = `<p>Here's what I understood. Please confirm:</p>${tripChips(trip)}
+      <div class="bubble-actions"><button class="btn" data-do="confirm">Confirm &amp; search</button>
+      <button class="btn plain" data-do="edit">Edit in form</button></div>`;
+  } else if (result.status === "incomplete") {
+    bubble.innerHTML = `<p>Here's what I understood so far:</p>${tripChips(trip)}
+      <p class="still">Still needed: ${result.missing_fields.map((f) => esc(FIELD_NAMES[f])).join(", ")}</p>
+      ${result.missing_fields.some((f) => f.endsWith("_time")) ? '<p class="time-rule">Arrival must be within the next 60 minutes, and both times on the same day.</p>' : ""}
+      <div class="bubble-actions"><button class="btn" data-do="edit">Complete in form</button></div>`;
+  } else {
+    bubble.innerHTML = `<p>I couldn't read that, so please use the form.</p>
+      <div class="bubble-actions" style="margin-top:10px"><button class="btn" data-do="edit">Open the form</button></div>`;
+  }
+  bubble.querySelector('[data-do="edit"]').addEventListener("click", () => {
+    fillForm(trip, result.missing_fields);
+    $("form-error").hidden = true;
+    showTab("form");
+  });
+  bubble.querySelector('[data-do="confirm"]')?.addEventListener("click", async (event) => {
+    event.target.disabled = true;
+    fillForm(trip, []);
+    await search(trip);
+    event.target.disabled = false;
+  });
+}
+
+async function search(trip) {
+  $("form-error").hidden = true;
+  try {
+    const result = await post("/api/confirm", { trip_request: trip });
+    if (result.status === "invalid_trip_request") {
+      showTab("form");
+      $("form-error").textContent = REASONS[result.reason] || `Please correct this trip: ${result.reason}.`;
+      $("form-error").hidden = false;
+      return;
+    }
+    lastTrip = trip;
+    renderResults(result);
+  } catch {
+    showTab("form");
+    $("form-error").textContent = "Something went wrong. Please try again.";
+    $("form-error").hidden = false;
+  }
+}
+
+function secondsAgo(iso) {
+  return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+}
+
+function renderCard(option, outputs) {
+  const lot = outputs.validated_parking_data.find((item) => item.lot_id === option.lot_id);
+  const name = outputs.lot_names[option.lot_id];
+  const primaryName = outputs.lot_names[option.primary_lot_id];
+  const why = option.role === "primary"
+    ? "Closest lot the confirmed rules allow for your whole stay."
+    : `Longer walk. Head here if ${esc(primaryName)} is full when you get there.`;
+  return `<article class="card ${esc(option.role)}">
+    <div class="card-top"><span class="role">${esc(option.role.toUpperCase())}</span><span>${esc(option.walking_time_minutes)} min walk</span></div>
+    <h3>${esc(name)}</h3>
+    <div class="count"><b>${esc(option.available_spaces)}</b><span>free of ${esc(lot.capacity)} right now</span></div>
+    <p class="why"><strong>Why:</strong> ${why}</p>
+    <p class="fresh ${option.stale ? "stale" : ""}">${option.stale ? "Data is out of date. " : ""}Data updated ${secondsAgo(lot.observed_at)} s ago</p>
+  </article>`;
+}
+
+function renderStages(trip, outputs) {
+  const lotName = (id) => `${esc(outputs.lot_names[id])} (${esc(id)})`;
+  const policy = outputs.parking_policy_request;
+  const validated = outputs.validated_parking_data.map((lot) => {
+    const status = outputs.data_quality_and_freshness_status[lot.lot_id];
+    return `<tr><td>${lotName(lot.lot_id)}</td><td class="num">${lot.occupied}</td><td class="num">${lot.capacity}</td>
+      <td class="num">${lot.capacity - lot.occupied}</td><td><span class="tag ${status === "current" ? "ok" : "old"}">${esc(status)}</span></td></tr>`;
+  }).join("");
+  const eligible = [
+    ...outputs.eligible_lot_ids.map((id) => `<tr><td>${lotName(id)}</td><td><span class="tag ok">Eligible</span></td><td class="wrap">Confirmed rules allow the whole stay</td></tr>`),
+    ...outputs.excluded_lot_ids.map((id) => `<tr><td>${lotName(id)}</td><td><span class="tag no">Excluded</span></td><td class="wrap">Closed, not allowed, or no confirmed rule covers the whole stay</td></tr>`),
+  ].join("");
+  $("a1-stages").innerHTML = `
+    <div class="stage"><div class="stage-id">A1.1</div><div><h3>Interpret and confirm the request</h3>
+      <p>The driver confirmed all six fields: ${esc(trip.destination)}, ${esc(tripTimes(trip))}, ${esc(trip.vehicle_category)}, ${esc(PERMIT_NAMES[trip.declared_eligibility] || trip.declared_eligibility)}, accessible space ${trip.access_needs ? "needed" : "not needed"}.</p></div></div>
+    <div class="stage"><div class="stage-id">A1.2</div><div><h3>Request parking, context and policy information</h3>
+      <p>Availability for ${outputs.availability_data_request.lot_ids.map(esc).join(", ")}. Walking times to ${esc(outputs.context_data_request.destination)}. Rules for ${esc(PERMIT_NAMES[policy.declared_eligibility] || policy.declared_eligibility)}.</p></div></div>
+    <div class="stage"><div class="stage-id">A1.3</div><div><h3>Validate parking and context information</h3>
+      <p>Invalid readings are left out. A lot is current if its newest reading is at most 120 seconds old.</p>
+      <div class="table-wrap"><table><thead><tr><th>Lot</th><th>Occupied</th><th>Capacity</th><th>Free</th><th>Freshness</th></tr></thead><tbody>${validated}</tbody></table></div></div></div>
+    <div class="stage"><div class="stage-id">A1.4</div><div><h3>Determine eligible parking areas</h3>
+      <div class="table-wrap"><table><thead><tr><th>Lot</th><th>Result</th><th>Why</th></tr></thead><tbody>${eligible}</tbody></table></div></div></div>`;
+}
+
+function renderResults(result) {
+  const outputs = result.a1_outputs;
+  const trip = result.trip_summary;
+  $("trip-line").textContent = `${trip.destination} · ${tripTimes(trip)} · ${PERMIT_NAMES[trip.declared_eligibility] || trip.declared_eligibility} · ${trip.vehicle_category}`;
+  const primaryId = result.ranked_options[0]?.lot_id;
+  $("cards").innerHTML = result.ranked_options.length
+    ? result.ranked_options.map((option) => renderCard({ ...option, primary_lot_id: primaryId }, outputs)).join("")
+    : `<p>No eligible parking area was found for this trip.</p>`;
+  const notShown = outputs.excluded_lot_ids.map((id) => outputs.lot_names[id]);
+  $("not-shown").textContent = notShown.length ? `Not shown: ${notShown.join(", ")} (not eligible for this trip)` : "";
+  renderStages(trip, outputs);
+  $("plan-view").hidden = true;
+  $("results-view").hidden = false;
+  $("plan-dialog").classList.add("wide");
+  $("plan-overlay").scrollTop = 0;
+}
+
+// The sample names clock times, because the model handles "3:45 PM" far more
+// reliably than "in 30 minutes" (docs/model-adapter.md).
+function sampleMessage() {
+  const arrival = nearestFive(Date.now() + 30 * 60000);
+  const departure = new Date(arrival.getTime() + 2 * 3600000);
+  const format = (d) => timeLabel(localTime(d));
+  return `I need to park near Duffield Hall. I'm arriving at ${format(arrival)} and leaving at ${format(departure)}. I drive a sedan, have an O permit, and don't need an accessible space.`;
+}
+
+$("tab-form").addEventListener("click", () => showTab("form"));
+$("tab-chat").addEventListener("click", () => showTab("chat"));
+
+$("trip-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const trip = readForm();
+  const missing = ["destination", "vehicle_category", "declared_eligibility"].filter((name) => !trip[name]);
+  Object.keys(FIELD_NAMES).forEach((name) => markField(name, missing.includes(name) ? "Please fill in" : ""));
+  if (missing.length === 0) search(trip);
+});
+
+$("send").addEventListener("click", async () => {
+  const message = $("message").value.trim();
+  if (!message) return;
+  addBubble("me", esc(message));
+  $("message").value = "";
+  $("send").disabled = true;
+  const bubble = addBubble("bot", "<p>Reading your message...</p>");
+  try {
+    renderReply(bubble, await post("/api/interpret", { message }));
+    $("chat").scrollTop = $("chat").scrollHeight;
+  } catch {
+    bubble.innerHTML = "<p>Something went wrong. Please try again.</p>";
+  } finally {
+    $("send").disabled = false;
+  }
+});
+
+$("edit-trip").addEventListener("click", () => {
+  $("results-view").hidden = true;
+  $("plan-view").hidden = false;
+  $("plan-dialog").classList.remove("wide");
+  fillForm(lastTrip, []);
+  showTab("form");
+});
+
+// ---- Live status: one page of simulated parking, with the last 12 rounds.
+const ZONE_NAMES = { permit_O: "Permit O", visitor: "Visitor", accessible: "Accessible" };
+const ZONE_SHORT = { permit_O: "O", visitor: "Visitor", accessible: "ADA" };
+const REFRESH_MS = 30000;   // SR-08, NFR.2: at most 60 seconds between refreshes
+const STALE_SECONDS = 120;  // SR-09
+let live = null;
+let selectedLot = null;
+
+const clockOf = (iso) => timeLabel(iso.slice(11, 16));
+const count = (digits, digit) => digits.split("").filter((d) => d === digit).length;
+
+function lotStats(round, lotId) {
+  const zones = round.spaces[lotId];
+  const names = Object.keys(ZONE_NAMES).filter((zone) => zone in zones);
+  const capacity = names.reduce((sum, zone) => sum + zones[zone].length, 0);
+  const taken = names.reduce((sum, zone) => sum + count(zones[zone], "1"), 0);
+  return { zones, names, capacity, taken, free: capacity - taken, full: Math.round(100 * taken / capacity) };
+}
+
+function lotState(stats, closed) {
+  if (closed) return ["shut", "Closed now"];
+  if (stats.full >= 90) return ["busy", "Almost full"];
+  if (stats.full >= 70) return ["busy", "Filling up"];
+  return ["good", "Plenty of space"];
+}
+
+function sparkline(lotId) {
+  const width = 300, height = 56, pad = 4;
+  const values = live.rounds.map((round) => lotStats(round, lotId).full);
+  const x = (i) => pad + (width - 2 * pad) * i / (values.length - 1);
+  const y = (v) => pad + (height - 2 * pad) * (1 - v / 100);
+  const line = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const last = values.length - 1;
+  return `<svg class="spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Share of spaces taken over the last 3 hours, now ${values[last]}%">
+    <line x1="${pad}" x2="${width - pad}" y1="${y(0)}" y2="${y(0)}" stroke="#e6e2da"/>
+    <path d="${line}" fill="none" stroke="#b31b1b" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+  </svg>`;
+}
+
+function renderCampus(round) {
+  const lotIds = Object.keys(live.lot_names);
+  const open = lotIds.filter((lotId) => !round.closed_lot_ids.includes(lotId));
+  const free = open.reduce((sum, lotId) => sum + lotStats(round, lotId).free, 0);
+  const capacity = open.reduce((sum, lotId) => sum + lotStats(round, lotId).capacity, 0);
+  const closed = lotIds.length - open.length;
+  $("campus").innerHTML = `<span>Campus now:</span><b>${free}</b><span>of ${capacity} ${closed ? "open " : ""}spaces free${closed ? ` · ${closed} ${closed === 1 ? "lot" : "lots"} closed` : ""}</span>`;
+}
+
+function renderHome() {
+  const round = live.rounds[live.rounds.length - 1];
+  renderCampus(round);
+  const previous = live.rounds[live.rounds.length - 2];
+  $("lots").innerHTML = Object.keys(live.lot_names).map((lotId) => {
+    const stats = lotStats(round, lotId);
+    const closed = round.closed_lot_ids.includes(lotId);
+    const [kind, label] = lotState(stats, closed);
+    const change = stats.taken - lotStats(previous, lotId).taken;
+    const trend = change === 0 ? "No change" : `${change > 0 ? "+" : "−"}${Math.abs(change)} ${Math.abs(change) === 1 ? "car" : "cars"} in 5 min`;
+    const zones = stats.names.map((zone) => `${ZONE_SHORT[zone]} ${count(stats.zones[zone], "0")}`).join(" · ");
+    return `<button class="lot ${closed ? "closed" : ""}" type="button" data-lot="${esc(lotId)}">
+      <span class="state ${kind}">${label}</span>
+      <h3>${esc(live.lot_names[lotId])}</h3>
+      <div class="count"><b>${stats.free}</b><span>free of ${stats.capacity}</span></div>
+      <div class="bar"><i style="width:${stats.full}%"></i></div>
+      <div class="lot-line"><strong>${stats.full}% full</strong><span>${trend}</span></div>
+      ${sparkline(lotId)}
+      <span class="spark-label">Last 3 hours</span>
+      <p class="zones-line">Free: ${zones}</p>
+    </button>`;
+  }).join("");
+}
+
+function renderChart(lotId) {
+  const width = 360, height = 170, left = 34, right = 10, top = 10, bottom = 24;
+  const x = (i) => left + (width - left - right) * i / (live.rounds.length - 1);
+  const y = (percent) => top + (height - top - bottom) * (1 - percent / 100);
+  const values = live.rounds.map((round) => lotStats(round, lotId).full);
+  const last = values.length - 1;
+  const gridlines = [0, 50, 100].map((v) => `<line x1="${left}" x2="${width - right}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e2da"/>
+    <text x="${left - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#6b717c">${v}%</text>`).join("");
+  const ticks = [0, Math.round((values.length - 1) / 2), values.length - 1].map((i) => `<text x="${x(i)}" y="${height - 6}" text-anchor="${i === 0 ? "start" : i === values.length - 1 ? "end" : "middle"}" font-size="11" fill="#6b717c">${clockOf(live.rounds[i].as_of)}</text>`).join("");
+  const line = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const slot = (width - left - right) / (values.length - 1);
+  const hits = values.map((v, i) => `<rect x="${x(i) - slot / 2}" y="${top}" width="${slot}" height="${height - top - bottom}" fill="transparent" data-i="${i}"/>`).join("");
+  $("chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Share of spaces taken at ${esc(live.lot_names[lotId])} over the last 3 hours, now ${values[last]}%">
+    ${gridlines}${ticks}
+    <line x1="${left}" x2="${width - right}" y1="${y(95)}" y2="${y(95)}" stroke="#b31b1b" stroke-width="1" stroke-dasharray="4 4"/>
+    <text x="${width - right}" y="${y(95) + 13}" text-anchor="end" font-size="11" fill="#4b5260">95% practically full</text>
+    <path d="${line}" fill="none" stroke="#b31b1b" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${x(last)}" cy="${y(values[last])}" r="5" fill="#b31b1b" stroke="#fcfcfa" stroke-width="2"/>
+    ${hits}</svg><div class="chart-tip" id="chart-tip" hidden></div>`;
+  const svg = $("chart").querySelector("svg");
+  svg.querySelectorAll("rect[data-i]").forEach((rect) => {
+    const i = Number(rect.dataset.i);
+    rect.addEventListener("mouseenter", () => {
+      const tip = $("chart-tip");
+      const scale = svg.getBoundingClientRect().width / width;
+      tip.textContent = `${clockOf(live.rounds[i].as_of)}: ${values[i]}% full`;
+      tip.style.left = `${x(i) * scale}px`;
+      tip.style.top = `${y(values[i]) * scale}px`;
+      tip.hidden = false;
+    });
+    rect.addEventListener("mouseleave", () => { $("chart-tip").hidden = true; });
+  });
+}
+
+function renderLot() {
+  const round = live.rounds[live.rounds.length - 1];
+  const stats = lotStats(round, selectedLot);
+  const closed = round.closed_lot_ids.includes(selectedLot);
+  $("lot-name").textContent = live.lot_names[selectedLot];
+  $("lot-summary").textContent = `${stats.free} free of ${stats.capacity} · ${stats.full}% full${closed ? " · Closed now" : ""}`;
+  $("zones").innerHTML = stats.names.filter((zone) => stats.zones[zone].length).map((zone) => {
+    const digits = stats.zones[zone];
+    const cells = digits.split("").map((d) => `<i class="sp ${d === "0" ? "free" : ""} ${zone === "accessible" ? "ada" : ""}"></i>`).join("");
+    return `<div class="zone-row"><div><strong>${ZONE_NAMES[zone]}</strong> · ${count(digits, "0")} free of ${digits.length}</div><div class="spaces">${cells}</div></div>`;
+  }).join("");
+  renderChart(selectedLot);
+  $("chart-note").innerHTML = `<strong>At ${clockOf(round.as_of)}:</strong> ${stats.taken} of ${stats.capacity} spaces taken`;
+}
+
+function renderUpdated() {
+  if (!live) return;
+  const latest = live.rounds[live.rounds.length - 1].as_of;
+  const age = Math.max(0, Math.round((Date.now() - new Date(latest).getTime()) / 1000));
+  $("updated").className = `updated ${age > STALE_SECONDS ? "old" : ""}`;
+  $("updated-text").textContent = age > STALE_SECONDS
+    ? `Out of date. Last observed ${clockOf(latest)}`
+    : `Updated ${clockOf(latest)} · ${age} s ago`;
+}
+
+function renderLive() {
+  if (!live) return;
+  if (selectedLot) renderLot(); else renderHome();
+  renderUpdated();
+}
+
+async function refreshLive() {
+  try {
+    const response = await fetch("/api/live");
+    if (!response.ok) throw new Error("request failed");
+    live = await response.json();
+    renderLive();
+  } catch {
+    if (live) {
+      renderUpdated();  // Keep the last data; its age shows it is going out of date.
+    } else {
+      $("updated").className = "updated old";
+      $("updated-text").textContent = "Could not load live data. Restart the server: Ctrl+C, then python web_app.py";
+    }
+  }
+}
+
+$("lots").addEventListener("click", (event) => {
+  const card = event.target.closest("[data-lot]");
+  if (!card) return;
+  selectedLot = card.dataset.lot;
+  $("home-view").hidden = true;
+  $("lot-view").hidden = false;
+  renderLive();
+  window.scrollTo(0, 0);
+});
+
+$("back").addEventListener("click", () => {
+  selectedLot = null;
+  $("lot-view").hidden = true;
+  $("home-view").hidden = false;
+  renderLive();
+});
+
+// ---- Plan Your Trip popup, over the live status page.
+let planOpener = null;
+
+function openPlan(event) {
+  planOpener = event.currentTarget;
+  if (!lastTrip && options.destinations.length) setDefaultTimes();
+  if (!$("chat").children.length) $("message").value = sampleMessage();
+  $("plan-overlay").hidden = false;
+  document.body.style.overflow = "hidden";
+  $("plan-close").focus();
+}
+
+function closePlan() {
+  $("plan-overlay").hidden = true;
+  document.body.style.overflow = "";
+  planOpener?.focus();
+}
+
+document.querySelectorAll("[data-open-plan]").forEach((button) => button.addEventListener("click", openPlan));
+$("plan-close").addEventListener("click", closePlan);
+$("plan-overlay").addEventListener("mousedown", (event) => { if (event.target === $("plan-overlay")) closePlan(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("plan-overlay").hidden) closePlan(); });
+
+setInterval(refreshLive, REFRESH_MS);
+setInterval(renderUpdated, 1000);
+refreshLive();
+
+$("message").value = sampleMessage();
+fetch("/api/options").then((response) => response.json()).then((loaded) => {
+  options = loaded;
+  buildForm();
+});
+</script>
+</body>
+</html>

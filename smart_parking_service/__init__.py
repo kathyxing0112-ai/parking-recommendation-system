@@ -13,11 +13,12 @@ exists and A3 uses its walking-time fallback (SR-13). A4 is not implemented
 either, so this module still builds the driver-facing result.
 """
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from contextual_information_sources import get_contextual_information
-from cornell_transportation_and_parking_services import get_parking_rules_and_closures
+from cornell_transportation_and_parking_services import get_parking_rules_and_closures, get_rule_table
 from language_model import interpret_trip_request as model_interpret
+from parking_availability_data_sources import get_lot_inventory
 from parking_data_access import ParkingDataStore
 from prepare_eligible_parking_information import InvalidTripRequest, prepare_eligible_parking_information
 from rank_parking_options import rank_parking_options
@@ -49,6 +50,9 @@ INFORMATION_ACQUISITION_AND_REFRESH_RULES = {"refresh_interval_seconds": 60, "lo
 DATA_VALIDATION_AND_FRESHNESS_RULES = {"stale_after_seconds": 120}  # SR-09
 # SR-13. No forecast exists yet, so A3 uses its walking-time fallback.
 RANKING_AND_FALLBACK_RULES = {"weights": {"walking_time": 0.4, "availability": 0.4, "uncertainty": 0.2}}
+
+LIVE_ROUNDS = 36          # three hours of 5-minute rounds on the live status page
+LIVE_ROUND_MINUTES = 5
 
 _data_store = None
 
@@ -156,7 +160,63 @@ def find_suitable_parking(trip_request: dict) -> dict:
         "ranked_options": ranked_options,
         "trip_summary": trip_summary,
         "data_mode": "synthetic",
+        "a1_outputs": _a1_outputs(prepared),
     }
+
+
+def _a1_outputs(prepared: dict) -> dict:
+    """What A1.2-A1.4 produced for this trip, for the driver interface to show."""
+    eligible = {area["lot_id"] for area in prepared["eligible_parking_areas"]}
+    return {
+        "lot_names": {lot["lot_id"]: lot["name"] for lot in get_lot_inventory()},
+        "availability_data_request": prepared["availability_data_request"],  # A1.2
+        "context_data_request": prepared["context_data_request"],
+        "parking_policy_request": prepared["parking_policy_request"],
+        "validated_parking_data": prepared["validated_parking_data"],  # A1.3
+        "data_quality_and_freshness_status": prepared["data_quality_and_freshness_status"],
+        "eligible_lot_ids": [lot_id for lot_id in PILOT_LOT_IDS if lot_id in eligible],  # A1.4
+        "excluded_lot_ids": [lot_id for lot_id in PILOT_LOT_IDS if lot_id not in eligible],
+    }
+
+
+def _closed_lots(at: datetime) -> list[str]:
+    """Lots with a confirmed closure rule in force at this moment."""
+    closed = []
+    for rule in get_rule_table()["rules"]:
+        in_dates = date.fromisoformat(rule["valid_from"]) <= at.date() <= date.fromisoformat(rule["valid_until"])
+        in_hours = rule["start_local_time"] <= at.strftime("%H:%M") < rule["end_local_time"]
+        if rule["closure"] and in_dates and at.isoweekday() in rule["days_of_week"] and in_hours:
+            closed.append(rule["lot_id"])
+    return closed
+
+
+def get_live_parking_status() -> dict:
+    """SR-08: timestamped current parking information, with the last three hours of rounds.
+
+    Each round holds one digit per space, in space_id order: 1 occupied, 0 vacant.
+    """
+    now = datetime.fromisoformat(_now())
+    rounds = []
+    for back in range(LIVE_ROUNDS - 1, -1, -1):
+        at = now - timedelta(minutes=LIVE_ROUND_MINUTES * back)
+        events = _store().request_parking_availability({"lot_ids": PILOT_LOT_IDS, "as_of": at.isoformat()})
+        spaces = {}
+        for event in events:
+            digit = "1" if event["status"] == "occupied" else "0"
+            zones = spaces.setdefault(event["lot_id"], {})
+            zones[event["zone"]] = zones.get(event["zone"], "") + digit
+        rounds.append({"as_of": at.isoformat(), "closed_lot_ids": _closed_lots(at), "spaces": spaces})
+    return {
+        "lot_names": {lot["lot_id"]: lot["name"] for lot in get_lot_inventory()},
+        "round_minutes": LIVE_ROUND_MINUTES,
+        "rounds": rounds,
+        "data_mode": "simulated",
+    }
+
+
+def get_trip_form_options() -> dict:
+    """The values the six-field confirmation form offers."""
+    return PROVISIONAL_SUPPORTED_VALUES
 
 
 def get_selected_parking_information(recommendations: dict, lot_id: str) -> dict:

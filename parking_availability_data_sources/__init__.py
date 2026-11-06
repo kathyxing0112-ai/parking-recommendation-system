@@ -15,7 +15,8 @@ from datetime import datetime, timedelta
 
 SIMULATOR_SEED = 5151
 FEED_INTERVAL_SECONDS = 30   # SR-08: the simulated feed targets one update every 30 s
-OCCUPANCY_SLOT_MINUTES = 15  # occupancy is redrawn per 15-minute slot
+OCCUPANCY_SLOT_MINUTES = 5   # occupancy changes once per 5-minute slot
+SLOT_JITTER = 0.12           # a few spaces change every slot even when the rate is flat
 
 ZONE_CODES = {"permit_O": "O", "visitor": "V", "accessible": "A"}
 
@@ -31,7 +32,7 @@ PILOT_LOTS = [
     {"lot_id": "LOT-2", "name": "Peterson Lot", "latitude": 42.4460, "longitude": -76.4790,
      "capacity_by_zone": {"permit_O": 0, "visitor": 110, "accessible": 10},
      "occupancy_offset": 0.0},
-    {"lot_id": "LOT-3", "name": "Campus Road O Area", "latitude": 42.4490, "longitude": -76.4760,
+    {"lot_id": "LOT-3", "name": "Robert Purcell Community Center Parking Lot", "latitude": 42.4490, "longitude": -76.4760,
      "capacity_by_zone": {"permit_O": 140, "visitor": 0, "accessible": 10},
      "occupancy_offset": -0.10},
 ]
@@ -73,7 +74,9 @@ def get_space_inventory() -> list[dict]:
 
 
 def _occupancy_rate(lot: dict, at: datetime) -> float:
-    rate = HOURLY_RATE[at.hour]
+    # Straight line between hourly rates, so the rate moves every slot.
+    this_hour, next_hour = HOURLY_RATE[at.hour], HOURLY_RATE[(at.hour + 1) % 24]
+    rate = this_hour + (next_hour - this_hour) * at.minute / 60
     if at.weekday() >= 5:
         rate *= WEEKEND_FACTOR
     return min(max(rate + lot["occupancy_offset"], 0.0), 1.0)
@@ -100,8 +103,11 @@ def get_current_parking_availability(lot_ids: list[str], as_of: datetime) -> lis
     for space in get_space_inventory():
         if space["lot_id"] not in lot_ids:
             continue
-        draw = random.Random(f"{SIMULATOR_SEED}|{space['space_id']}|{slot_start.isoformat()}")
-        if draw.random() < _occupancy_rate(lots[space["lot_id"]], slot_start):
+        # Each space keeps one number for the whole day, so a parked car stays
+        # parked between slots and the lot fills and empties gradually.
+        day_draw = random.Random(f"{SIMULATOR_SEED}|{space['space_id']}|{slot_start.date()}").random()
+        slot_draw = random.Random(f"{SIMULATOR_SEED}|{space['space_id']}|{slot_start.isoformat()}").random()
+        if day_draw + SLOT_JITTER * (slot_draw - 0.5) < _occupancy_rate(lots[space["lot_id"]], slot_start):
             status = "occupied"
         else:
             status = "vacant"
