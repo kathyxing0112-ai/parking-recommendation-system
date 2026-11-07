@@ -599,3 +599,21 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   message, a missing form field, an arrival outside the window, the replay and the popup. Wednesday daytime rules were checked through the service.
   No test covers the page itself.
 - Reviewed by: pending.
+
+## 2026-11-07 — Walking-time table
+
+- Tool: Claude Code (Claude Opus 5.5).
+- Built from: `walking_times.xlsx`. Katherine Xing measured the walking times in
+  Google Maps, walking mode, on 2026-11-03, and Codex then checked the workbook.
+  The CSV records her as the person who checked them.
+- Changed: the workbook became `contextual_information_sources/walking_times.csv`,
+  one row per building and lot, 43 buildings by 3 lots. X.C.3 reads it, and the
+  supported destinations are now the buildings in the table, not three. The
+  workbook itself is not committed.
+- `scripts/live_model_check.py`: the unsupported-destination case now uses Bailey
+  Hall, because Statler Hall is in the table. Checked with `qwen3:4b`: eight
+  messages naming table buildings, including short forms such as "Baker Lab",
+  matched the table, and an area name came back missing.
+- Not changed: A1, A3 and the ranking rules. The example values in the tests do
+  not come from this table.
+- Reviewed by: pending.

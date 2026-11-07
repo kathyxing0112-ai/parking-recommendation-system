@@ -15,7 +15,7 @@ either, so this module still builds the driver-facing result.
 
 from datetime import date, datetime, timedelta
 
-from contextual_information_sources import get_contextual_information
+from contextual_information_sources import get_contextual_information, get_destinations
 from cornell_transportation_and_parking_services import get_parking_rules_and_closures, get_rule_table
 from language_model import interpret_trip_request as model_interpret
 from parking_availability_data_sources import get_lot_inventory
@@ -37,7 +37,7 @@ PILOT_LOT_IDS = ["LOT-1", "LOT-2", "LOT-3"]
 # Provisional values the application gives the model (Model Response Contract).
 # The approved lists are still open (prompt-log 2026-10-04, deferred item 3).
 PROVISIONAL_SUPPORTED_VALUES = {
-    "destinations": ["Duffield Hall", "Upson Hall", "Gates Hall"],
+    "destinations": get_destinations(),  # the buildings in the walking-time table
     "vehicle_categories": ["sedan", "suv", "van"],
     "eligibility_values": ["permit_O", "visitor"],
 }

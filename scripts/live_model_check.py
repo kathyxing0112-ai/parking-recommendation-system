@@ -82,7 +82,7 @@ CASES = [
     },
     {
         "name": "unsupported_destination",
-        "message": "Going to Statler Hall at 3:30pm until 5pm, sedan, O permit, no accessible parking needed.",
+        "message": "Going to Bailey Hall at 3:30pm until 5pm, sedan, O permit, no accessible parking needed.",
         "expect": {"missing": ["destination"]},
     },
     {

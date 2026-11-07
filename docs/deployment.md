@@ -65,7 +65,7 @@ cornell_driver_interface ──► smart_parking_service
                                  │
           ┌──────────────────────┼──────────────────────────┐
           ▼                      ▼                          ▼
- C.1.1 model adapter     C.1.2 data access component   X.C.3 / X.C.4 stubs
+ C.1.1 model adapter     C.1.2 data access component   X.C.3 / X.C.4 tables
  language_model/         parking_data_access/          (walking times, rules)
           │ HTTP, loopback        │ SQLite (schema.sql)
           ▼                      ▼
@@ -78,7 +78,7 @@ cornell_driver_interface ──► smart_parking_service
 | C.1.1 model adapter | Ollama / Qwen3 4B | One `/api/chat` request with the driver message, the current time and the supported values. The reply is a JSON object | `docs/model-adapter.md`; SPEC.md Model Response Contract |
 | C.1.2 data access component | X.C.2 simulated feed | Availability Data Request and Updated Availability Request; the reply is space-level sensor events | `contracts/api-v1.yaml` `SensorEvent`, `UpdatedParkingAvailability`; SPEC Data Contract §1 |
 | C.1.2 data access component | SQLite store | Lot and space inventory (§3), accepted and rejected sensor events (§1) | `parking_data_access/schema.sql` |
-| `smart_parking_service` | X.C.3, X.C.4 | Walking times; parking rules and closures | X.C.3 is still a Chapter 2 stub. X.C.4 returns the team-confirmed §4 rule table, which C.1.4 applies. Neither is a data source in Lab 8.5's sense |
+| `smart_parking_service` | X.C.3, X.C.4 | Walking times; parking rules and closures | X.C.3 reads the walking-time table `contextual_information_sources/walking_times.csv` (43 buildings by 3 lots, whole minutes, with source and date). X.C.4 returns the team-confirmed §4 rule table, which C.1.4 applies. Neither is a data source in Lab 8.5's sense |
 
 ## Data access component (C.1.2)
 

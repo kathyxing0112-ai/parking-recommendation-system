@@ -22,9 +22,10 @@ printed with its UC.1 message identifier. Parking availability comes from a
 seeded, simulated sensor feed through the data access component, and the
 driver's message is interpreted by the local Qwen3 4B model through its
 adapter (`docs/deployment.md`). A1 validates the data and filters the areas, and
-A3 ranks them by walking time because A2 has no forecast yet. Walking times are
-still stubs. The team confirmed the parking rules for the pilot, and they are
-not Cornell policy. See
+A3 ranks them by walking time because A2 has no forecast yet. Walking times
+come from `contextual_information_sources/walking_times.csv`, which also lists
+the supported destinations. The team confirmed the parking rules for the pilot,
+and they are not Cornell policy. See
 `docs/walking-skeleton.md` for the message-to-code mapping.
 
 To walk through the same use case in a browser, run:
