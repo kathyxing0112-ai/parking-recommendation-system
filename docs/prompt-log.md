@@ -617,3 +617,20 @@ Later on 2026-11-03, further decisions from Katherine Xing:
 - Not changed: A1, A3 and the ranking rules. The example values in the tests do
   not come from this table.
 - Reviewed by: pending.
+
+## 2026-11-07 — Katherine Xing — ChatGPT (model: GPT - 6.1 Sol)
+
+- Purpose: Lab Manual p.21. Claude Code wrote A1.1, A1.2, A1.3 and the adapter's
+  prefill result, so their requirement-based tests come from a separate session.
+- Prompt: `prompts/2026-11-03-a1-modules-independent-tests.md`, the part below
+  its paste line, in a new ChatGPT conversation with no access to the
+  repository. No module or existing test was pasted.
+- Output: `tests/test_a1_modules_independent.py`, saved unchanged by Katherine
+  Xing. It has 20 test functions, 52 cases, covering DO-01, DO-02, DO-03 and the
+  adapter's prefill result, with the 119/120/121-second and 5/6-second
+  boundaries.
+- Verification on 2026-11-07, run by Claude Code at commit `f679846` plus this
+  file: 52 passed, 0 failed. No code or test was changed. The `tests.yml`
+  selection gave 225 passed; the full suite gave 21 failed and 225 passed, and
+  the 21 are the same planned red tests.
+- Reviewed by: Xichen Wang
