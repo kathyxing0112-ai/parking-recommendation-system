@@ -485,7 +485,7 @@
     plus this file.
   - The full suite: 22 failed and 172 passed. The 22 are the same
     pre-existing red tests.
-- Reviewed by: pending. A team member who did not run either generation
+- Reviewed by: Xichen Wang. A team member who did not run either generation
   must review it.
 
 ## 2026-11-03 — Katherine Xing — Claude Code (Opus 5.5)
@@ -553,7 +553,7 @@
   equals the inventory in the pilot.
 - Still open: trip-record storage, the C.1 2.3.1 number, and the DO-03
   occupied-count clause. The Innoslate side of these decisions is the team's.
-- Reviewed by: pending.
+- Reviewed by: Xichen Wang.
 
 Later on 2026-11-03, further decisions from Katherine Xing:
 
@@ -598,7 +598,7 @@ Later on 2026-11-03, further decisions from Katherine Xing:
 - Checked by hand in a browser with `qwen3:4b`: a complete message, an incomplete
   message, a missing form field, an arrival outside the window, the replay and the popup. Wednesday daytime rules were checked through the service.
   No test covers the page itself.
-- Reviewed by: pending.
+- Reviewed by: Xichen Wang.
 
 ## 2026-11-07 — Walking-time table
 
@@ -616,7 +616,7 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   matched the table, and an area name came back missing.
 - Not changed: A1, A3 and the ranking rules. The example values in the tests do
   not come from this table.
-- Reviewed by: pending.
+- Reviewed by: Xichen Wang.
 
 ## 2026-11-07 — Katherine Xing — ChatGPT (model: GPT - 6.1 Sol)
 
