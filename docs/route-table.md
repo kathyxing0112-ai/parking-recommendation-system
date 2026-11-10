@@ -39,10 +39,13 @@ respectively.
 | E3 | `cornell_driver_interface.confirm_trip_requirements(trip_request)` | Cornell Driver | UC.1 | #3 UC.1.3 Confirm Trip Requirements → #4–#9 (UC.1.4–UC.1.9) → UC.1.10–UC.1.13 → #10 UC.1.14 Present Ranked Parking Recommendations | A1 → A2 → A3 → A4 |
 | E4 | `cornell_driver_interface.select_parking_option(recommendations, lot_id)` | Cornell Driver | UC.1 | #11 UC.1.16 Select Parking Option → #12 UC.1.17 Present Selected Parking Information | A4 |
 | E5 | `cornell_driver_interface.request_pre_arrival_recheck(lot_id)` | Cornell Driver | UC.1 | #13 UC.1.18 Request Pre-Arrival Status Recheck → #14 UC.1.19, #15 UC.1.20 → #16 UC.1.21 Present Updated Parking Status | A1 → A4 (P1/P3 refresh path) |
+| E6 | `python web_app.py` → the Plan Your Trip popup at `http://127.0.0.1:8000` | Cornell Driver | UC.1 Find Suitable Parking | Calls E2 and E3 from the page: #1–#10, showing what A1.1–A1.4 produce | A1, A3 |
+| E7 | `cornell_driver_interface.get_live_parking_status()`, the live status page and lot pages from `python web_app.py` | Cornell Driver | None. Supplementary (see below) | None | None |
 
 `app.show()` is a print helper that only `app.main()` calls, so it is not an
 entry point. Nothing outside `app.py` and `cornell_driver_interface/` is called
-directly by an actor. The following modules are reached only through E2–E5:
+directly by an actor, apart from the page in `web_app.py`, which calls the same
+driver interface. The following modules are reached only through E2–E5:
 
 - `smart_parking_service`
 - `language_model`
@@ -55,11 +58,15 @@ directly by an actor. The following modules are reached only through E2–E5:
 | Command or function | Called by | Classification |
 |---|---|---|
 | `python -m pytest tests/ -v` | Developer, or CI (`.github/workflows/tests.yml`) | Verification harness. It is not a use-case entry point. It is the documented test command in SR-06 handoff task 4.  |
-| A1–A6 module functions (`prepare_eligible_parking_information`, `estimate_arrival_time_availability`, `rank_parking_options`, `present_parking_recommendations_and_status`, `authorize_protected_data_operations`, `apply_personal_data_retention_rules`) | `tests/test_functional_requirements.py` and `tests/test_interface_contract.py` only | Internal first-level functions. No actor calls them, and no entry point reaches them yet. Integration behind the Chapter 7 contract is planned. |
+| A1–A6 module functions (`prepare_eligible_parking_information`, `estimate_arrival_time_availability`, `rank_parking_options`, `present_parking_recommendations_and_status`, `authorize_protected_data_operations`, `apply_personal_data_retention_rules`) | `tests/test_functional_requirements.py` and `tests/test_interface_contract.py` only | Internal first-level functions. No actor calls them directly. E3 reaches A1 and A3 through `smart_parking_service`. A2 and A4 have no body yet, and A5 and A6 have no caller because no trip record is stored. |
 
 ## Orphans found and their disposition
 
-No orphan entry points were found. Each of E1–E5 traces to UC.1.
+Each of E1–E6 traces to UC.1. **E7 has no UC.1 message:** the live status page
+(Path 1 in the team's UI sample) is not in the Innoslate model. Disposition: kept as
+a supplementary feature, by Katherine Xing's decision on 2026-11-03. The main
+product function is the trip recommendation. The page still follows the SR-08 and
+NFR.2 refresh limit.
 
 The audit did find one orphan **payload**. Ranked Parking Recommendations (Seq
 #10) carried data that traces to no output in the model:
@@ -93,8 +100,8 @@ Parking Recommendations is consistent with the model.
 | Item | Model (V2) | Repository |
 |---|---|---|
 | Use cases | 1 (UC.1) | 1 served (UC.1) |
-| Driver-initiated interactions in UC.1 | 4 (Seq #1, #3, #11, #13) | 4 driver-interface entry points (E2–E5), plus the `app.py` command (E1) that runs them |
-| Entry-point-to-use-case traces | — | 5, all to UC.1 (E1–E5) |
+| Driver-initiated interactions in UC.1 | 4 (Seq #1, #3, #11, #13) | 4 driver-interface entry points (E2–E5), plus the `app.py` command (E1) and the `web_app.py` page (E6) that run them |
+| Entry-point-to-use-case traces | — | 6 to UC.1 (E1–E6); E7 has none |
 | Numbered UC.1 interactions | 16 | 16 messages implemented in the walking skeleton (`docs/walking-skeleton.md`) |
 | System-performed UC.1 actions | 12 (report Table 1) | 12. UC.1.10–UC.1.13 are still a single placeholder inside `find_suitable_parking()`. |
 | System actions outside UC.1 | 2 (SYS.1, SYS.2) | 0 entry points; both planned for Chapter 8 |

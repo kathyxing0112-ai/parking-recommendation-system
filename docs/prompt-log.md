@@ -485,5 +485,152 @@
     plus this file.
   - The full suite: 22 failed and 172 passed. The 22 are the same
     pre-existing red tests.
-- Reviewed by: pending. A team member who did not run either generation
+- Reviewed by: Xichen Wang. A team member who did not run either generation
   must review it.
+
+## 2026-11-03 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from:
+  - The requirements for the recorded demo: a working function, code
+    traceability and a passing CI run.
+  - DO-01, DO-02 and DO-03; C.1 Spec 1.4.1 to 1.4.4; the A1.1 to A1.4 ICOMs.
+  - Katherine Xing's decisions on 2026-11-03: split CI into two workflows, and
+    generate the module tests in a separate AI session.
+- Prompt: implement A1 and its second-level modules, connect them to the
+  product, and split CI. Do not write the tests for the new modules.
+- Output:
+  - `prepare_eligible_parking_information/`: new A1.1, A1.2 and A1.3 modules,
+    and the A1 body that calls them with the existing A1.4 module.
+  - `smart_parking_service` now calls A1 and A3 instead of returning hard-coded
+    options. X.C.4 returns the draft rule table.
+  - `.github/workflows/tests.yml` covers implemented behavior;
+    `requirement-status.yml` runs the full suite.
+  - `prompts/2026-11-03-a1-modules-independent-tests.md`.
+  - Updated: `docs/traceability.md`, `docs/route-table.md`,
+    `docs/deployment.md`, `docs/walking-skeleton.md`, `README.md`, ADR-0003.
+- Verification on 2026-11-03:
+  - `test_FR_1_4_1_prepares_eligible_parking_information`, written in Chapter 5
+    and not modified, passes.
+  - The `tests.yml` selection gave 173 passed locally; the full suite gave 21
+    failed and 173 passed. The 21 are 19 acceptance placeholders and FR 1.4.2
+    and 1.4.4.
+  - `python app.py` with the live local model ran from the message to the
+    recheck.
+- Assumptions, to be confirmed by the team:
+  - (1) `unknown` spaces count as occupied at lot level (SPEC section 1).
+  - (2) `capacity` is the number of spaces with a valid event, because A1 has no
+    inventory input. DO-03's "occupied outside 0 to capacity" case cannot occur
+    through this interface.
+  - (3) A timestamp up to 5 s ahead counts as valid and current.
+- Not done: the independent module tests, which are not yet generated, and the
+  review by a team member who did not write this code.
+
+## 2026-11-03 — Katherine Xing — Claude Code (Opus 5.5)
+
+- Built from: decisions Katherine Xing reported on 2026-11-03 for the Innoslate
+  baseline review.
+- Decisions recorded:
+  - The 60-minute arrival window stays, as a known limit (SPEC section 5).
+  - The rule table is confirmed, including permit holders using pay and visitor
+    zones. Version `confirmed-2026-11-03`; no rule's logic changed.
+  - Bochao Liang replaces Tingyu Huang as data-and-rules owner (SR-07).
+  - Katherine Xing, who wrote the rule table, is now the `owner` on its rules
+    and the data-and-rules owner in SR-07.
+    No rule's logic changed.
+  - The lot mapping is confirmed, and Xichen Wang owns the walking-time table.
+  - The simulator produces no `unknown` readings (`UNKNOWN_RATE` is 0). SPEC
+    section 1 still allows the status, so A1.3 still handles it.
+  - An `incomplete` result now carries the fields that passed.
+- Changed: SPEC.md (SR-07, section 5, Model Response Contract); the rule table,
+  renamed `parking_rules.json`; the simulator; the adapter and service.
+- Tests changed because the requirement changed, not to fit the code:
+  `tests/test_rule_table.py` (the confirmed label) and three `incomplete`
+  assertions in `tests/test_model_adapter.py`. The same session wrote this code
+  and these edits, so the independent prompt
+  `prompts/2026-11-03-a1-modules-independent-tests.md` now also covers the
+  prefill result.
+- Assumption (2) above: the simulator reports every space, so `capacity` always
+  equals the inventory in the pilot.
+- Still open: trip-record storage, the C.1 2.3.1 number, and the DO-03
+  occupied-count clause. The Innoslate side of these decisions is the team's.
+- Reviewed by: Xichen Wang.
+
+Later on 2026-11-03, further decisions from Katherine Xing:
+
+- `unknown` is removed from the status list everywhere, not just from the
+  simulator: SPEC section 1, the contract, the schema, A1.3 and the independent
+  test prompt. This replaces the `UNKNOWN_RATE` note above and assumption (1).
+- The pilot stores no trip records, and A6 and C.6 stay. SPEC SR-03, SR-04 and
+  the retention boundary say so. Their matrix, code and tests are unchanged.
+- The C.1 2.3.1 limit is 5 seconds, the SR-13 limit. The Innoslate text is the
+  team's edit.
+
+## 2026-11-03 — Browser page for UC.1 (PMC2 demo)
+
+- Tool: Claude Code (Claude Opus 5.5).
+- Built from: Katherine Xing's request for a thin page that follows A1.1–A1.4
+  on the real product, for the classroom demo on 2026-11-04.
+- Added: `web_app.py` (standard library), `web/index.html`, and route-table
+  entry E6. The service now returns `a1_outputs`, and the driver interface has
+  `get_trip_form_options()`.
+- The page follows the team's UI sample (`Cornell Smart Parking.pptx`, slides 6
+  and 7): a form and an assistant tab, a confirmation card in the chat, and
+  primary and backup cards. Group size and chance of a free space are left out,
+  because group size is outside SPEC section 5 and A2 has no forecast yet. Date
+  and time text is built in English, not by native browser inputs.
+- Later the same evening, at Katherine Xing's request: a live status home page,
+  a page per lot, and the trip screens moved into a Plan Your Trip popup
+  (slides 4 and 5 of the sample). A Replay button was tried and removed at her
+  request: the page now follows the real clock. It refreshes every 30 seconds
+  (SR-08, NFR.2), and occupancy changes every 5 minutes. The SPEC 15-minute modeling
+  table is unaffected: it can sample these slots every 15 minutes.
+  The sample's forecast preview and parking levels are left out: A2 has no forecast,
+  and the data has no levels.
+- The simulator changed so cars stay parked between rounds. Each space had been
+  drawn independently every slot, which looked like noise on the lot page.
+- Assumption: a lot is shown as closed only from a confirmed `closure` rule.
+- Route-table entry E7, the live status page, has no UC.1 message. Katherine Xing
+  decided to keep it as a supplementary feature.
+- LOT-3 is renamed Robert Purcell Community Center Parking Lot, because Campus Road
+  O Area cannot be found on a map. Katherine Xing chose the name from Google Maps. Its capacity, zones and rules are still simulator assumptions.
+- A1.4 returns only the eligible areas, so the page gives one general reason for
+  an excluded lot. It does not name the rule.
+- Checked by hand in a browser with `qwen3:4b`: a complete message, an incomplete
+  message, a missing form field, an arrival outside the window, the replay and the popup. Wednesday daytime rules were checked through the service.
+  No test covers the page itself.
+- Reviewed by: Xichen Wang.
+
+## 2026-11-07 — Walking-time table
+
+- Tool: Claude Code (Claude Opus 5.5).
+- Built from: `walking_times.xlsx`. Katherine Xing measured the walking times in
+  Google Maps, walking mode, on 2026-11-03, and Codex then checked the workbook.
+  The CSV records her as the person who checked them.
+- Changed: the workbook became `contextual_information_sources/walking_times.csv`,
+  one row per building and lot, 43 buildings by 3 lots. X.C.3 reads it, and the
+  supported destinations are now the buildings in the table, not three. The
+  workbook itself is not committed.
+- `scripts/live_model_check.py`: the unsupported-destination case now uses Bailey
+  Hall, because Statler Hall is in the table. Checked with `qwen3:4b`: eight
+  messages naming table buildings, including short forms such as "Baker Lab",
+  matched the table, and an area name came back missing.
+- Not changed: A1, A3 and the ranking rules. The example values in the tests do
+  not come from this table.
+- Reviewed by: Xichen Wang.
+
+## 2026-11-07 — Katherine Xing — ChatGPT (model: GPT - 6.1 Sol)
+
+- Purpose: Lab Manual p.21. Claude Code wrote A1.1, A1.2, A1.3 and the adapter's
+  prefill result, so their requirement-based tests come from a separate session.
+- Prompt: `prompts/2026-11-03-a1-modules-independent-tests.md`, the part below
+  its paste line, in a new ChatGPT conversation with no access to the
+  repository. No module or existing test was pasted.
+- Output: `tests/test_a1_modules_independent.py`, saved unchanged by Katherine
+  Xing. It has 20 test functions, 52 cases, covering DO-01, DO-02, DO-03 and the
+  adapter's prefill result, with the 119/120/121-second and 5/6-second
+  boundaries.
+- Verification on 2026-11-07, run by Claude Code at commit `f679846` plus this
+  file: 52 passed, 0 failed. No code or test was changed. The `tests.yml`
+  selection gave 225 passed; the full suite gave 21 failed and 225 passed, and
+  the 21 are the same planned red tests.
+- Reviewed by: Xichen Wang

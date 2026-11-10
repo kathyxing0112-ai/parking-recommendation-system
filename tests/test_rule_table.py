@@ -1,4 +1,4 @@
-"""The draft parking-rule table matches the SPEC Data Contract section 4 shape.
+"""The parking-rule table matches the SPEC Data Contract section 4 shape.
 
 These tests check the table's structure only. Whether a rule is correct
 policy is a team review question, not a test (SR-10).
@@ -22,9 +22,9 @@ TIME = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]|24:00")
 RULES = get_rule_table()["rules"]
 
 
-def test_table_is_labeled_as_unconfirmed_draft():
+def test_table_is_labeled_as_confirmed_and_not_cornell_policy():
     table = get_rule_table()
-    assert "DRAFT" in table["status"] and "Not Cornell policy" in table["status"]
+    assert "CONFIRMED" in table["status"] and "Not Cornell policy" in table["status"]
 
 
 def test_rule_ids_are_unique():

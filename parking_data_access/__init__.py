@@ -20,7 +20,7 @@ from pathlib import Path
 import parking_availability_data_sources as source
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
-STATUSES = ("occupied", "vacant", "unknown")
+STATUSES = ("occupied", "vacant")
 EVENT_FIELDS = ("space_id", "lot_id", "zone", "status", "timestamp")
 FUTURE_TOLERANCE = timedelta(seconds=5)  # SPEC Data Contract section 1
 
@@ -40,7 +40,7 @@ class ParkingDataStore:
 
     def __init__(self, path: str = ":memory:", data_source=source):
         self._source = data_source
-        self._db = sqlite3.connect(path)
+        self._db = sqlite3.connect(path, check_same_thread=False)  # web_app.py serves from threads
         self._db.execute("PRAGMA foreign_keys = ON")
         self._db.executescript(SCHEMA_PATH.read_text())
         self.load_inventory(data_source.get_lot_inventory(), data_source.get_space_inventory())

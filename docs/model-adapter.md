@@ -103,7 +103,9 @@ adapter never replaces it with another value.
 If no field is missing, the result is
 `{"status": "complete", "trip_request": {...six fields...}}`, with offset-aware
 ISO 8601 times. Otherwise it is
-`{"status": "incomplete", "missing_fields": [...]}`, in the six-field order.
+`{"status": "incomplete", "trip_request": {...}, "missing_fields": [...]}`.
+`trip_request` holds only the fields that passed, for the confirmation step to
+show filled in. `missing_fields` is in the six-field order.
 
 Known limits:
 
@@ -112,8 +114,13 @@ Known limits:
   missing.
 - Times are not carried past midnight. An arrival after midnight sent before
   midnight, or a departure on the next day, is listed as missing.
-- The 60-minute arrival window is under team review (meeting planned for
-  the week of 2026-11-02).
+- Relative times are unreliable. On 2026-11-03, messages saying "in 30 minutes"
+  often kept the current time, or came back as missing, so the driver must check
+  them on the confirmation step. Clock times such as "3:45 PM" gave the right
+  result in 9 of 10 runs, and the other run came back incomplete. `web/index.html`
+  offers a sample message with clock times.
+- A trip more than 60 minutes ahead is outside this version. The team kept
+  this limit on 2026-11-03.
 
 ## When the reply is discarded
 

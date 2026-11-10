@@ -21,9 +21,23 @@ selecting an option, and requesting a pre-arrival status recheck. Each step is
 printed with its UC.1 message identifier. Parking availability comes from a
 seeded, simulated sensor feed through the data access component, and the
 driver's message is interpreted by the local Qwen3 4B model through its
-adapter (`docs/deployment.md`). The ranking and the X.C.3/X.C.4 sources are
-still hard-coded stubs; see `docs/walking-skeleton.md` for the
-message-to-code mapping.
+adapter (`docs/deployment.md`). A1 validates the data and filters the areas, and
+A3 ranks them by walking time because A2 has no forecast yet. Walking times
+come from `contextual_information_sources/walking_times.csv`, which also lists
+the supported destinations. The team confirmed the parking rules for the pilot,
+and they are not Cornell policy. See
+`docs/walking-skeleton.md` for the message-to-code mapping.
+
+To walk through the same use case in a browser, run:
+
+```bash
+python web_app.py
+```
+
+Then open `http://127.0.0.1:8000`. The home page shows simulated live status for
+the three lots and refreshes every 30 seconds. Occupancy changes every 5 minutes,
+and each lot has its own page. This page is a supplementary feature. The Plan Your Trip popup shows what A1.1–A1.4 produce for the
+trip, then the A3 ranking, labeled as walking-time only until A2 exists.
 
 To use the language model, install [Ollama](https://ollama.com) and run:
 
@@ -46,14 +60,15 @@ later increments implement the corresponding behavior.
 
 `tests/test_functional_requirements.py` contains one test per system
 functional requirement (1.4.1–1.4.6). The tests for A3, A5, and A6 pass; the
-tests for A1, A2, and A4 fail until those modules are implemented. See
+tests for A2 and A4 fail until those modules are implemented. See
 `docs/traceability.md` for the function-to-module-to-test map.
 
 `tests/test_data_access.py` and `tests/test_model_adapter.py` cover the
 Chapter 8 data access component and model adapter, including every
 schema-violation fallback. They need no running model.
-`tests/test_rule_table.py` checks that the draft parking-rule table has the
-SPEC Data Contract section 4 shape. The rules themselves are unconfirmed.
+`tests/test_rule_table.py` checks that the parking-rule table has the
+SPEC Data Contract section 4 shape. Whether a rule is right is a team review
+question, not a test.
 `tests/test_eligibility_filter.py` runs the DO-04 scenarios against the C.1.4
 Eligibility Filter Module (Lab 9.4; see `docs/deviation-log.md`).
 
@@ -67,6 +82,10 @@ python scripts/live_model_check.py
 For each simulated driver message it prints the model's raw reply, the
 adapter result, and whether that result is the expected one. Use
 `--message "..."` to try a message of your own.
+
+CI has two workflows. `tests.yml` covers implemented behavior and must stay
+green. `requirement-status.yml` runs the full suite, so it stays red until the
+remaining requirements are met.
 
 `tests/test_interface_contract.py` checks that each A1–A6 module matches the
 internal interface contract in `contracts/api-v1.yaml`. After changing the

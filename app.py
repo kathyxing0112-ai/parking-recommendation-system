@@ -6,7 +6,8 @@ message at a time, in the order of the updated UC.1 sequence diagram
 X.C.2 feed through the data access component, and the message is interpreted
 by the local Qwen3 model through its adapter; if the model is not running or
 its output violates the Model Response Contract, the driver fills in the
-six-field form instead. Ranking is still a hard-coded placeholder.
+six-field form instead. A1 filters the areas and A3 ranks them by walking time,
+because A2 has no forecast yet.
 """
 
 from datetime import datetime, timedelta
@@ -45,7 +46,11 @@ def main() -> None:
     show("UC.1.3 Confirm Trip Requirements -> UC.1.4-UC.1.9 -> UC.1.14 Present Ranked Parking Recommendations",
          recommendations["ranked_options"])
 
-    selected = driver_interface.select_parking_option(recommendations, "LOT-1")
+    if not recommendations["ranked_options"]:
+        return  # SR-13: no confirmed eligible option is available for this trip.
+
+    selected = driver_interface.select_parking_option(
+        recommendations, recommendations["ranked_options"][0]["lot_id"])
     show("UC.1.16 Select Parking Option -> UC.1.17 Present Selected Parking Information", selected)
 
     status = driver_interface.request_pre_arrival_recheck(selected["lot_id"])

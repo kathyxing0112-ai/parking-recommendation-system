@@ -22,7 +22,7 @@ diagram.
 | UC.1.5 Provide Current Parking Availability | X.C.2 → SoI | return value of the X.C.2 call |
 | UC.1.7 Provide Context Information | X.C.3 → SoI | return value of the X.C.3 call |
 | UC.1.9 Provide Parking Rules and Closures | X.C.4 → SoI | return value of the X.C.4 call |
-| UC.1.10–UC.1.13 (internal Actions) | within SoI | placeholder inside `smart_parking_service.find_suitable_parking()` |
+| UC.1.10–UC.1.13 (internal Actions) | within SoI | `prepare_eligible_parking_information()` (UC.1.10, UC.1.11) and `rank_parking_options()` (UC.1.13), called by `smart_parking_service.find_suitable_parking()`. UC.1.12 has no forecast yet |
 | UC.1.14 Present Ranked Parking Recommendations | SoI → Cornell Driver | `ranked_options` returned by `find_suitable_parking()` |
 | UC.1.16 Select Parking Option | Cornell Driver → SoI | `cornell_driver_interface.select_parking_option()` |
 | UC.1.17 Present Selected Parking Information | SoI → Cornell Driver | `smart_parking_service.get_selected_parking_information()` |
@@ -66,11 +66,13 @@ explanations from the factors it used (SR-15).
   the data access component, and the Language Model is the local Qwen3 4B
   reached through its adapter (`docs/deployment.md`). When the model is not
   running or its output violates the contract, UC.1.2 returns the six-field
-  form. X.C.3 and X.C.4 still return hard-coded, synthetic values labeled
-  `synthetic`.
-- UC.1.10–UC.1.13 (validate inputs, filter ineligible areas, estimate
-  arrival-time availability, rank primary and backup options) are a single
-  placeholder: the primary and backup options are hard-coded, not computed.
+  form. X.C.3 returns walking times from
+  `contextual_information_sources/walking_times.csv`, and X.C.4
+  returns the team-confirmed rule table, which is not Cornell policy.
+- UC.1.10 and UC.1.11 (validate inputs, filter ineligible areas) run through A1.
+  UC.1.12 (estimate arrival-time availability) has no implementation, so UC.1.13
+  ranks through A3's walking-time fallback and the explanation says forecasts
+  are unavailable. A4 has no body, so `smart_parking_service` builds the result.
 - The skeleton sends each external request and receives its response before
   the next request, whereas the diagram shows the three requests before the
   three responses; the participants and information exchanged are the same.

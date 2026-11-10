@@ -13,6 +13,16 @@ def submit_trip_request(message: str) -> dict:
     return service.interpret_trip_request(message)
 
 
+def get_live_parking_status() -> dict:
+    """The live status page, a supplementary feature: current parking and the last three hours."""
+    return service.get_live_parking_status()
+
+
+def get_trip_form_options() -> dict:
+    """The destination, vehicle and eligibility values the confirmation form offers."""
+    return service.get_trip_form_options()
+
+
 def confirm_trip_requirements(trip_request: dict) -> dict:
     """UC.1.3 Confirm Trip Requirements -> UC.1.14 Present Ranked Parking Recommendations."""
     return service.find_suitable_parking(trip_request)

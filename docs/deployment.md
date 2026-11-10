@@ -11,7 +11,7 @@ The pilot runs on one developer machine. Nothing in the pilot is hosted.
 
 | Node | What runs there | Talks to |
 |---|---|---|
-| Developer machine, Python 3.13 process (`python app.py`) | C.0 and all six subsystems C.1–C.6 as in-process Python packages; the simulated X.C.2 feed; the SQLite parking data store | Ollama over loopback HTTP |
+| Developer machine, Python 3.13 process (`python app.py` or `python web_app.py`, which serves one page on `127.0.0.1:8000`) | C.0 and all six subsystems C.1–C.6 as in-process Python packages; the simulated X.C.2 feed; the SQLite parking data store | Ollama over loopback HTTP |
 | Same machine, Ollama server (`127.0.0.1:11434`) | Qwen3 4B (`qwen3:4b`) | Nothing. It only answers the Python process |
 | GitHub Actions runner | `python -m pytest tests/` | Nothing. CI does not start Ollama; the adapter tests use a fake transport |
 
@@ -32,7 +32,7 @@ six first-level subsystems. Each one performs exactly one first-level function.
 
 | Asset | Name | Performs | Code | State in this increment |
 |---|---|---|---|---|
-| C.1 | Parking Information Subsystem | A1 Prepare Eligible Parking Information | `prepare_eligible_parking_information/` | Signature only; body pending. Its data access component and model adapter are built (below) |
+| C.1 | Parking Information Subsystem | A1 Prepare Eligible Parking Information | `prepare_eligible_parking_information/` | Implemented: calls one module per subfunction (below) |
 | C.2 | Availability Forecasting Subsystem | A2 Estimate Arrival Time Availability | `estimate_arrival_time_availability/` | Signature only; waits for the forecast model (ADR-0002) |
 | C.3 | Recommendation Ranking Subsystem | A3 Rank Parking Options | `rank_parking_options/` | Implemented |
 | C.4 | Driver Presentation Subsystem | A4 Present Parking Recommendations and Status | `present_parking_recommendations_and_status/` | Signature only; body pending |
@@ -43,16 +43,17 @@ C.1 is decomposed to the second level:
 
 | Asset | Name | Performs | Code |
 |---|---|---|---|
-| C.1.1 | Trip Request Interpretation Module | A1.1 Interpret and Confirm Parking Requests | **Model adapter** `language_model/` |
-| C.1.2 | External Data Acquisition Module | A1.2 Request Parking, Context, and Policy Information | **Data access component** `parking_data_access/` |
-| C.1.3 | Data Validation Module | A1.3 Validate Parking and Context Information | Not built yet |
-| C.1.4 | Eligibility Filter Module | A1.4 Determine Eligible Parking Areas | `prepare_eligible_parking_information/determine_eligible_parking_areas.py`, generated once from the C.1 specification (Lab 9.4). Not yet called by A1; see `docs/deviation-log.md` |
+| C.1.1 | Trip Request Interpretation Module | A1.1 Interpret and Confirm Parking Requests | `prepare_eligible_parking_information/interpret_and_confirm_parking_requests.py`; **model adapter** `language_model/` |
+| C.1.2 | External Data Acquisition Module | A1.2 Request Parking, Context, and Policy Information | `prepare_eligible_parking_information/request_parking_context_and_policy_information.py`; **data access component** `parking_data_access/` |
+| C.1.3 | Data Validation Module | A1.3 Validate Parking and Context Information | `prepare_eligible_parking_information/validate_parking_and_context_information.py` |
+| C.1.4 | Eligibility Filter Module | A1.4 Determine Eligible Parking Areas | `prepare_eligible_parking_information/determine_eligible_parking_areas.py`, generated once from the C.1 specification (Lab 9.4). Called by A1; see `docs/deviation-log.md` |
 
 Two more packages are part of C.0 but are not functions on the IDEF0
 (`docs/traceability.md`): `smart_parking_service/` puts the UC.1 messages in
-order, and `cornell_driver_interface/` is the system side of X.C.1. Until A1,
-A2 and A4 have bodies, `smart_parking_service` calls the C.1.1 and C.1.2
-components directly (ADR-0003, divergences).
+order, and `cornell_driver_interface/` is the system side of X.C.1.
+`smart_parking_service` runs A1 and A3. Until A2 and A4 have bodies, it has no
+forecast, A3 uses its walking-time fallback, and the service itself builds the
+driver-facing result (ADR-0003, divergences).
 
 ## What talks to what
 
@@ -64,7 +65,7 @@ cornell_driver_interface ──► smart_parking_service
                                  │
           ┌──────────────────────┼──────────────────────────┐
           ▼                      ▼                          ▼
- C.1.1 model adapter     C.1.2 data access component   X.C.3 / X.C.4 stubs
+ C.1.1 model adapter     C.1.2 data access component   X.C.3 / X.C.4 tables
  language_model/         parking_data_access/          (walking times, rules)
           │ HTTP, loopback        │ SQLite (schema.sql)
           ▼                      ▼
@@ -77,7 +78,7 @@ cornell_driver_interface ──► smart_parking_service
 | C.1.1 model adapter | Ollama / Qwen3 4B | One `/api/chat` request with the driver message, the current time and the supported values. The reply is a JSON object | `docs/model-adapter.md`; SPEC.md Model Response Contract |
 | C.1.2 data access component | X.C.2 simulated feed | Availability Data Request and Updated Availability Request; the reply is space-level sensor events | `contracts/api-v1.yaml` `SensorEvent`, `UpdatedParkingAvailability`; SPEC Data Contract §1 |
 | C.1.2 data access component | SQLite store | Lot and space inventory (§3), accepted and rejected sensor events (§1) | `parking_data_access/schema.sql` |
-| `smart_parking_service` | X.C.3, X.C.4 | Walking times; parking rules and closures | Still Chapter 2 stubs. They are not data sources in Lab 8.5's sense. A draft §4 rule table (`get_rule_table()`) is ready for C.1.4; the stub is replaced when C.1.4 uses it |
+| `smart_parking_service` | X.C.3, X.C.4 | Walking times; parking rules and closures | X.C.3 reads the walking-time table `contextual_information_sources/walking_times.csv` (43 buildings by 3 lots, whole minutes, with source and date). X.C.4 returns the team-confirmed §4 rule table, which C.1.4 applies. Neither is a data source in Lab 8.5's sense |
 
 ## Data access component (C.1.2)
 
@@ -88,11 +89,11 @@ cornell_driver_interface ──► smart_parking_service
 - **Source.** The source is the seeded simulator in
   `parking_availability_data_sources/` (seed 5151). It has three pilot lots
   and 470 spaces, and it reports every 30 seconds. The lots are named Hoy
-  Road Garage (LOT-1), Peterson Lot (LOT-2) and Campus Road O Area (LOT-3). Lots, capacities and
+  Road Garage (LOT-1), Peterson Lot (LOT-2) and Robert Purcell Community Center Parking Lot (LOT-3). Lots, capacities and
   occupancy are all simulator assumptions, labeled `simulated_inventory`.
 - **Checks at ingestion (SPEC Data Contract §1, §3):**
   - The space must exist, and its lot and zone must match the inventory.
-  - The status must be `occupied`, `vacant` or `unknown`.
+  - The status must be `occupied` or `vacant`.
   - The timestamp must be offset-aware and no more than 5 s ahead of the
     application clock.
   - Duplicates are dropped.
@@ -110,13 +111,17 @@ cornell_driver_interface ──► smart_parking_service
 - **Not stored yet.** The data store does not yet hold:
   - Section 2, the 15-minute modeling table. It arrives with the weeks 1–15
     simulator and the forecast comparison (ADR-0002).
-  - Section 4, the rule table. A draft now lives with X.C.4 in
-    `cornell_transportation_and_parking_services/parking_rules_draft.json`
-    and is read through `get_rule_table()`. It is labeled unconfirmed and
-    stays out of the store until the team confirms it.
-  - Trip records. These are personal data under SR-04 and wait for the A6
-    storage adapter.
+  - Section 4, the rule table. The team confirmed it on 2026-11-03. It lives
+    with X.C.4 in
+    `cornell_transportation_and_parking_services/parking_rules.json` and is
+    read through `get_rule_table()`.
+  - Trip records. The team decided on 2026-11-03 that the pilot stores none.
+    A6 and C.6 stay in the design with nothing to delete.
   - The database is in memory and is rebuilt on each run.
+- **Simulated occupancy.** Each space keeps one random number for the whole day,
+  and a small per-slot change is added to it. A car therefore stays parked between
+  5-minute slots, and the rate moves in a straight line between hourly values.
+  Earlier rounds are recalculated from the seed, not stored.
 
 ## Model adapter (C.1.1)
 

@@ -80,6 +80,11 @@ def test_unstated_fields_are_listed_as_missing():
     reply = {**REPLY, "vehicle_category": None, "declared_eligibility": None, "departure_time": None}
     assert interpret(replying(reply)) == {
         "status": "incomplete",
+        "trip_request": {
+            "destination": "Upson Hall",
+            "arrival_time": "2026-10-02T11:20:00-04:00",
+            "access_needs": False,
+        },
         "missing_fields": ["departure_time", "vehicle_category", "declared_eligibility"],
     }
 
@@ -104,14 +109,18 @@ def test_unusable_value_is_listed_as_missing_not_substituted(field, value):
 
 def test_departure_is_missing_when_arrival_is_missing():
     result = interpret(replying({**REPLY, "arrival_time": None}))
-    assert result == {"status": "incomplete", "missing_fields": ["arrival_time", "departure_time"]}
+    assert result["status"] == "incomplete"
+    assert result["missing_fields"] == ["arrival_time", "departure_time"]
+    assert "departure_time" not in result["trip_request"]
 
 
 @pytest.mark.parametrize("value", ["yes", "no", 1, {"needed": True}])
 def test_access_needs_of_wrong_type_is_missing_not_false(value):
     """A wrong type is not an unstated value; only null defaults to false."""
     result = interpret(replying({**REPLY, "access_needs": value}))
-    assert result == {"status": "incomplete", "missing_fields": ["access_needs"]}
+    assert result["status"] == "incomplete"
+    assert result["missing_fields"] == ["access_needs"]
+    assert "access_needs" not in result["trip_request"]
 
 
 def test_times_use_the_submission_date_and_offset():

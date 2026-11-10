@@ -1,7 +1,7 @@
 {
   "table": "SPEC Data Contract section 4 parking-rule table",
-  "status": "DRAFT, NOT CONFIRMED. Not Cornell policy. Built from public Cornell pages plus labeled simulator assumptions; the team must review and confirm before evaluation (SR-10).",
-  "version": "draft-2026-11-01c",
+  "status": "CONFIRMED by the team on 2026-11-03 for the pilot (SR-10). Not Cornell policy. Built from public Cornell pages plus labeled simulator assumptions.",
+  "version": "confirmed-2026-11-03",
   "conventions": {
     "days_of_week": "ISO weekday numbers, 1 = Monday ... 7 = Sunday",
     "times": "Local wall-clock HH:MM in time_zone. The rule recurs on every date from valid_from to valid_until whose weekday is in days_of_week. end_local_time 24:00 means the end of the day. An end time earlier than the start time means the window runs past midnight into the next date, and belongs to the date it starts on. A start equal to the end is invalid",
@@ -32,8 +32,8 @@
       "allowed": true,
       "closure": false,
       "source": "Simulator assumption: an O-permit zone accepts O permits during enforcement hours. Enforcement hours from https://fcs.cornell.edu/node/2296 (undated)",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-02",
@@ -56,8 +56,8 @@
       "allowed": true,
       "closure": false,
       "source": "Simulator assumption: an O-permit zone accepts O permits during enforcement hours. Enforcement hours from https://fcs.cornell.edu/node/2296 (undated)",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-03",
@@ -80,8 +80,8 @@
       "allowed": false,
       "closure": false,
       "source": "https://fcs.cornell.edu/node/2296 (undated): permit areas are enforced on weekdays outside the 5 P.M.-7:30 A.M. open-parking period",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-04",
@@ -104,8 +104,8 @@
       "allowed": false,
       "closure": false,
       "source": "https://fcs.cornell.edu/node/2296 (undated): permit areas are enforced on weekdays outside the 5 P.M.-7:30 A.M. open-parking period",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-05",
@@ -128,8 +128,8 @@
       "allowed": true,
       "closure": false,
       "source": "https://fcs.cornell.edu/node/2296 (undated): Hoy Road Parking Garage (LOT-1) is open parking weekdays 5 P.M.-7:30 A.M.",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-06",
@@ -149,8 +149,8 @@
       "allowed": true,
       "closure": false,
       "source": "https://fcs.cornell.edu/node/2296 (undated): Hoy Road Parking Garage (LOT-1) is open parking all day on weekends",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-07",
@@ -175,8 +175,8 @@
       "allowed": true,
       "closure": false,
       "source": "Simulator assumption: visitor zones are paid hourly parking open to anyone who pays, including permit holders (team decision 2026-11-01). Hourly pay lots are listed in https://fcs.cornell.edu/sites/default/files/2026-08/ParkmobileMap26.pdf (August 2026); rates are not modeled",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-08",
@@ -201,8 +201,8 @@
       "allowed": true,
       "closure": false,
       "source": "https://fcs.cornell.edu/sites/default/files/2026-08/ParkmobileMap26.pdf (August 2026): Peterson Lot (LOT-2) is an hourly pay lot. Treating it as paid parking open to anyone, including permit holders, at all hours is a simulator assumption (team decision 2026-11-01); rates are not modeled",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-09",
@@ -227,8 +227,8 @@
       "allowed": true,
       "closure": false,
       "source": "Simulator assumption: accessible spaces accept trips with access_needs true. A valid placard is required and is not checked. Accessible spaces are restricted to placard holders at all times per https://fcs.cornell.edu/node/2296 (undated)",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-10",
@@ -253,8 +253,8 @@
       "allowed": true,
       "closure": false,
       "source": "Simulator assumption: accessible spaces accept trips with access_needs true. A valid placard is required and is not checked. Accessible spaces are restricted to placard holders at all times per https://fcs.cornell.edu/node/2296 (undated)",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-11",
@@ -279,8 +279,8 @@
       "allowed": true,
       "closure": false,
       "source": "Simulator assumption: accessible spaces accept trips with access_needs true. A valid placard is required and is not checked. Accessible spaces are restricted to placard holders at all times per https://fcs.cornell.edu/node/2296 (undated)",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     },
     {
       "rule_id": "R-12",
@@ -299,8 +299,8 @@
       "allowed": false,
       "closure": true,
       "source": "Simulator assumption: a simulated event-day closure (Wednesday 2026-11-04), so the closure case can be tested. Not a real Cornell closure",
-      "owner": "Katherine Xing (draft)",
-      "reviewed_at": "2026-11-01T00:00:00-04:00"
+      "owner": "Katherine Xing",
+      "reviewed_at": "2026-11-03T00:00:00-05:00"
     }
   ]
 }

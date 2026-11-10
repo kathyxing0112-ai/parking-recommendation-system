@@ -574,7 +574,7 @@ components:
         zone: {type: string}
         status:
           type: string
-          enum: [occupied, vacant, unknown]
+          enum: [occupied, vacant]
         timestamp: {type: string, format: date-time}
 
     UpdatedParkingAvailability:

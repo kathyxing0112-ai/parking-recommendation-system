@@ -93,6 +93,8 @@ guaranteed (done, 2026-10-25).
   and `walking_time_minutes`, not the contract's `ParkingRecommendation`.
   Integration follows once the A1, A2 and A4 bodies exist, because wiring them
   now would break `app.py` with `NotImplementedError`.
+  *Partly resolved on 2026-11-03:* the service now calls A1 and A3. A2 and A4
+  still have no bodies, so it still builds the recommendation items itself.
 - **The X.C.2 stubs return lot-level `available_spaces`.** They do not return
   the space-level `SensorEvent` that SPEC Data Contract section 1 and the
   contract's A1 request define. These are A0 boundary inputs, not internal
