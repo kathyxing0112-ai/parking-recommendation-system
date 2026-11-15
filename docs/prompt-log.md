@@ -652,9 +652,14 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   moment it follows as the next day. An evening trial on 2026-11-10 sent 24 of
   30 Scenario 1 runs to the form because times past midnight were dropped.
   Four adapter tests cover it.
+- Also changed after the team chose to keep the model warm (option C in the
+  §10.4 decision): `keep_alive` of 30 minutes on every request, and one full
+  warm-up request when `web_app` starts. A bare model load was tried first and
+  left the first request at about 3.5 s, so the warm-up sends a full request.
+  Three adapter tests cover it. Scenario 1 was measured again after the change.
 - Not delegated: the explanation of why measured and simulated times differ
   and the decision that follows (Lab Manual §10.4.3). Claude Code produced the
   numbers and figures only.
-- Verification: `tests.yml` selection 238 passed.
+- Verification: `tests.yml` selection 241 passed.
 - Reviewed by: (pending, Xichen Wang)
 

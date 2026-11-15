@@ -68,6 +68,8 @@ the lists (prompt log 2026-10-04, deferred item 3).
 | `num_predict` (output token limit) | 512 | A reply is about 60 tokens |
 | `num_ctx` (context limit) | 4096 | Fits the prompt plus the longest allowed message |
 | Input limit | 2000 characters | A longer message is not sent. The adapter returns a fallback |
+| `keep_alive` | 30 minutes | Ollama unloads an idle model after 5 minutes by default, and reloading took 4-6 s on the first request (Chapter 10 measurements). 30 minutes keeps the model ready through a quiet spell. It holds about 2.5 GB of memory while loaded |
+| Warm-up at start | One full request with the message "warm up", reply discarded | `web_app` sends it in the background when it starts (`smart_parking_service.warm_up_language_model`). Loading the weights alone left the first request at about 3.5 s; a full request brought it to about 2.1 s (2026-11-15). If the model is not running, nothing changes: the first request falls back as before |
 | Timeout | 60 s | Covers loading the model the first time on a laptop CPU. SR-13's 5 s budget starts after the request is confirmed, so it does not include this call |
 
 ## Model reply format

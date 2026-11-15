@@ -64,12 +64,18 @@ made before that change are not used.
 
 ## Formal runs, 2026-11-15
 
-Commit `11c03c8`, Apple M4, `qwen3:4b` through Ollama, both scenarios through
-`web_app`'s POST endpoints (`--http`), 50 runs each, Scenario 1 with the model
-unloaded before run 1. The simulation parameters (X2 V0.3) were frozen and the
-Innoslate runs made on 2026-11-14, before these runs.
+Apple M4, `qwen3:4b` through Ollama, both scenarios through `web_app`'s POST
+endpoints (`--http`), 50 runs each, Scenario 1 with the model unloaded first.
+The simulation parameters (X2 V0.3) were frozen and the Innoslate runs made on
+2026-11-14, before these runs.
 
-- Raw runs: `docs/measurements/2026-11-15/s1-http/`, `s2-http/`
+| Run | Commit | Product | Use |
+|---|---|---|---|
+| `s2-http/` | `11c03c8` | Scenario 2 (no model) | Comparison |
+| `s1-http/` | `11c03c8` | Scenario 1 before the warm-up change: run 1 was a cold start (3,986 ms inference) | Evidence for the decision below |
+| `s1-http-warm/` | `7ffb193` | Scenario 1 after the warm-up change (model loaded at start, `keep_alive` 30 min): run 1 was 2,141 ms in total | Comparison (current product) |
+
+- Raw runs: `docs/measurements/2026-11-15/`
 - Simulation results: `docs/measurements/simulation/HW6_B4_Simulation_Results.xlsx` (B4)
 - Comparison: `docs/measurements/2026-11-15/comparison.md`, `comparison.csv`,
   `fig_stage_comparison.png`, `fig_windows.png`, made by

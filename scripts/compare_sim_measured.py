@@ -144,14 +144,17 @@ def main() -> None:
             cold = [v["C.1.1.model_call"] for r, v in per_run.items() if state[r] == "cold"]
             s = stats(sim["s1.3"])
             w = stats(warm)
-            rows.append({"scenario": "S1", "stage": "s1.3 inference, warm model only",
-                         "sim_n": s["n"], "sim_mean_ms": s["mean"] * 1000, "sim_sd_ms": s["sd"] * 1000,
-                         "sim_min_ms": s["min"] * 1000, "sim_max_ms": s["max"] * 1000,
-                         "meas_n": w["n"], "meas_mean_ms": w["mean"] * 1000, "meas_sd_ms": w["sd"] * 1000,
-                         "meas_median_ms": w["median"] * 1000, "meas_p95_ms": w["p95"] * 1000,
-                         "meas_min_ms": w["min"] * 1000, "meas_max_ms": w["max"] * 1000,
-                         "sim_to_meas_mean_ratio": s["mean"] / w["mean"]})
-            cold_note = ", ".join(ms(c) for c in cold)
+            if cold:  # a warm-only row adds nothing when every run was warm
+                rows.append({"scenario": "S1", "stage": "s1.3 inference, warm model only",
+                             "sim_n": s["n"], "sim_mean_ms": s["mean"] * 1000, "sim_sd_ms": s["sd"] * 1000,
+                             "sim_min_ms": s["min"] * 1000, "sim_max_ms": s["max"] * 1000,
+                             "meas_n": w["n"], "meas_mean_ms": w["mean"] * 1000, "meas_sd_ms": w["sd"] * 1000,
+                             "meas_median_ms": w["median"] * 1000, "meas_p95_ms": w["p95"] * 1000,
+                             "meas_min_ms": w["min"] * 1000, "meas_max_ms": w["max"] * 1000,
+                             "sim_to_meas_mean_ratio": s["mean"] / w["mean"]})
+            cold_note = (f"S1 cold-start inference (model unloaded before run 1): {', '.join(ms(c) for c in cold)} ms."
+                         if cold else "S1 had no cold start: the product loads the model when it starts "
+                         "(warm-up), so run 1 was warm.")
         for stage in UNMODELED:
             vals = [v[stage] for v in per_run.values() if stage in v]
             if vals:
@@ -182,7 +185,7 @@ def main() -> None:
             f"{ms(r['meas_mean_ms'] / 1000)} | {ms(r['meas_sd_ms'] / 1000)} | {ms(r['meas_median_ms'] / 1000)} | "
             f"{ms(r['meas_p95_ms'] / 1000)} | {ms(r['meas_min_ms'] / 1000)}-{ms(r['meas_max_ms'] / 1000)} | "
             f"{r['sim_to_meas_mean_ratio']:.1f}x |")
-    lines += ["", f"S1 cold-start inference (run 1, model unloaded first): {cold_note} ms.", "",
+    lines += ["", cold_note, "",
               "Measured stages with no modeled action:", "",
               "| Scen. | Stage | n | mean ms | max ms |", "|---|---|---|---|---|"]
     for scen, stage, st in unmodeled:
