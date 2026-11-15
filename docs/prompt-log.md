@@ -634,3 +634,27 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   selection gave 225 passed; the full suite gave 21 failed and 225 passed, and
   the 21 are the same planned red tests.
 - Reviewed by: Xichen Wang
+
+## 2026-11-09 to 2026-11-15 — Katherine Xing — Claude Code (model: Claude Opus 5.5)
+
+- Purpose: Lab Manual §10.4, which names the instrumentation harness, the data
+  collection script and the comparison plots as good work for the assistant.
+- Prompts: in the Claude Code session, Katherine asked for timestamps at every
+  participant boundary of the UC.1 sequence diagram, a script that runs each
+  scenario at least thirty times, an HTTP mode for the SR-13 window
+  (POST /api/confirm), and a per-stage comparison with the B4 Innoslate samples.
+- Output: `stage_timing/`, `scripts/make_uc1_requests.py`,
+  `measurements/uc1_requests.json`, `scripts/measure_uc1.py`,
+  `scripts/compare_sim_measured.py`, `tests/test_stage_timing.py`,
+  `tests/test_measure_uc1.py`, and the timing wrappers in the driver interface,
+  service, A1 and the model adapter.
+- Also changed: the model adapter now reads a clock time earlier than the
+  moment it follows as the next day. An evening trial on 2026-11-10 sent 24 of
+  30 Scenario 1 runs to the form because times past midnight were dropped.
+  Four adapter tests cover it.
+- Not delegated: the explanation of why measured and simulated times differ
+  and the decision that follows (Lab Manual §10.4.3). Claude Code produced the
+  numbers and figures only.
+- Verification: `tests.yml` selection 238 passed.
+- Reviewed by: (pending, Xichen Wang)
+
