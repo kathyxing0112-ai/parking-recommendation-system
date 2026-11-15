@@ -118,17 +118,23 @@ def build_request(message: str, submitted_at: str, supported_values: dict) -> di
     }
 
 
-def warm_up_model(transport=None, timeout: float = TIMEOUT_SECONDS) -> bool:
-    """Load the model before the first driver arrives.
+WARM_UP_MESSAGE = "warm up"
 
-    An Ollama chat request with no messages loads the model and generates
-    nothing. Called once when the product starts (web_app.main). Returns
-    False if the model is not reachable; the product still works, and the
-    first request then loads the model itself or falls back to the form.
+
+def warm_up_model(supported_values: dict, transport=None, timeout: float = TIMEOUT_SECONDS) -> bool:
+    """Run one full request before the first driver arrives, and discard the reply.
+
+    Loading the weights alone (a request with no messages) left the first real
+    request at about 3.5 s; one complete request with the product's own prompt
+    and reply format brought it to about 2.1 s, the warm time (2026-11-15).
+    Called once when the product starts. Returns False if the model is not
+    reachable; the product still works, and the first request then loads the
+    model itself or falls back to the form.
     """
     transport = transport or post_to_local_ollama
+    submitted_at = datetime.now().astimezone().isoformat(timespec="seconds")
     try:
-        transport({"model": MODEL_NAME, "messages": [], "stream": False, "keep_alive": KEEP_ALIVE}, timeout)
+        transport(build_request(WARM_UP_MESSAGE, submitted_at, supported_values), timeout)
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return False
     return True

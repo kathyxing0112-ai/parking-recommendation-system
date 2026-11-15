@@ -18,6 +18,7 @@ from datetime import date, datetime, timedelta
 from contextual_information_sources import get_contextual_information, get_destinations
 from cornell_transportation_and_parking_services import get_parking_rules_and_closures, get_rule_table
 from language_model import interpret_trip_request as model_interpret
+from language_model import warm_up_model
 from parking_availability_data_sources import get_lot_inventory
 from parking_data_access import ParkingDataStore
 from prepare_eligible_parking_information import InvalidTripRequest, prepare_eligible_parking_information
@@ -85,6 +86,11 @@ def interpret_trip_request(message: str) -> dict:
         return {"status": "incomplete", "trip_request": response["trip_request"],
                 "missing_fields": response["missing_fields"]}
     return {"status": "form_required", "trip_request": {}, "missing_fields": list(REQUIRED_FIELDS)}
+
+
+def warm_up_language_model() -> bool:
+    """Load the local model with the product's own prompt before the first driver (keep_alive in language_model)."""
+    return warm_up_model(PROVISIONAL_SUPPORTED_VALUES)
 
 
 def find_suitable_parking(trip_request: dict) -> dict:

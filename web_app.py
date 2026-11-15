@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import cornell_driver_interface as driver_interface
-import language_model
+import smart_parking_service
 
 HOST = "127.0.0.1"
 PORT = 8000
@@ -71,7 +71,8 @@ class DriverRequestHandler(BaseHTTPRequestHandler):
 def main() -> None:
     server = ThreadingHTTPServer((HOST, PORT), DriverRequestHandler)
     # Load the model in the background so the first driver does not wait for it.
-    threading.Thread(target=language_model.warm_up_model, daemon=True).start()
+    # Not a driver action, so it goes to the service directly.
+    threading.Thread(target=smart_parking_service.warm_up_language_model, daemon=True).start()
     print(f"Cornell Smart Parking: open http://{HOST}:{PORT}")
     server.serve_forever()
 

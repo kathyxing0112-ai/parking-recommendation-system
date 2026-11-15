@@ -241,15 +241,19 @@ def test_request_keeps_the_model_loaded():
     assert body["keep_alive"] == language_model.KEEP_ALIVE
 
 
-def test_warm_up_loads_the_model_without_a_prompt():
+def test_warm_up_sends_one_full_request_like_a_driver_request():
     sent = []
-    assert language_model.warm_up_model(transport=lambda body, timeout: sent.append(body) or {}) is True
-    assert sent == [{"model": language_model.MODEL_NAME, "messages": [], "stream": False,
-                     "keep_alive": language_model.KEEP_ALIVE}]
+    assert language_model.warm_up_model(SUPPORTED, transport=lambda body, timeout: sent.append(body) or {}) is True
+    (body,) = sent
+    real = language_model.build_request("x", SUBMITTED_AT, SUPPORTED)
+    assert body["messages"][0] == real["messages"][0]  # the same system prompt
+    assert body["format"] == real["format"] and body["options"] == real["options"]
+    assert body["keep_alive"] == language_model.KEEP_ALIVE
+    assert language_model.WARM_UP_MESSAGE in body["messages"][1]["content"]
 
 
 def test_warm_up_failure_does_not_stop_the_product():
     def refused(body, timeout):
         raise ConnectionRefusedError
 
-    assert language_model.warm_up_model(transport=refused) is False
+    assert language_model.warm_up_model(SUPPORTED, transport=refused) is False

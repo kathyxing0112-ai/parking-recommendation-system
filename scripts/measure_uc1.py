@@ -57,6 +57,7 @@ sys.path.insert(0, str(ROOT))
 
 import cornell_driver_interface as driver_interface  # noqa: E402
 import language_model  # noqa: E402
+import smart_parking_service  # noqa: E402
 import stage_timing  # noqa: E402
 import web_app  # noqa: E402
 
@@ -87,7 +88,7 @@ class HttpProduct:
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         # web_app.main loads the model when the product starts; do the same,
         # and wait for it, so run 1 meets the product as a driver would.
-        self.warmed_up = language_model.warm_up_model() if warm_up else None
+        self.warmed_up = smart_parking_service.warm_up_language_model() if warm_up else None
 
     def post(self, path: str, payload: dict, parent: str) -> tuple[dict, list[dict]]:
         request = urllib.request.Request(self.base + path, data=json.dumps(payload).encode(),
