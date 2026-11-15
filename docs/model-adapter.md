@@ -96,8 +96,8 @@ adapter never replaces it with another value.
 | Field | Kept when | Otherwise |
 |---|---|---|
 | `destination`, `vehicle_category`, `declared_eligibility` | It matches a supported value, ignoring case. The approved spelling is kept | Missing |
-| `arrival_time` | It is `HH:MM`, and that time on the submission date, with the submission's UTC offset, is no earlier than the submission minute and at most 60 minutes later (Data Contract §5) | Missing |
-| `departure_time` | `arrival_time` is kept, and this `HH:MM` on the same date is later than the arrival | Missing |
+| `arrival_time` | It is `HH:MM`, and that time, with the submission's UTC offset, is no earlier than the submission minute and at most 60 minutes later (Data Contract §5). The time is placed on the submission date, or on the next date if it is earlier than the submission minute (sent 23:40, arrive 00:15) | Missing |
+| `departure_time` | `arrival_time` is kept, and this `HH:MM` is not equal to the arrival. It is placed on the arrival date, or on the next date if it is earlier than the arrival (arrive 22:00, leave 01:00) | Missing |
 | `access_needs` | It is true or false | `null` (not stated) is set to `false` (SPEC.md Model Response Contract); the confirmation step shows the value, and the driver can change it. Any other value, such as `"yes"` or `1`, is listed as missing |
 
 If no field is missing, the result is
@@ -112,8 +112,12 @@ Known limits:
 - A time with no am/pm is taken as written. "3:20" sent at 15:00 becomes
   03:20, which is outside the arrival window, so `arrival_time` is listed as
   missing.
-- Times are not carried past midnight. An arrival after midnight sent before
-  midnight, or a departure on the next day, is listed as missing.
+- Times are carried past midnight by the rule above, not by the model: the
+  model writes clock times only. Until 2026-11-11 a time past midnight was
+  listed as missing, which sent evening requests to the form (found in the
+  Chapter 10 measurement trial, docs/measured-behavior.md). A departure the
+  driver meant as earlier than the arrival therefore reads as the next day;
+  the confirmation step shows the full date and time so the driver can catch it.
 - Relative times are unreliable. On 2026-11-03, messages saying "in 30 minutes"
   often kept the current time, or came back as missing, so the driver must check
   them on the confirmation step. Clock times such as "3:45 PM" gave the right

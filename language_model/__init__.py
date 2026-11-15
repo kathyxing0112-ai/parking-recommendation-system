@@ -23,6 +23,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
 
+from stage_timing import stage
+
 # Local only: the endpoint is the loopback address, so no project data leaves the machine.
 OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
 MODEL_NAME = "qwen3:4b"
@@ -162,11 +164,18 @@ def assemble_contract(content: str, submitted_at: str, supported_values: dict) -
     for field, list_key in LISTED_FIELDS.items():
         trip[field] = _listed_value(reply[field], supported_values[list_key])
 
+    # The model writes clock times only. A clock time earlier than the moment
+    # it follows is read as the next day: an arrival before the submission
+    # minute, or a departure before the arrival (for example 23:30 -> 00:10).
     arrival = _clock_time_on(submitted, reply["arrival_time"])
+    if arrival is not None and arrival < submitted:
+        arrival += timedelta(days=1)
     if arrival is not None and not submitted <= arrival <= submitted + ARRIVAL_WINDOW:
         arrival = None
     departure = _clock_time_on(arrival, reply["departure_time"]) if arrival is not None else None
-    if departure is not None and departure <= arrival:
+    if departure is not None and departure < arrival:
+        departure += timedelta(days=1)
+    if departure is not None and departure == arrival:
         departure = None
     trip["arrival_time"] = arrival.isoformat() if arrival is not None else None
     trip["departure_time"] = departure.isoformat() if departure is not None else None
@@ -194,11 +203,13 @@ def interpret_trip_request(message: str, *, submitted_at: str, supported_values:
     if len(message) > MAX_MESSAGE_CHARACTERS:
         return {"status": "fallback", "reason": "message_too_long"}
     try:
-        reply = transport(build_request(message, submitted_at, supported_values), TIMEOUT_SECONDS)
+        with stage("C.1.1.model_call"):
+            reply = transport(build_request(message, submitted_at, supported_values), TIMEOUT_SECONDS)
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return {"status": "fallback", "reason": "model_unavailable"}
     if not isinstance(reply, dict) or not isinstance(reply.get("message"), dict):
         return {"status": "fallback", "reason": "malformed_json"}
     if reply.get("done_reason") == "length":
         return {"status": "fallback", "reason": "output_truncated"}
-    return assemble_contract(reply["message"].get("content"), submitted_at, supported_values)
+    with stage("C.1.1.contract_check"):
+        return assemble_contract(reply["message"].get("content"), submitted_at, supported_values)

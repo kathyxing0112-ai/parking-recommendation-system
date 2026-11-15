@@ -6,11 +6,13 @@ one driver-facing message in the updated UC.1 sequence diagram.
 """
 
 import smart_parking_service as service
+from stage_timing import stage
 
 
 def submit_trip_request(message: str) -> dict:
     """UC.1.1 Submit Trip Request -> UC.1.2 Interpret and Confirm Trip Request."""
-    return service.interpret_trip_request(message)
+    with stage("UC1.interpret_request"):
+        return service.interpret_trip_request(message)
 
 
 def get_live_parking_status() -> dict:
@@ -25,7 +27,8 @@ def get_trip_form_options() -> dict:
 
 def confirm_trip_requirements(trip_request: dict) -> dict:
     """UC.1.3 Confirm Trip Requirements -> UC.1.14 Present Ranked Parking Recommendations."""
-    return service.find_suitable_parking(trip_request)
+    with stage("UC1.find_parking"):
+        return service.find_suitable_parking(trip_request)
 
 
 def select_parking_option(recommendations: dict, lot_id: str) -> dict:
