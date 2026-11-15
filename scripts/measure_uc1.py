@@ -32,6 +32,9 @@ inside this process and POSTs to /api/interpret and /api/confirm, as the page
 does. The client times each round trip (HTTP.*_round_trip), and the server-side
 stages are still recorded on the handler thread. HTTP.confirm_round_trip is the
 SR-13 window up to the reply arriving; page rendering is not included.
+With --http, Scenario 1 also loads the model when the server starts, as
+web_app.main does; with --cold-first the model is unloaded before that, so
+run 1 shows what the first driver after a product start meets.
 """
 
 import argparse
@@ -67,7 +70,7 @@ HTTP_TOP_LEVEL = ("HTTP.interpret_round_trip", "HTTP.confirm_round_trip")
 class HttpProduct:
     """web_app's server on a free loopback port, recording server-side stages per request."""
 
-    def __init__(self):
+    def __init__(self, warm_up: bool = False):
         self.records: queue.Queue = queue.Queue()
         records = self.records
 
@@ -82,6 +85,9 @@ class HttpProduct:
         self.server = web_app.ThreadingHTTPServer((web_app.HOST, 0), TimedHandler)
         self.base = f"http://{web_app.HOST}:{self.server.server_address[1]}"
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        # web_app.main loads the model when the product starts; do the same,
+        # and wait for it, so run 1 meets the product as a driver would.
+        self.warmed_up = language_model.warm_up_model() if warm_up else None
 
     def post(self, path: str, payload: dict, parent: str) -> tuple[dict, list[dict]]:
         request = urllib.request.Request(self.base + path, data=json.dumps(payload).encode(),
@@ -275,11 +281,15 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     env = environment(args)
 
-    http = HttpProduct() if args.http else None
+    if args.http and args.scenario == 1 and args.cold_first:
+        unload_model()  # start from an unloaded model, then let the product start as usual
+    http = HttpProduct(warm_up=args.scenario == 1) if args.http else None
+    if http is not None:
+        env["startup_warm_up"] = http.warmed_up
     run_rows, stage_rows = [], []
     for i in range(args.runs):
         request = requests[i % len(requests)]
-        if args.scenario == 1 and (args.cold_each or (args.cold_first and i == 0)):
+        if args.scenario == 1 and (args.cold_each or (args.cold_first and i == 0 and not args.http)):
             unload_model()
         model_state = ("cold" if not model_loaded() else "warm") if args.scenario == 1 else "not_used"
         run, records = one_run(args.scenario, request, http)

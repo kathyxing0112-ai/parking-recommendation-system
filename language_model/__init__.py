@@ -29,6 +29,11 @@ from stage_timing import stage
 OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
 MODEL_NAME = "qwen3:4b"
 TIMEOUT_SECONDS = 60
+# How long Ollama keeps the model in memory after a request (its default is
+# 5 minutes). A model that has been unloaded takes seconds to load again, so
+# the first driver after a quiet spell waited 4-6 s instead of about 2 s
+# (Chapter 10 measurements, docs/measured-behavior.md).
+KEEP_ALIVE = "30m"
 MAX_MESSAGE_CHARACTERS = 2000
 MODEL_OPTIONS = {"temperature": 0, "seed": 5151, "num_predict": 512, "num_ctx": 4096}
 
@@ -109,7 +114,24 @@ def build_request(message: str, submitted_at: str, supported_values: dict) -> di
         "stream": False,
         "think": False,
         "options": dict(MODEL_OPTIONS),
+        "keep_alive": KEEP_ALIVE,
     }
+
+
+def warm_up_model(transport=None, timeout: float = TIMEOUT_SECONDS) -> bool:
+    """Load the model before the first driver arrives.
+
+    An Ollama chat request with no messages loads the model and generates
+    nothing. Called once when the product starts (web_app.main). Returns
+    False if the model is not reachable; the product still works, and the
+    first request then loads the model itself or falls back to the form.
+    """
+    transport = transport or post_to_local_ollama
+    try:
+        transport({"model": MODEL_NAME, "messages": [], "stream": False, "keep_alive": KEEP_ALIVE}, timeout)
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return False
+    return True
 
 
 def post_to_local_ollama(body: dict, timeout: float) -> dict:

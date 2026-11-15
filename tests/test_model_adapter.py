@@ -232,3 +232,24 @@ def test_fallback_presents_six_field_form_without_raw_output(monkeypatch):
     result = smart_parking_service.interpret_trip_request("anything")
     assert result == {"status": "form_required", "trip_request": {},
                       "missing_fields": list(smart_parking_service.REQUIRED_FIELDS)}
+
+
+def test_request_keeps_the_model_loaded():
+    transport = replying(REPLY)
+    interpret(transport)
+    body, _ = transport.sent[0]
+    assert body["keep_alive"] == language_model.KEEP_ALIVE
+
+
+def test_warm_up_loads_the_model_without_a_prompt():
+    sent = []
+    assert language_model.warm_up_model(transport=lambda body, timeout: sent.append(body) or {}) is True
+    assert sent == [{"model": language_model.MODEL_NAME, "messages": [], "stream": False,
+                     "keep_alive": language_model.KEEP_ALIVE}]
+
+
+def test_warm_up_failure_does_not_stop_the_product():
+    def refused(body, timeout):
+        raise ConnectionRefusedError
+
+    assert language_model.warm_up_model(transport=refused) is False
