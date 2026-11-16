@@ -84,6 +84,31 @@ The simulation parameters (X2 V0.3) were frozen and the Innoslate runs made on
 The explanation of the divergence and the decision are written by the team
 (report §4.4), not generated.
 
+## SR-13 to display, 2026-11-15
+
+`measure_uc1.py --http` stops when the client has read the reply. SR-13 ends
+when both options are displayed, so the same interval was also measured in a
+browser, through the page's own code: `scripts/measure_display.js` calls the
+page's `search(trip)` (POST /api/confirm, then `renderResults`) and stops
+after the frame with both recommendation cards has been painted (two
+`requestAnimationFrame` callbacks). Product code is unchanged.
+
+Setup: `web_app.py` at commit `e89e9e1` (model warm-up included), the Plan Your
+Trip popup open, Chromium 156 in the Claude desktop app's browser pane, pane
+visible (16.7 ms frame interval checked before the runs; a hidden pane paints
+about once a second and gave invalid trial values). 50 runs spaced 2 s apart
+(as in S1) and 50 back to back (as in S2), requests R01-R40 cycled.
+
+| Series | Reply read (`fetch_ms`) median / max | Cards written (`dom_ms`) median / max | Cards painted (`display_ms`) median / max |
+|---|---|---|---|
+| Spaced 2 s | 50.5 / 139.1 ms | 52.4 / 140.2 ms | 65.2 / 149.1 ms |
+| Back to back | 34.7 / 67.3 ms | 36.2 / 68.7 ms | 66.6 / 83.5 ms |
+
+Every one of the 100 runs showed two recommendation cards with the results
+view visible. The longest time to display was 149.1 ms against the 5 s limit.
+`display_ms` waits for frame boundaries, so it is an upper bound on the paint
+time by up to about two frames (33 ms). Data: `docs/measurements/2026-11-15/display/`.
+
 ## Decision (Lab Manual §10.4.2), 2026-11-15
 
 Recorded from report §4.4. **Simulation parameters: unchanged (X2 V0.3).
@@ -91,7 +116,7 @@ Architecture: the product keeps the language model warm.**
 
 | Divergence | What was checked | Decision |
 |---|---|---|
-| Downstream stages: X2 overestimates window D about 12–25× (244 ms simulated; 21.1 ms S1 and 9.6 ms S2 measured) | Every implemented downstream stage against its X2 value (`comparison.md`). X2 Table 1 marks these inputs as preliminary estimates | Keep the X2 downstream values. They make the simulation conservative for SR-13: the measured `POST /api/confirm` round trip was at most 26.0 ms (S1) and 29.9 ms (S2) against 5 s, with two options in every run. The simulated 244 ms describes the model only and is not the system's response time |
+| Downstream stages: X2 overestimates window D about 12–25× (244 ms simulated; 21.1 ms S1 and 9.6 ms S2 measured) | Every implemented downstream stage against its X2 value (`comparison.md`). X2 Table 1 marks these inputs as preliminary estimates | Keep the X2 downstream values. They make the simulation conservative for SR-13: the measured `POST /api/confirm` round trip was at most 26.0 ms (S1) and 29.9 ms (S2), and the time until both options were painted in a browser at most 149.1 ms, against 5 s, with two options in every run. The simulated 244 ms describes the model only and is not the system's response time |
 | Inference: mean close (2.17 s measured, 2.4 s assumed), spread under a third of the assumed one, right-skewed; first request after an unload took 3.99 s | First request with no warm-up (3.99 s), with a bare model load (about 3.5 s), and with one full warm-up request (2.11 s) | Change the implementation, not the simulation: one full warm-up request when `web_app` starts and `keep_alive` of 30 minutes (commits `436c65f`, `7ffb193`; `docs/model-adapter.md`). Cost: about 2.5 GB of memory held for up to 30 minutes after the last request. S1 was measured again after the change (`s1-http-warm`). The X2 inference distribution is kept: its mean is within about 10%, inference is outside the SR-13 window, and the scenario comparison does not change |
 | S1 downstream 2–4× slower than S2 (X.C.2 read 17.8 ms against 8.2 ms) with the same code | Three experiments on one build (`request-spacing/`): alternating conditions; back-to-back requests with the model loaded and unloaded; idle gaps of 0–2 s with the model unloaded | Request spacing alone reproduces the slowdown (back-to-back 8.5–9.2 ms; after a 0.1–2.0 s gap 21.1–21.9 ms, with no model involved). One set of downstream parameters stays for both scenarios. The S2 figure reflects back-to-back test runs; real requests are spaced like S1's. The machine-level cause was not verified |
 

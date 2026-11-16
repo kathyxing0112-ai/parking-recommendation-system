@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-11-16T00:37:04.726Z",
+  "finishedAt": "2026-11-16T00:38:51.557Z",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/5.11492.5 Chrome/156.0.8078.75 Safari/537.36",
+  "viewport": [
+    994,
+    929,
+    2
+  ],
+  "page": "http://localhost:8000/ (web_app.py, Plan Your Trip popup open)",
+  "commit": "e89e9e1",
+  "frame_interval_ms_before_run": 16.7,
+  "script": "scripts/measure_display.js",
+  "requests": "measurements/uc1_requests.json (forms, R01-R40 cycled)"
+}
