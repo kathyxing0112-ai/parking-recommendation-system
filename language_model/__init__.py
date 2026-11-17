@@ -23,10 +23,17 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
 
+from stage_timing import stage
+
 # Local only: the endpoint is the loopback address, so no project data leaves the machine.
 OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
 MODEL_NAME = "qwen3:4b"
 TIMEOUT_SECONDS = 60
+# How long Ollama keeps the model in memory after a request (its default is
+# 5 minutes). A model that has been unloaded takes seconds to load again, so
+# the first driver after a quiet spell waited 4-6 s instead of about 2 s
+# (Chapter 10 measurements, docs/measured-behavior.md).
+KEEP_ALIVE = "30m"
 MAX_MESSAGE_CHARACTERS = 2000
 MODEL_OPTIONS = {"temperature": 0, "seed": 5151, "num_predict": 512, "num_ctx": 4096}
 
@@ -107,7 +114,30 @@ def build_request(message: str, submitted_at: str, supported_values: dict) -> di
         "stream": False,
         "think": False,
         "options": dict(MODEL_OPTIONS),
+        "keep_alive": KEEP_ALIVE,
     }
+
+
+WARM_UP_MESSAGE = "warm up"
+
+
+def warm_up_model(supported_values: dict, transport=None, timeout: float = TIMEOUT_SECONDS) -> bool:
+    """Run one full request before the first driver arrives, and discard the reply.
+
+    Loading the weights alone (a request with no messages) left the first real
+    request at about 3.5 s; one complete request with the product's own prompt
+    and reply format brought it to about 2.1 s, the warm time (2026-11-15).
+    Called once when the product starts. Returns False if the model is not
+    reachable; the product still works, and the first request then loads the
+    model itself or falls back to the form.
+    """
+    transport = transport or post_to_local_ollama
+    submitted_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    try:
+        transport(build_request(WARM_UP_MESSAGE, submitted_at, supported_values), timeout)
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return False
+    return True
 
 
 def post_to_local_ollama(body: dict, timeout: float) -> dict:
@@ -162,11 +192,18 @@ def assemble_contract(content: str, submitted_at: str, supported_values: dict) -
     for field, list_key in LISTED_FIELDS.items():
         trip[field] = _listed_value(reply[field], supported_values[list_key])
 
+    # The model writes clock times only. A clock time earlier than the moment
+    # it follows is read as the next day: an arrival before the submission
+    # minute, or a departure before the arrival (for example 23:30 -> 00:10).
     arrival = _clock_time_on(submitted, reply["arrival_time"])
+    if arrival is not None and arrival < submitted:
+        arrival += timedelta(days=1)
     if arrival is not None and not submitted <= arrival <= submitted + ARRIVAL_WINDOW:
         arrival = None
     departure = _clock_time_on(arrival, reply["departure_time"]) if arrival is not None else None
-    if departure is not None and departure <= arrival:
+    if departure is not None and departure < arrival:
+        departure += timedelta(days=1)
+    if departure is not None and departure == arrival:
         departure = None
     trip["arrival_time"] = arrival.isoformat() if arrival is not None else None
     trip["departure_time"] = departure.isoformat() if departure is not None else None
@@ -194,11 +231,13 @@ def interpret_trip_request(message: str, *, submitted_at: str, supported_values:
     if len(message) > MAX_MESSAGE_CHARACTERS:
         return {"status": "fallback", "reason": "message_too_long"}
     try:
-        reply = transport(build_request(message, submitted_at, supported_values), TIMEOUT_SECONDS)
+        with stage("C.1.1.model_call"):
+            reply = transport(build_request(message, submitted_at, supported_values), TIMEOUT_SECONDS)
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return {"status": "fallback", "reason": "model_unavailable"}
     if not isinstance(reply, dict) or not isinstance(reply.get("message"), dict):
         return {"status": "fallback", "reason": "malformed_json"}
     if reply.get("done_reason") == "length":
         return {"status": "fallback", "reason": "output_truncated"}
-    return assemble_contract(reply["message"].get("content"), submitted_at, supported_values)
+    with stage("C.1.1.contract_check"):
+        return assemble_contract(reply["message"].get("content"), submitted_at, supported_values)

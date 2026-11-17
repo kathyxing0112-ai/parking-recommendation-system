@@ -1,0 +1,23 @@
+{
+  "measured_at_utc": "2026-11-15T18:21:49+00:00",
+  "scenario": 2,
+  "runs": 50,
+  "cold_first": false,
+  "cold_each": false,
+  "http": true,
+  "request_set": "measurements/uc1_requests.json",
+  "git_commit": "11c03c8",
+  "git_dirty": false,
+  "python": "3.13.9",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "cpu": "Apple M4",
+  "memory_bytes": "17179869184",
+  "model": "qwen3:4b",
+  "model_options": {
+    "temperature": 0,
+    "seed": 5151,
+    "num_predict": 512,
+    "num_ctx": 4096
+  }
+}

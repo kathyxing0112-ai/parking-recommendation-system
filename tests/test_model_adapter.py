@@ -131,6 +131,37 @@ def test_times_use_the_submission_date_and_offset():
     assert result["trip_request"]["departure_time"] == "2026-11-02T18:00:00-05:00"
 
 
+def at_night(arrival, departure, submitted_at="2026-11-10T23:40:00-05:00"):
+    return interpret_trip_request(
+        "x", submitted_at=submitted_at, supported_values=SUPPORTED,
+        transport=replying({**REPLY, "arrival_time": arrival, "departure_time": departure}))
+
+
+def test_departure_after_midnight_is_the_next_day():
+    result = at_night("23:55", "01:30")
+    assert result["status"] == "complete"
+    assert result["trip_request"]["arrival_time"] == "2026-11-10T23:55:00-05:00"
+    assert result["trip_request"]["departure_time"] == "2026-11-11T01:30:00-05:00"
+
+
+def test_arrival_after_midnight_is_the_next_day():
+    result = at_night("00:15", "02:00")
+    assert result["status"] == "complete"
+    assert result["trip_request"]["arrival_time"] == "2026-11-11T00:15:00-05:00"
+    assert result["trip_request"]["departure_time"] == "2026-11-11T02:00:00-05:00"
+
+
+def test_next_day_arrival_outside_the_window_is_missing():
+    # 23:00 sent at 23:40 would be tomorrow at 23:00, far outside 60 minutes.
+    result = at_night("23:00", "23:59")
+    assert result["missing_fields"] == ["arrival_time", "departure_time"]
+
+
+def test_departure_equal_to_arrival_is_missing():
+    result = at_night("23:55", "23:55")
+    assert result["missing_fields"] == ["departure_time"]
+
+
 def test_arrival_in_the_submission_minute_is_accepted():
     result = interpret_trip_request(
         "x", submitted_at="2026-10-02T11:20:40-04:00", supported_values=SUPPORTED,
@@ -201,3 +232,28 @@ def test_fallback_presents_six_field_form_without_raw_output(monkeypatch):
     result = smart_parking_service.interpret_trip_request("anything")
     assert result == {"status": "form_required", "trip_request": {},
                       "missing_fields": list(smart_parking_service.REQUIRED_FIELDS)}
+
+
+def test_request_keeps_the_model_loaded():
+    transport = replying(REPLY)
+    interpret(transport)
+    body, _ = transport.sent[0]
+    assert body["keep_alive"] == language_model.KEEP_ALIVE
+
+
+def test_warm_up_sends_one_full_request_like_a_driver_request():
+    sent = []
+    assert language_model.warm_up_model(SUPPORTED, transport=lambda body, timeout: sent.append(body) or {}) is True
+    (body,) = sent
+    real = language_model.build_request("x", SUBMITTED_AT, SUPPORTED)
+    assert body["messages"][0] == real["messages"][0]  # the same system prompt
+    assert body["format"] == real["format"] and body["options"] == real["options"]
+    assert body["keep_alive"] == language_model.KEEP_ALIVE
+    assert language_model.WARM_UP_MESSAGE in body["messages"][1]["content"]
+
+
+def test_warm_up_failure_does_not_stop_the_product():
+    def refused(body, timeout):
+        raise ConnectionRefusedError
+
+    assert language_model.warm_up_model(SUPPORTED, transport=refused) is False

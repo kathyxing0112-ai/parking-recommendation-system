@@ -27,6 +27,7 @@ from prepare_eligible_parking_information.request_parking_context_and_policy_inf
 from prepare_eligible_parking_information.validate_parking_and_context_information import (
     validate_parking_and_context_information,
 )
+from stage_timing import stage
 
 __all__ = ["InvalidTripRequest", "prepare_eligible_parking_information"]
 
@@ -78,11 +79,12 @@ def prepare_eligible_parking_information(
     (contract 422).
     """
     submitted_at = trip_information_and_parking_request.get("submitted_at")
-    interpretation = interpret_and_confirm_parking_requests(  # A1.1
-        trip_information_and_parking_request,
-        confirmed_trip_requirements,
-        trip_request_validation_rules=trip_request_validation_rules,
-    )
+    with stage("C.1.1.confirm"):
+        interpretation = interpret_and_confirm_parking_requests(  # A1.1
+            trip_information_and_parking_request,
+            confirmed_trip_requirements,
+            trip_request_validation_rules=trip_request_validation_rules,
+        )
     normalized = interpretation.get("normalized_trip_requirements")
     if normalized is None:
         return {
@@ -95,28 +97,31 @@ def prepare_eligible_parking_information(
             "personal_records_and_retention_metadata": [],
         }
 
-    requests = request_parking_context_and_policy_information(  # A1.2
-        normalized,
-        status_recheck_request,
-        information_acquisition_and_refresh_rules=information_acquisition_and_refresh_rules,
-        requested_at=submitted_at,
-    )
-    validated = validate_parking_and_context_information(  # A1.3
-        normalized,
-        parking_availability_data,
-        updated_parking_availability,
-        contextual_information,
-        data_validation_and_freshness_rules=data_validation_and_freshness_rules,
-        parking_policy_constraints=parking_policy_constraints,
-        decision_time=submitted_at,
-    )
-    eligible = determine_eligible_parking_areas(  # A1.4
-        validated["validated_parking_data"],
-        normalized,
-        validated["validated_context_information"],
-        validated["data_quality_and_freshness_status"],
-        parking_policy_constraints=parking_policy_constraints,
-    )
+    with stage("C.1.2.requests"):
+        requests = request_parking_context_and_policy_information(  # A1.2
+            normalized,
+            status_recheck_request,
+            information_acquisition_and_refresh_rules=information_acquisition_and_refresh_rules,
+            requested_at=submitted_at,
+        )
+    with stage("C.1.3.validate"):
+        validated = validate_parking_and_context_information(  # A1.3
+            normalized,
+            parking_availability_data,
+            updated_parking_availability,
+            contextual_information,
+            data_validation_and_freshness_rules=data_validation_and_freshness_rules,
+            parking_policy_constraints=parking_policy_constraints,
+            decision_time=submitted_at,
+        )
+    with stage("C.1.4.eligibility"):
+        eligible = determine_eligible_parking_areas(  # A1.4
+            validated["validated_parking_data"],
+            normalized,
+            validated["validated_context_information"],
+            validated["data_quality_and_freshness_status"],
+            parking_policy_constraints=parking_policy_constraints,
+        )
     return {
         **requests,
         "normalized_trip_requirements": normalized,

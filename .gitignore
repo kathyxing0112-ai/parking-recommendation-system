@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Ch10 raw measurement runs: kept local until the simulation parameters are committed
+measurements/runs/
