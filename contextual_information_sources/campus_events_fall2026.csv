@@ -1,0 +1,8 @@
+date,start_hour,end_hour,lot_ids,occupancy_increase,name,source
+2026-09-16,10,16,LOT-1,0.15,Career fair (weekday),simulated draft - not a real schedule; team maintains
+2026-09-19,10,18,LOT-1;LOT-2,0.45,Home football game,simulated draft - not a real schedule; team maintains
+2026-10-03,10,18,LOT-1;LOT-2,0.45,Home football game,simulated draft - not a real schedule; team maintains
+2026-10-17,9,19,LOT-1;LOT-2;LOT-3,0.50,Homecoming football game,simulated draft - not a real schedule; team maintains
+2026-10-28,17,22,LOT-3,0.30,Evening concert (weekday),simulated draft - not a real schedule; team maintains
+2026-11-07,10,18,LOT-1;LOT-2,0.45,Home football game,simulated draft - not a real schedule; team maintains
+2026-11-21,10,18,LOT-1;LOT-2,0.45,Home football game,simulated draft - not a real schedule; team maintains
