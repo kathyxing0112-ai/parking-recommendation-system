@@ -26,8 +26,15 @@ bias (median forecast minus observation). The 2026-11-07 event window is reporte
 its own (one event, for reference only).
 
 Interval calibration: the LightGBM intervals are widened by split conformal calibration
-(one amount per lead-time band) fitted on forecasts for week 11 and checked on forecasts
-made in week 12, next to the uncalibrated methods on the same week-12 forecasts.
+(one amount per lead-time band) fitted on forecasts for week 11, without the event window,
+and checked on forecasts made in week 12, next to the uncalibrated methods on the same
+week-12 forecasts.
+
+Usage-weighted scores (team decisions, 2026-11-21): the selection score weights each
+lead-time band by the team's assumed share of requests (most requests come close to
+arrival), read without the event window; two other share sets test whether the ranking
+depends on the assumption. T_c is read without the event window (3 h); the reading with
+the event (7 h) is still reported.
 
 Leakage checks run inside the script and stop it if a rule is broken; the checks that
 held are listed in run.json. The LightGBM settings were frozen on 2026-11-21.
@@ -75,6 +82,11 @@ FEATURES = ["lot_code", "lead", "origin_minute", "rate_now", "lag_15", "lag_30",
 PROFILE_WEEKS = 15            # look back as many weeks as exist before the time
 SHORT_MODEL_MAX_LEAD = 360    # ALT-F2 trains its LightGBM on lead times up to 6 h only
 CALIBRATION_WEEK, CHECK_WEEK = 11, 12
+# Team assumption (2026-11-21): share of requests by how long before arrival they are made.
+USAGE_BANDS = [("0-1h", 0, 60), ("1-3h", 60, 180), ("3-6h", 180, 360), ("6-24h", 360, 1440), ("24-72h", 1440, 4320)]
+USAGE_SHARES = {"team": (0.50, 0.25, 0.10, 0.10, 0.05),        # the team's assumption
+                "more near": (0.70, 0.15, 0.05, 0.05, 0.05),   # sensitivity checks
+                "more far": (0.30, 0.20, 0.15, 0.20, 0.15)}
 INTERVAL_LEVEL = 0.8
 
 CHECKS: list[str] = []        # leakage checks that passed in this run, written to run.json
@@ -343,6 +355,28 @@ def band_table(scored):
     return table.sort_values(["scope", "method", "band"])
 
 
+def usage_weighted(scored) -> pd.DataFrame:
+    """Each metric by usage band, and weighted by each share set in USAGE_SHARES."""
+    names = [b[0] for b in USAGE_BANDS]
+    scored = scored.assign(usage_band=scored["lead"].map(lambda l: next(n for n, a, b in USAGE_BANDS if a < l <= b)),
+                           covered=scored["covered"].astype(float))
+    event = in_event_window(scored)
+    day = scored["target_hour"].isin(DAYTIME_HOURS).to_numpy()
+    scopes = {"all-day, no event window": ~event, "daytime, no event window": ~event & day,
+              "all-day": np.ones(len(scored), bool), "daytime": day, "event window": event}
+    rows = []
+    for scope, m in scopes.items():
+        if not m.any():
+            continue
+        for metric, column in [("mae", "err"), ("bias", "bias"), ("pinball", "pinball"),
+                               ("coverage", "covered"), ("width", "width")]:
+            t = scored[m].groupby(["method", "usage_band"])[column].mean().unstack()[names]
+            for name, shares in USAGE_SHARES.items():
+                t[f"weighted {name}"] = t[names].to_numpy() @ np.array(shares)
+            rows.append(t.reset_index().assign(scope=scope, metric=metric))
+    return pd.concat(rows, ignore_index=True)
+
+
 def tables(scored):
     day = scored[scored["target_hour"].isin(DAYTIME_HOURS)]
     event = scored[in_event_window(scored)]
@@ -356,7 +390,7 @@ def tables(scored):
 def calibrate(val, pred, bands):
     """Split conformal calibration of the 80% interval, one widening amount per lead-time band.
 
-    For each forecast with target time in week 11, the score is how far the observation falls
+    For each forecast with target time in week 11 (outside the event window), the score is how far the observation falls
     outside the interval (negative when inside). The widening for a band is the
     ceil((n+1)*0.8)/n quantile of its scores, so that about 80% of week-11 observations fall
     inside the widened interval. The median forecast is not changed. Week 12 is the check.
@@ -365,6 +399,7 @@ def calibrate(val, pred, bands):
     y = val["y"].to_numpy()
     band = val["lead"].map(band_of).to_numpy()
     calibration = (val["target_week"] == CALIBRATION_WEEK).to_numpy()   # forecast time is then in week 11 too
+    calibration &= ~in_event_window(val)                              # team decision 2026-11-21
     scores = np.maximum(pred[:, 0] - y, y - pred[:, 2])
     out, widen = pred.copy(), {}
     for b in bands:
@@ -558,6 +593,7 @@ def main(argv=None):
     per_lead.round(4).to_csv(args.out / "per_lead.csv", index=False)
     by_band.round(4).to_csv(args.out / "by_band.csv", index=False)
     event_band.round(4).to_csv(args.out / "event_window.csv", index=False)
+    usage_weighted(score(val, preds)).round(4).to_csv(args.out / "usage_weighted.csv", index=False)
     cutoff_table.join(cutoff_ordinary, rsuffix="_no_event_window").to_csv(
         args.out / "cutoff_short_model_vs_baseline.csv")
 
@@ -573,13 +609,17 @@ def main(argv=None):
     check_rows = (val["origin_week"] == CHECK_WEEK).to_numpy()   # target time is then in week 12 too
     check_table = band_table(score(val[check_rows], {k: v[check_rows] for k, v in calibrated.items()}))
     check_table.round(4).to_csv(args.out / "calibration_check_week12.csv", index=False)
+    usage_weighted(score(val[check_rows], {k: v[check_rows] for k, v in calibrated.items()})).round(4).to_csv(
+        args.out / "usage_weighted_week12_calibrated.csv", index=False)
 
     run = {"cutoff_T_c_minutes": t_c, "cutoff_T_c_minutes_without_event_window": t_c_ordinary,
            "cutoff_rule": "shortest lead where the ALT-F2 LightGBM (trained on leads <= 6 h) has higher all-day "
                           "validation MAE than the baseline; if none, the next lead after 6 h. "
                           "ALT-F2 = that LightGBM below T_c, baseline from T_c on",
+           "team_T_c_reading": "without the event window (decided 2026-11-21)",
+           "usage_shares": {"bands": [b[0] for b in USAGE_BANDS], **USAGE_SHARES},
            "calibration": {"method": "split conformal, one widening per lead-time band (spaces added to each side)",
-                           "calibrated_on": f"forecasts with target time in week {CALIBRATION_WEEK}",
+                           "calibrated_on": f"forecasts with target time in week {CALIBRATION_WEEK}, without the event window",
                            "checked_on": f"forecasts made in week {CHECK_WEEK}",
                            "ALT-F1 widening": f1_widen, "ALT-F2 LightGBM part widening": f2_widen},
            "validation_forecast_times": int(val["origin"].nunique()), "validation_samples": len(val),
