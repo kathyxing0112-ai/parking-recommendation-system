@@ -1,0 +1,114 @@
+{
+  "cutoff_T_c_minutes": 420,
+  "cutoff_T_c_minutes_without_event_window": 180,
+  "cutoff_rule": "shortest lead where the ALT-F2 LightGBM (trained on leads <= 6 h) has higher all-day validation MAE than the baseline; if none, the next lead after 6 h. ALT-F2 = that LightGBM below T_c, baseline from T_c on",
+  "calibration": {
+    "method": "split conformal, one widening per lead-time band (spaces added to each side)",
+    "calibrated_on": "forecasts with target time in week 11",
+    "checked_on": "forecasts made in week 12",
+    "ALT-F1 widening": {
+      "0-1h": 1.958,
+      "1-6h": 2.178,
+      "6-24h": 2.122,
+      "24-48h": 2.062,
+      "48-72h": 2.231
+    },
+    "ALT-F2 LightGBM part widening": {
+      "0-1h": 1.418,
+      "1-6h": 1.945
+    }
+  },
+  "validation_forecast_times": 336,
+  "validation_samples": 40068,
+  "training_samples": 767586,
+  "leakage_checks_passed": [
+    "no holdout row (weeks 13-15) is kept after loading",
+    "forecast time and target time are in the same split",
+    "lag, same-time-last-week and profile inputs are at or before the forecast time",
+    "every label is after its forecast time",
+    "labels are not model features",
+    "the baseline table uses weeks 1-10 only",
+    "Chronos history ends at the forecast time",
+    "Chronos future covariates are calendar, event and weather-forecast values only"
+  ],
+  "cost": {
+    "baseline": {
+      "fit_s": 0.007,
+      "trained_on": "weeks 1-10",
+      "model_size_kb": 58.6,
+      "memory_mb": 1.2,
+      "latency_one_request": {
+        "runs": 30,
+        "median_ms": 0.207,
+        "p95_ms": 0.239
+      }
+    },
+    "ALT-F1 LightGBM": {
+      "fit_s": 111.6,
+      "trained_on": "weeks 1-10, lead times 15 min-72 h",
+      "training_samples": 767586,
+      "model_size_kb": 8201.2,
+      "memory_mb": 32.2,
+      "latency_one_request": {
+        "runs": 30,
+        "median_ms": 2.278,
+        "p95_ms": 2.664
+      }
+    },
+    "ALT-F2 hybrid": {
+      "fit_s": 9.9,
+      "trained_on": "weeks 1-10; LightGBM on lead times 15 min-6 h",
+      "training_samples": 163134,
+      "model_size_kb": 7088.1,
+      "memory_mb": 27.3,
+      "latency_one_request": {
+        "runs": 30,
+        "median_ms": 1.703,
+        "p95_ms": 2.098
+      }
+    },
+    "ALT-F3 Chronos-2 + covariates": {
+      "fit_s": 0,
+      "trained_on": "none (zero-shot)",
+      "model": "amazon/chronos-2",
+      "load_s": 3.2,
+      "validation_run_s": 296.6,
+      "parameters_m": 119.5,
+      "memory_mb": 291.6,
+      "latency_one_request": {
+        "runs": 30,
+        "median_ms": 831.58,
+        "p95_ms": 946.443
+      }
+    },
+    "ALT-F3b Chronos-Bolt-Small": {
+      "fit_s": 0,
+      "trained_on": "none (zero-shot)",
+      "model": "amazon/chronos-bolt-small",
+      "load_s": 0.3,
+      "validation_run_s": 388.6,
+      "parameters_m": 47.7,
+      "memory_mb": 318.2,
+      "latency_one_request": {
+        "runs": 30,
+        "median_ms": 1244.183,
+        "p95_ms": 1715.599
+      }
+    }
+  },
+  "environment": {
+    "commit": "632a7e48292ce5014f4629d034ee1fc3857b77fb",
+    "uncommitted_changes_in_scripts_or_data": false,
+    "data_sha256": "81faa2458d1f2e919355e6cef9cb0863fe850f42bb9fa85f36a32d2661a646b2",
+    "machine": "arm64",
+    "processor": "Apple M4",
+    "memory_gb": 16,
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.9",
+    "lightgbm": "4.7.0",
+    "torch": "2.11.0",
+    "chronos_forecasting": "2.3.2",
+    "device": "cpu",
+    "torch_threads": 4
+  }
+}

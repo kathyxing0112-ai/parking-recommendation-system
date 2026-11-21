@@ -1,0 +1,109 @@
+method,band,n,mae,bias,pinball,coverage,width,scope
+ALT-F1 LightGBM,0-1h,4029,4.0946,-0.1173,1.3833,0.5803,8.3473,all-day
+ALT-F1 LightGBM,1-6h,4980,5.4111,-0.21,1.7928,0.5536,10.2979,all-day
+ALT-F1 LightGBM,6-24h,17307,5.5018,0.0014,1.8322,0.5564,10.3772,all-day
+ALT-F1 LightGBM,24-48h,7164,5.5051,0.2658,1.8445,0.5501,10.2979,all-day
+ALT-F1 LightGBM,48-72h,6588,5.6194,0.4313,1.8854,0.5404,10.132,all-day
+ALT-F1 LightGBM,0-72h,40068,5.369,0.0811,1.7931,0.5547,10.1087,all-day
+ALT-F2 hybrid,0-1h,4029,3.6565,-0.0896,1.1971,0.6361,8.4198,all-day
+ALT-F2 hybrid,1-6h,4980,5.4113,-0.3227,1.7502,0.5914,10.9168,all-day
+ALT-F2 hybrid,6-24h,17307,6.0001,-1.9095,1.9375,0.7532,19.2256,all-day
+ALT-F2 hybrid,24-48h,7164,6.0193,-1.943,1.9219,0.7494,18.683,all-day
+ALT-F2 hybrid,48-72h,6588,6.1241,-2.074,1.9515,0.7439,18.7694,all-day
+ALT-F2 hybrid,0-72h,40068,5.7151,-1.5623,1.8393,0.7191,16.9343,all-day
+"ALT-F2 hybrid, T_c 3 h (no event)",0-1h,4029,3.6565,-0.0896,1.1971,0.6361,8.4198,all-day
+"ALT-F2 hybrid, T_c 3 h (no event)",1-6h,4980,5.853,-1.6856,1.9153,0.7195,18.2091,all-day
+"ALT-F2 hybrid, T_c 3 h (no event)",6-24h,17307,6.0001,-1.9095,1.9375,0.7532,19.2256,all-day
+"ALT-F2 hybrid, T_c 3 h (no event)",24-48h,7164,6.0193,-1.943,1.9219,0.7494,18.683,all-day
+"ALT-F2 hybrid, T_c 3 h (no event)",48-72h,6588,6.1241,-2.074,1.9515,0.7439,18.7694,all-day
+"ALT-F2 hybrid, T_c 3 h (no event)",0-72h,40068,5.77,-1.7317,1.8598,0.7351,17.8407,all-day
+ALT-F3 Chronos-2 + covariates,0-1h,4029,3.9904,-0.0947,1.2794,0.7714,12.09,all-day
+ALT-F3 Chronos-2 + covariates,1-6h,4980,7.7131,0.5473,2.4986,0.7639,23.3355,all-day
+ALT-F3 Chronos-2 + covariates,6-24h,17307,9.3177,2.9373,3.0387,0.7706,31.5749,all-day
+ALT-F3 Chronos-2 + covariates,24-48h,7164,10.8716,4.1152,3.5286,0.7614,38.3047,all-day
+ALT-F3 Chronos-2 + covariates,48-72h,6588,10.8277,4.093,3.5381,0.7775,41.7832,all-day
+ALT-F3 Chronos-2 + covariates,0-72h,40068,9.1087,2.736,2.9644,0.7693,31.4733,all-day
+ALT-F3b Chronos-Bolt-Small,0-1h,4029,4.8579,-1.2165,1.5483,0.8099,14.4309,all-day
+ALT-F3b Chronos-Bolt-Small,1-6h,4980,9.7505,-1.7677,3.3934,0.6534,18.4863,all-day
+ALT-F3b Chronos-Bolt-Small,6-24h,17307,10.2464,-0.4566,3.593,0.6574,19.2272,all-day
+ALT-F3b Chronos-Bolt-Small,24-48h,7164,10.6079,-0.2881,3.8045,0.615,17.799,all-day
+ALT-F3b Chronos-Bolt-Small,48-72h,6588,10.6073,-0.2869,3.8382,0.5918,16.7076,all-day
+ALT-F3b Chronos-Bolt-Small,0-72h,40068,9.7669,-0.6379,3.4407,0.6539,17.9832,all-day
+baseline,0-1h,4029,6.0587,-2.1552,1.9825,0.7486,20.0058,all-day
+baseline,1-6h,4980,6.0704,-2.0314,1.9914,0.751,20.1127,all-day
+baseline,6-24h,17307,6.0001,-1.9095,1.9375,0.7532,19.2256,all-day
+baseline,24-48h,7164,6.0193,-1.943,1.9219,0.7494,18.683,all-day
+baseline,48-72h,6588,6.1241,-2.074,1.9515,0.7439,18.7694,all-day
+baseline,0-72h,40068,6.0386,-1.9824,1.9482,0.7503,19.2423,all-day
+ALT-F1 LightGBM,0-1h,3965,3.9762,-0.3016,1.3474,0.5783,8.1937,"all-day, no event window"
+ALT-F1 LightGBM,1-6h,4900,5.3024,-0.4095,1.7632,0.55,10.1469,"all-day, no event window"
+ALT-F1 LightGBM,6-24h,17019,5.3729,-0.2206,1.7972,0.5536,10.2398,"all-day, no event window"
+ALT-F1 LightGBM,24-48h,7036,5.3664,0.0318,1.807,0.547,10.145,"all-day, no event window"
+ALT-F1 LightGBM,48-72h,6460,5.4724,0.1815,1.8453,0.5368,9.9664,"all-day, no event window"
+ALT-F1 LightGBM,0-72h,39380,5.2387,-0.1412,1.7573,0.5517,9.9604,"all-day, no event window"
+ALT-F2 hybrid,0-1h,3965,3.5332,-0.2569,1.1443,0.6404,8.3857,"all-day, no event window"
+ALT-F2 hybrid,1-6h,4900,5.3231,-0.4477,1.7082,0.5945,10.8594,"all-day, no event window"
+ALT-F2 hybrid,6-24h,17019,5.0192,-0.8593,1.7402,0.7512,18.0907,"all-day, no event window"
+ALT-F2 hybrid,24-48h,7036,4.9651,-0.8146,1.7096,0.7472,17.453,"all-day, no event window"
+ALT-F2 hybrid,48-72h,6460,4.9779,-0.8476,1.7208,0.7413,17.4314,"all-day, no event window"
+ALT-F2 hybrid,0-72h,39380,4.891,-0.7375,1.6676,0.7182,15.9917,"all-day, no event window"
+"ALT-F2 hybrid, T_c 3 h (no event)",0-1h,3965,3.5332,-0.2569,1.1443,0.6404,8.3857,"all-day, no event window"
+"ALT-F2 hybrid, T_c 3 h (no event)",1-6h,4900,5.0779,-0.9015,1.7543,0.7186,17.3392,"all-day, no event window"
+"ALT-F2 hybrid, T_c 3 h (no event)",6-24h,17019,5.0192,-0.8593,1.7402,0.7512,18.0907,"all-day, no event window"
+"ALT-F2 hybrid, T_c 3 h (no event)",24-48h,7036,4.9651,-0.8146,1.7096,0.7472,17.453,"all-day, no event window"
+"ALT-F2 hybrid, T_c 3 h (no event)",48-72h,6460,4.9779,-0.8476,1.7208,0.7413,17.4314,"all-day, no event window"
+"ALT-F2 hybrid, T_c 3 h (no event)",0-72h,39380,4.8604,-0.794,1.6733,0.7336,16.7979,"all-day, no event window"
+ALT-F3 Chronos-2 + covariates,0-1h,3965,3.9372,-0.0587,1.2622,0.7707,11.9478,"all-day, no event window"
+ALT-F3 Chronos-2 + covariates,1-6h,4900,7.6312,0.6446,2.4785,0.7616,22.9754,"all-day, no event window"
+ALT-F3 Chronos-2 + covariates,6-24h,17019,9.2664,2.8243,3.0256,0.7668,31.223,"all-day, no event window"
+ALT-F3 Chronos-2 + covariates,24-48h,7036,10.8466,3.9932,3.5158,0.7571,37.8072,"all-day, no event window"
+ALT-F3 Chronos-2 + covariates,48-72h,6460,10.8056,3.9667,3.5226,0.7731,41.2258,"all-day, no event window"
+ALT-F3 Chronos-2 + covariates,0-72h,39380,9.0612,2.6591,2.9491,0.7659,31.0733,"all-day, no event window"
+ALT-F3b Chronos-Bolt-Small,0-1h,3965,4.6885,-0.9924,1.4913,0.8136,14.1914,"all-day, no event window"
+ALT-F3b Chronos-Bolt-Small,1-6h,4900,8.8906,-0.7776,2.9988,0.6637,18.392,"all-day, no event window"
+ALT-F3b Chronos-Bolt-Small,6-24h,17019,9.2186,0.7369,3.112,0.6685,19.1593,"all-day, no event window"
+ALT-F3b Chronos-Bolt-Small,24-48h,7036,9.4969,1.0106,3.2783,0.6262,17.7284,"all-day, no event window"
+ALT-F3b Chronos-Bolt-Small,48-72h,6460,9.3956,1.1292,3.26,0.6036,16.6435,"all-day, no event window"
+ALT-F3b Chronos-Bolt-Small,0-72h,39380,8.8004,0.4876,2.9887,0.6643,17.8953,"all-day, no event window"
+baseline,0-1h,3965,5.1216,-1.1551,1.7953,0.7463,18.9496,"all-day, no event window"
+baseline,1-6h,4900,5.1251,-1.0202,1.802,0.749,19.0322,"all-day, no event window"
+baseline,6-24h,17019,5.0192,-0.8593,1.7402,0.7512,18.0907,"all-day, no event window"
+baseline,24-48h,7036,4.9651,-0.8146,1.7096,0.7472,17.453,"all-day, no event window"
+baseline,48-72h,6460,4.9779,-0.8476,1.7208,0.7413,17.4314,"all-day, no event window"
+baseline,0-72h,39380,5.0262,-0.8992,1.7448,0.7481,18.0722,"all-day, no event window"
+ALT-F1 LightGBM,0-1h,2016,5.7584,0.272,1.9163,0.5908,11.9324,daytime
+ALT-F1 LightGBM,1-6h,2520,7.6328,0.1238,2.5061,0.5738,14.8118,daytime
+ALT-F1 LightGBM,6-24h,8658,7.729,0.5349,2.5388,0.5815,14.9495,daytime
+ALT-F1 LightGBM,24-48h,3594,7.6908,1.0145,2.5458,0.576,14.781,daytime
+ALT-F1 LightGBM,48-72h,3306,7.86,1.3016,2.6062,0.5611,14.4929,daytime
+ALT-F1 LightGBM,0-72h,20094,7.534,0.6689,2.4846,0.5771,14.5243,daytime
+ALT-F2 hybrid,0-1h,2016,5.1814,0.2153,1.6803,0.6275,11.763,daytime
+ALT-F2 hybrid,1-6h,2520,7.7861,-0.1737,2.498,0.5944,15.7622,daytime
+ALT-F2 hybrid,6-24h,8658,8.9028,-3.0048,2.821,0.7581,29.2935,daytime
+ALT-F2 hybrid,24-48h,3594,8.9225,-3.0739,2.7896,0.7518,28.4351,daytime
+ALT-F2 hybrid,48-72h,3306,9.0898,-3.3243,2.8405,0.7435,28.7969,daytime
+ALT-F2 hybrid,0-72h,20094,8.4237,-2.3916,2.6636,0.721,25.6025,daytime
+"ALT-F2 hybrid, T_c 3 h (no event)",0-1h,2016,5.1814,0.2153,1.6803,0.6275,11.763,daytime
+"ALT-F2 hybrid, T_c 3 h (no event)",1-6h,2520,8.6295,-2.6113,2.7901,0.7238,27.7499,daytime
+"ALT-F2 hybrid, T_c 3 h (no event)",6-24h,8658,8.9028,-3.0048,2.821,0.7581,29.2935,daytime
+"ALT-F2 hybrid, T_c 3 h (no event)",24-48h,3594,8.9225,-3.0739,2.7896,0.7518,28.4351,daytime
+"ALT-F2 hybrid, T_c 3 h (no event)",48-72h,3306,9.0898,-3.3243,2.8405,0.7435,28.7969,daytime
+"ALT-F2 hybrid, T_c 3 h (no event)",0-72h,20094,8.5295,-2.6973,2.7003,0.7372,27.1059,daytime
+ALT-F3 Chronos-2 + covariates,0-1h,2016,5.1052,-0.5719,1.6333,0.7897,15.8104,daytime
+ALT-F3 Chronos-2 + covariates,1-6h,2520,10.9411,-0.2461,3.5279,0.7996,33.5981,daytime
+ALT-F3 Chronos-2 + covariates,6-24h,8658,13.377,3.8593,4.3453,0.8252,47.2355,daytime
+ALT-F3 Chronos-2 + covariates,24-48h,3594,15.3501,5.2461,4.9923,0.8269,57.7198,daytime
+ALT-F3 Chronos-2 + covariates,48-72h,3306,14.853,4.6507,4.91,0.8527,63.0219,daytime
+ALT-F3 Chronos-2 + covariates,0-72h,20094,12.8374,3.2781,4.1793,0.8233,46.8449,daytime
+ALT-F3b Chronos-Bolt-Small,0-1h,2016,6.2769,-1.1705,1.9999,0.747,17.2275,daytime
+ALT-F3b Chronos-Bolt-Small,1-6h,2520,14.2021,-4.1581,4.9778,0.5754,24.6985,daytime
+ALT-F3b Chronos-Bolt-Small,6-24h,8658,15.4726,-1.0601,5.4695,0.5948,26.1074,daytime
+ALT-F3b Chronos-Bolt-Small,24-48h,3594,15.9584,-1.3821,5.7821,0.5473,24.1915,daytime
+ALT-F3b Chronos-Bolt-Small,48-72h,3306,16.0157,-1.4454,5.8822,0.5251,22.4334,daytime
+ALT-F3b Chronos-Bolt-Small,0-72h,20094,14.5669,-1.5807,5.1835,0.5877,24.0927,daytime
+baseline,0-1h,2016,8.8824,-3.3482,2.8653,0.7584,30.6801,daytime
+baseline,1-6h,2520,8.9603,-3.2024,2.9013,0.756,30.7683,daytime
+baseline,6-24h,8658,8.9028,-3.0048,2.821,0.7581,29.2935,daytime
+baseline,24-48h,3594,8.9225,-3.0739,2.7896,0.7518,28.4351,daytime
+baseline,48-72h,3306,9.0898,-3.3243,2.8405,0.7435,28.7969,daytime
+baseline,0-72h,20094,8.9423,-3.1289,2.8331,0.7544,29.3823,daytime
