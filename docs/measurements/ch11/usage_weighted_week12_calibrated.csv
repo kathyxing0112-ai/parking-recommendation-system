@@ -1,0 +1,181 @@
+method,0-1h,1-3h,3-6h,6-24h,24-72h,weighted team,weighted more near,weighted more far,scope,metric
+ALT-F1 LightGBM,4.1111,5.4617,5.8079,5.8256,5.9837,4.8835,4.5779,5.2595,"all-day, no event window",mae
+"ALT-F1 LightGBM, calibrated",4.1111,5.4617,5.8079,5.8256,5.9837,4.8835,4.5779,5.2595,"all-day, no event window",mae
+ALT-F2 hybrid,3.6057,5.4009,5.989,5.201,5.1359,4.5289,4.1504,4.8708,"all-day, no event window",mae
+"ALT-F2 hybrid, T_c 3 h (no event)",3.6057,5.2269,5.2676,5.201,5.1359,4.4132,4.0882,4.7278,"all-day, no event window",mae
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",3.6057,5.2269,5.2676,5.201,5.1359,4.4132,4.0882,4.7278,"all-day, no event window",mae
+"ALT-F2 hybrid, calibrated",3.6057,5.4009,5.989,5.201,5.1359,4.5289,4.1504,4.8708,"all-day, no event window",mae
+ALT-F3 Chronos-2 + covariates,3.4594,5.529,6.4254,7.531,8.4545,4.9303,4.3715,5.8818,"all-day, no event window",mae
+ALT-F3b Chronos-Bolt-Small,4.0876,6.0825,7.2801,8.366,9.1476,5.5864,5.0134,6.5801,"all-day, no event window",mae
+baseline,5.1838,5.2553,5.2676,5.201,5.1359,5.2094,5.1972,5.2069,"all-day, no event window",mae
+ALT-F1 LightGBM,-0.4267,-0.4911,-0.3874,-0.4085,-0.5639,-0.4439,-0.4403,-0.4506,"all-day, no event window",bias
+"ALT-F1 LightGBM, calibrated",-0.4267,-0.4911,-0.3874,-0.4085,-0.5639,-0.4439,-0.4403,-0.4506,"all-day, no event window",bias
+ALT-F2 hybrid,-0.3603,-0.528,-0.5784,-0.8707,-1.2655,-0.5204,-0.4672,-0.6644,"all-day, no event window",bias
+"ALT-F2 hybrid, T_c 3 h (no event)",-0.3603,-0.7093,-0.8736,-0.8707,-1.2655,-0.5952,-0.5091,-0.745,"all-day, no event window",bias
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",-0.3603,-0.7093,-0.8736,-0.8707,-1.2655,-0.5952,-0.5091,-0.745,"all-day, no event window",bias
+"ALT-F2 hybrid, calibrated",-0.3603,-0.528,-0.5784,-0.8707,-1.2655,-0.5204,-0.4672,-0.6644,"all-day, no event window",bias
+ALT-F3 Chronos-2 + covariates,-0.0321,0.3083,0.4819,1.3551,1.4059,0.315,0.1859,0.6062,"all-day, no event window",bias
+ALT-F3b Chronos-Bolt-Small,-0.6989,-0.5705,0.6245,1.1767,1.245,-0.2497,-0.4225,0.192,"all-day, no event window",bias
+baseline,-1.1356,-0.9099,-0.8736,-0.8707,-1.2655,-1.033,-1.0819,-1.0177,"all-day, no event window",bias
+ALT-F1 LightGBM,1.3925,1.8171,1.9508,1.9677,2.0517,1.6449,1.5458,1.7751,"all-day, no event window",pinball
+"ALT-F1 LightGBM, calibrated",1.3128,1.7125,1.8307,1.8495,1.9256,1.5488,1.4561,1.6697,"all-day, no event window",pinball
+ALT-F2 hybrid,1.1559,1.7194,1.8942,1.811,1.8009,1.4683,1.3423,1.6071,"all-day, no event window",pinball
+"ALT-F2 hybrid, T_c 3 h (no event)",1.1559,1.762,1.8786,1.811,1.8009,1.4774,1.3479,1.6133,"all-day, no event window",pinball
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",1.1199,1.7265,1.8786,1.811,1.8009,1.4506,1.3174,1.5954,"all-day, no event window",pinball
+"ALT-F2 hybrid, calibrated",1.1199,1.6451,1.8157,1.811,1.8009,1.4239,1.3021,1.5697,"all-day, no event window",pinball
+ALT-F3 Chronos-2 + covariates,1.0968,1.7244,2.0469,2.4521,2.7983,1.5693,1.3913,1.8911,"all-day, no event window",pinball
+ALT-F3b Chronos-Bolt-Small,1.2743,1.8927,2.3014,2.8071,3.1584,1.7791,1.5893,2.1412,"all-day, no event window",pinball
+baseline,1.8496,1.8736,1.8786,1.811,1.8009,1.8522,1.8503,1.8437,"all-day, no event window",pinball
+ALT-F1 LightGBM,0.5708,0.5418,0.531,0.5296,0.5273,0.5533,0.5602,0.5442,"all-day, no event window",coverage
+"ALT-F1 LightGBM, calibrated",0.7705,0.7492,0.7301,0.724,0.7076,0.7533,0.7598,0.7414,"all-day, no event window",coverage
+ALT-F2 hybrid,0.6259,0.5811,0.5733,0.7624,0.7518,0.6294,0.6297,0.6552,"all-day, no event window",coverage
+"ALT-F2 hybrid, T_c 3 h (no event)",0.6259,0.6747,0.7648,0.7624,0.7518,0.672,0.6533,0.7027,"all-day, no event window",coverage
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",0.7889,0.7684,0.7648,0.7624,0.7518,0.7768,0.7814,0.7703,"all-day, no event window",coverage
+"ALT-F2 hybrid, calibrated",0.7889,0.7654,0.7546,0.7624,0.7518,0.7751,0.7805,0.7682,"all-day, no event window",coverage
+ALT-F3 Chronos-2 + covariates,0.769,0.7674,0.7805,0.777,0.7688,0.7705,0.7697,0.772,"all-day, no event window",coverage
+ALT-F3b Chronos-Bolt-Small,0.8361,0.7553,0.7076,0.7186,0.6422,0.7816,0.802,0.7481,"all-day, no event window",coverage
+baseline,0.7556,0.7633,0.7648,0.7624,0.7518,0.7589,0.7574,0.7593,"all-day, no event window",coverage
+ALT-F1 LightGBM,8.1336,10.0081,10.1928,10.0545,9.8437,9.0857,8.6993,9.4581,"all-day, no event window",width
+"ALT-F1 LightGBM, calibrated",11.9248,14.2319,14.4192,14.1168,13.9273,13.0703,12.6053,13.4991,"all-day, no event window",width
+ALT-F2 hybrid,8.2151,10.5976,11.1436,18.3959,16.946,10.5582,9.6645,12.4767,"all-day, no event window",width
+"ALT-F2 hybrid, T_c 3 h (no event)",8.2151,15.355,20.3187,18.3959,16.946,12.665,10.8368,14.8044,"all-day, no event window",width
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",10.6448,17.158,20.3187,18.3959,16.946,14.3306,12.8081,15.8939,"all-day, no event window",width
+"ALT-F2 hybrid, calibrated",10.6448,14.1955,14.7492,18.3959,16.946,13.0331,12.0852,14.466,"all-day, no event window",width
+ALT-F3 Chronos-2 + covariates,11.0652,17.8792,22.377,27.4348,33.0785,16.6375,14.572,20.7007,"all-day, no event window",width
+ALT-F3b Chronos-Bolt-Small,13.4515,16.5222,18.081,18.8386,17.328,15.4147,14.6068,16.419,"all-day, no event window",width
+baseline,20.0136,20.1482,20.3187,18.3959,16.946,19.7626,19.8148,19.3026,"all-day, no event window",width
+ALT-F1 LightGBM,5.6796,7.6866,8.0457,8.1727,8.2522,6.7959,6.3522,7.3204,"daytime, no event window",mae
+"ALT-F1 LightGBM, calibrated",5.6796,7.6866,8.0457,8.1727,8.2522,6.7959,6.3522,7.3204,"daytime, no event window",mae
+ALT-F2 hybrid,5.0542,7.7967,8.4258,7.1712,6.8921,6.3806,5.8319,6.8075,"daytime, no event window",mae
+"ALT-F2 hybrid, T_c 3 h (no event)",5.0542,7.3452,7.1587,7.1712,6.8921,6.141,5.7008,6.5272,"daytime, no event window",mae
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",5.0542,7.3452,7.1587,7.1712,6.8921,6.141,5.7008,6.5272,"daytime, no event window",mae
+"ALT-F2 hybrid, calibrated",5.0542,7.7967,8.4258,7.1712,6.8921,6.3806,5.8319,6.8075,"daytime, no event window",mae
+ALT-F3 Chronos-2 + covariates,4.421,7.418,8.5233,10.3135,10.6525,6.4813,5.6819,7.749,"daytime, no event window",mae
+ALT-F3b Chronos-Bolt-Small,5.2731,8.3941,10.418,12.7257,13.4981,7.7243,6.7824,9.3933,"daytime, no event window",mae
+baseline,7.0312,7.1587,7.1587,7.1712,6.8921,7.0829,7.0568,7.083,"daytime, no event window",mae
+ALT-F1 LightGBM,-0.0531,0.0054,0.1855,0.1145,0.1616,0.0129,-0.0133,0.0601,"daytime, no event window",bias
+"ALT-F1 LightGBM, calibrated",-0.0531,0.0054,0.1855,0.1145,0.1616,0.0129,-0.0133,0.0601,"daytime, no event window",bias
+ALT-F2 hybrid,-0.2805,-0.4017,-0.2674,-0.6988,-1.2348,-0.399,-0.3666,-0.5296,"daytime, no event window",bias
+"ALT-F2 hybrid, T_c 3 h (no event)",-0.2805,-0.5176,-0.619,-0.6988,-1.2348,-0.4632,-0.4016,-0.6055,"daytime, no event window",bias
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",-0.2805,-0.5176,-0.619,-0.6988,-1.2348,-0.4632,-0.4016,-0.6055,"daytime, no event window",bias
+"ALT-F2 hybrid, calibrated",-0.2805,-0.4017,-0.2674,-0.6988,-1.2348,-0.399,-0.3666,-0.5296,"daytime, no event window",bias
+ALT-F3 Chronos-2 + covariates,-0.5226,-0.249,-0.2352,0.8562,0.3044,-0.2462,-0.3569,-0.025,"daytime, no event window",bias
+ALT-F3b Chronos-Bolt-Small,0.2335,-0.1585,1.3688,2.6629,2.8653,0.6236,0.4845,1.2061,"daytime, no event window",bias
+baseline,-0.9519,-0.619,-0.619,-0.6988,-1.2348,-0.8242,-0.8868,-0.8272,"daytime, no event window",bias
+ALT-F1 LightGBM,1.8962,2.5415,2.6699,2.7258,2.8182,2.264,2.1193,2.4455,"daytime, no event window",pinball
+"ALT-F1 LightGBM, calibrated",1.7936,2.4031,2.514,2.5735,2.6464,2.1386,2.0026,2.3074,"daytime, no event window",pinball
+ALT-F2 hybrid,1.5983,2.4382,2.625,2.5195,2.4641,2.0464,1.865,2.2344,"daytime, no event window",pinball
+"ALT-F2 hybrid, T_c 3 h (no event)",1.5983,2.477,2.5974,2.5195,2.4641,2.0533,1.8694,2.238,"daytime, no event window",pinball
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",1.5477,2.4299,2.5974,2.5195,2.4641,2.0162,1.8269,2.2134,"daytime, no event window",pinball
+"ALT-F2 hybrid, calibrated",1.5477,2.3391,2.5195,2.5195,2.4641,1.9858,1.8094,2.1836,"daytime, no event window",pinball
+ALT-F3 Chronos-2 + covariates,1.4078,2.3147,2.6917,3.3624,3.6162,2.0688,1.8162,2.5039,"daytime, no event window",pinball
+ALT-F3b Chronos-Bolt-Small,1.6375,2.6365,3.2791,4.3041,4.7246,2.4724,2.1571,3.0799,"daytime, no event window",pinball
+baseline,2.566,2.5974,2.5974,2.5195,2.4641,2.5672,2.5648,2.5524,"daytime, no event window",pinball
+ALT-F1 LightGBM,0.5704,0.5397,0.5265,0.5197,0.5017,0.5498,0.5577,0.5372,"daytime, no event window",coverage
+"ALT-F1 LightGBM, calibrated",0.7192,0.6825,0.664,0.6487,0.6294,0.693,0.703,0.676,"daytime, no event window",coverage
+ALT-F2 hybrid,0.6111,0.5794,0.5635,0.7448,0.7242,0.6174,0.6163,0.6413,"daytime, no event window",coverage
+"ALT-F2 hybrid, T_c 3 h (no event)",0.6111,0.6706,0.7579,0.7448,0.7242,0.6597,0.6397,0.6887,"daytime, no event window",coverage
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",0.7351,0.7341,0.7579,0.7448,0.7242,0.7376,0.736,0.7386,"daytime, no event window",coverage
+"ALT-F2 hybrid, calibrated",0.7351,0.6984,0.6865,0.7448,0.7242,0.7215,0.7271,0.7208,"daytime, no event window",coverage
+ALT-F3 Chronos-2 + covariates,0.7986,0.8194,0.8452,0.8314,0.8637,0.815,0.809,0.8261,"daytime, no event window",coverage
+ALT-F3b Chronos-Bolt-Small,0.7698,0.6687,0.6614,0.6599,0.5854,0.7135,0.7345,0.6837,"daytime, no event window",coverage
+baseline,0.7609,0.7579,0.7579,0.7448,0.7242,0.7564,0.7577,0.7511,"daytime, no event window",coverage
+ALT-F1 LightGBM,11.5661,14.475,14.4914,14.5476,14.1097,13.0112,12.4249,13.5645,"daytime, no event window",width
+"ALT-F1 LightGBM, calibrated",15.4514,18.81,18.8199,18.7059,18.3068,17.0961,16.4291,17.7076,"daytime, no event window",width
+ALT-F2 hybrid,11.4071,15.5676,15.8201,27.6706,25.5721,15.2231,13.7732,18.2786,"daytime, no event window",width
+"ALT-F2 hybrid, T_c 3 h (no event)",11.4071,23.1848,30.7683,27.6706,25.5721,18.6222,15.6632,22.0442,"daytime, no event window",width
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",13.8725,25.0172,30.7683,27.6706,25.5721,20.313,17.6639,23.1504,"daytime, no event window",width
+"ALT-F2 hybrid, calibrated",13.8725,19.2354,19.4939,27.6706,25.5721,17.7402,16.2329,20.3028,"daytime, no event window",width
+ALT-F3 Chronos-2 + covariates,14.6288,25.4788,32.2444,41.1504,49.5849,23.5028,20.211,29.9889,"daytime, no event window",width
+ALT-F3b Chronos-Bolt-Small,15.7355,21.2795,24.8741,25.8121,23.6341,19.438,17.9228,21.4152,"daytime, no event window",width
+baseline,30.6801,30.7683,30.7683,27.6706,25.5721,30.1546,30.2918,29.3428,"daytime, no event window",width
+ALT-F1 LightGBM,4.1111,5.4617,5.8079,5.8256,5.9837,4.8835,4.5779,5.2595,all-day,mae
+"ALT-F1 LightGBM, calibrated",4.1111,5.4617,5.8079,5.8256,5.9837,4.8835,4.5779,5.2595,all-day,mae
+ALT-F2 hybrid,3.6057,5.4009,5.989,5.201,5.1359,4.5289,4.1504,4.8708,all-day,mae
+"ALT-F2 hybrid, T_c 3 h (no event)",3.6057,5.2269,5.2676,5.201,5.1359,4.4132,4.0882,4.7278,all-day,mae
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",3.6057,5.2269,5.2676,5.201,5.1359,4.4132,4.0882,4.7278,all-day,mae
+"ALT-F2 hybrid, calibrated",3.6057,5.4009,5.989,5.201,5.1359,4.5289,4.1504,4.8708,all-day,mae
+ALT-F3 Chronos-2 + covariates,3.4594,5.529,6.4254,7.531,8.4545,4.9303,4.3715,5.8818,all-day,mae
+ALT-F3b Chronos-Bolt-Small,4.0876,6.0825,7.2801,8.366,9.1476,5.5864,5.0134,6.5801,all-day,mae
+baseline,5.1838,5.2553,5.2676,5.201,5.1359,5.2094,5.1972,5.2069,all-day,mae
+ALT-F1 LightGBM,-0.4267,-0.4911,-0.3874,-0.4085,-0.5639,-0.4439,-0.4403,-0.4506,all-day,bias
+"ALT-F1 LightGBM, calibrated",-0.4267,-0.4911,-0.3874,-0.4085,-0.5639,-0.4439,-0.4403,-0.4506,all-day,bias
+ALT-F2 hybrid,-0.3603,-0.528,-0.5784,-0.8707,-1.2655,-0.5204,-0.4672,-0.6644,all-day,bias
+"ALT-F2 hybrid, T_c 3 h (no event)",-0.3603,-0.7093,-0.8736,-0.8707,-1.2655,-0.5952,-0.5091,-0.745,all-day,bias
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",-0.3603,-0.7093,-0.8736,-0.8707,-1.2655,-0.5952,-0.5091,-0.745,all-day,bias
+"ALT-F2 hybrid, calibrated",-0.3603,-0.528,-0.5784,-0.8707,-1.2655,-0.5204,-0.4672,-0.6644,all-day,bias
+ALT-F3 Chronos-2 + covariates,-0.0321,0.3083,0.4819,1.3551,1.4059,0.315,0.1859,0.6062,all-day,bias
+ALT-F3b Chronos-Bolt-Small,-0.6989,-0.5705,0.6245,1.1767,1.245,-0.2497,-0.4225,0.192,all-day,bias
+baseline,-1.1356,-0.9099,-0.8736,-0.8707,-1.2655,-1.033,-1.0819,-1.0177,all-day,bias
+ALT-F1 LightGBM,1.3925,1.8171,1.9508,1.9677,2.0517,1.6449,1.5458,1.7751,all-day,pinball
+"ALT-F1 LightGBM, calibrated",1.3128,1.7125,1.8307,1.8495,1.9256,1.5488,1.4561,1.6697,all-day,pinball
+ALT-F2 hybrid,1.1559,1.7194,1.8942,1.811,1.8009,1.4683,1.3423,1.6071,all-day,pinball
+"ALT-F2 hybrid, T_c 3 h (no event)",1.1559,1.762,1.8786,1.811,1.8009,1.4774,1.3479,1.6133,all-day,pinball
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",1.1199,1.7265,1.8786,1.811,1.8009,1.4506,1.3174,1.5954,all-day,pinball
+"ALT-F2 hybrid, calibrated",1.1199,1.6451,1.8157,1.811,1.8009,1.4239,1.3021,1.5697,all-day,pinball
+ALT-F3 Chronos-2 + covariates,1.0968,1.7244,2.0469,2.4521,2.7983,1.5693,1.3913,1.8911,all-day,pinball
+ALT-F3b Chronos-Bolt-Small,1.2743,1.8927,2.3014,2.8071,3.1584,1.7791,1.5893,2.1412,all-day,pinball
+baseline,1.8496,1.8736,1.8786,1.811,1.8009,1.8522,1.8503,1.8437,all-day,pinball
+ALT-F1 LightGBM,0.5708,0.5418,0.531,0.5296,0.5273,0.5533,0.5602,0.5442,all-day,coverage
+"ALT-F1 LightGBM, calibrated",0.7705,0.7492,0.7301,0.724,0.7076,0.7533,0.7598,0.7414,all-day,coverage
+ALT-F2 hybrid,0.6259,0.5811,0.5733,0.7624,0.7518,0.6294,0.6297,0.6552,all-day,coverage
+"ALT-F2 hybrid, T_c 3 h (no event)",0.6259,0.6747,0.7648,0.7624,0.7518,0.672,0.6533,0.7027,all-day,coverage
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",0.7889,0.7684,0.7648,0.7624,0.7518,0.7768,0.7814,0.7703,all-day,coverage
+"ALT-F2 hybrid, calibrated",0.7889,0.7654,0.7546,0.7624,0.7518,0.7751,0.7805,0.7682,all-day,coverage
+ALT-F3 Chronos-2 + covariates,0.769,0.7674,0.7805,0.777,0.7688,0.7705,0.7697,0.772,all-day,coverage
+ALT-F3b Chronos-Bolt-Small,0.8361,0.7553,0.7076,0.7186,0.6422,0.7816,0.802,0.7481,all-day,coverage
+baseline,0.7556,0.7633,0.7648,0.7624,0.7518,0.7589,0.7574,0.7593,all-day,coverage
+ALT-F1 LightGBM,8.1336,10.0081,10.1928,10.0545,9.8437,9.0857,8.6993,9.4581,all-day,width
+"ALT-F1 LightGBM, calibrated",11.9248,14.2319,14.4192,14.1168,13.9273,13.0703,12.6053,13.4991,all-day,width
+ALT-F2 hybrid,8.2151,10.5976,11.1436,18.3959,16.946,10.5582,9.6645,12.4767,all-day,width
+"ALT-F2 hybrid, T_c 3 h (no event)",8.2151,15.355,20.3187,18.3959,16.946,12.665,10.8368,14.8044,all-day,width
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",10.6448,17.158,20.3187,18.3959,16.946,14.3306,12.8081,15.8939,all-day,width
+"ALT-F2 hybrid, calibrated",10.6448,14.1955,14.7492,18.3959,16.946,13.0331,12.0852,14.466,all-day,width
+ALT-F3 Chronos-2 + covariates,11.0652,17.8792,22.377,27.4348,33.0785,16.6375,14.572,20.7007,all-day,width
+ALT-F3b Chronos-Bolt-Small,13.4515,16.5222,18.081,18.8386,17.328,15.4147,14.6068,16.419,all-day,width
+baseline,20.0136,20.1482,20.3187,18.3959,16.946,19.7626,19.8148,19.3026,all-day,width
+ALT-F1 LightGBM,5.6796,7.6866,8.0457,8.1727,8.2522,6.7959,6.3522,7.3204,daytime,mae
+"ALT-F1 LightGBM, calibrated",5.6796,7.6866,8.0457,8.1727,8.2522,6.7959,6.3522,7.3204,daytime,mae
+ALT-F2 hybrid,5.0542,7.7967,8.4258,7.1712,6.8921,6.3806,5.8319,6.8075,daytime,mae
+"ALT-F2 hybrid, T_c 3 h (no event)",5.0542,7.3452,7.1587,7.1712,6.8921,6.141,5.7008,6.5272,daytime,mae
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",5.0542,7.3452,7.1587,7.1712,6.8921,6.141,5.7008,6.5272,daytime,mae
+"ALT-F2 hybrid, calibrated",5.0542,7.7967,8.4258,7.1712,6.8921,6.3806,5.8319,6.8075,daytime,mae
+ALT-F3 Chronos-2 + covariates,4.421,7.418,8.5233,10.3135,10.6525,6.4813,5.6819,7.749,daytime,mae
+ALT-F3b Chronos-Bolt-Small,5.2731,8.3941,10.418,12.7257,13.4981,7.7243,6.7824,9.3933,daytime,mae
+baseline,7.0312,7.1587,7.1587,7.1712,6.8921,7.0829,7.0568,7.083,daytime,mae
+ALT-F1 LightGBM,-0.0531,0.0054,0.1855,0.1145,0.1616,0.0129,-0.0133,0.0601,daytime,bias
+"ALT-F1 LightGBM, calibrated",-0.0531,0.0054,0.1855,0.1145,0.1616,0.0129,-0.0133,0.0601,daytime,bias
+ALT-F2 hybrid,-0.2805,-0.4017,-0.2674,-0.6988,-1.2348,-0.399,-0.3666,-0.5296,daytime,bias
+"ALT-F2 hybrid, T_c 3 h (no event)",-0.2805,-0.5176,-0.619,-0.6988,-1.2348,-0.4632,-0.4016,-0.6055,daytime,bias
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",-0.2805,-0.5176,-0.619,-0.6988,-1.2348,-0.4632,-0.4016,-0.6055,daytime,bias
+"ALT-F2 hybrid, calibrated",-0.2805,-0.4017,-0.2674,-0.6988,-1.2348,-0.399,-0.3666,-0.5296,daytime,bias
+ALT-F3 Chronos-2 + covariates,-0.5226,-0.249,-0.2352,0.8562,0.3044,-0.2462,-0.3569,-0.025,daytime,bias
+ALT-F3b Chronos-Bolt-Small,0.2335,-0.1585,1.3688,2.6629,2.8653,0.6236,0.4845,1.2061,daytime,bias
+baseline,-0.9519,-0.619,-0.619,-0.6988,-1.2348,-0.8242,-0.8868,-0.8272,daytime,bias
+ALT-F1 LightGBM,1.8962,2.5415,2.6699,2.7258,2.8182,2.264,2.1193,2.4455,daytime,pinball
+"ALT-F1 LightGBM, calibrated",1.7936,2.4031,2.514,2.5735,2.6464,2.1386,2.0026,2.3074,daytime,pinball
+ALT-F2 hybrid,1.5983,2.4382,2.625,2.5195,2.4641,2.0464,1.865,2.2344,daytime,pinball
+"ALT-F2 hybrid, T_c 3 h (no event)",1.5983,2.477,2.5974,2.5195,2.4641,2.0533,1.8694,2.238,daytime,pinball
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",1.5477,2.4299,2.5974,2.5195,2.4641,2.0162,1.8269,2.2134,daytime,pinball
+"ALT-F2 hybrid, calibrated",1.5477,2.3391,2.5195,2.5195,2.4641,1.9858,1.8094,2.1836,daytime,pinball
+ALT-F3 Chronos-2 + covariates,1.4078,2.3147,2.6917,3.3624,3.6162,2.0688,1.8162,2.5039,daytime,pinball
+ALT-F3b Chronos-Bolt-Small,1.6375,2.6365,3.2791,4.3041,4.7246,2.4724,2.1571,3.0799,daytime,pinball
+baseline,2.566,2.5974,2.5974,2.5195,2.4641,2.5672,2.5648,2.5524,daytime,pinball
+ALT-F1 LightGBM,0.5704,0.5397,0.5265,0.5197,0.5017,0.5498,0.5577,0.5372,daytime,coverage
+"ALT-F1 LightGBM, calibrated",0.7192,0.6825,0.664,0.6487,0.6294,0.693,0.703,0.676,daytime,coverage
+ALT-F2 hybrid,0.6111,0.5794,0.5635,0.7448,0.7242,0.6174,0.6163,0.6413,daytime,coverage
+"ALT-F2 hybrid, T_c 3 h (no event)",0.6111,0.6706,0.7579,0.7448,0.7242,0.6597,0.6397,0.6887,daytime,coverage
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",0.7351,0.7341,0.7579,0.7448,0.7242,0.7376,0.736,0.7386,daytime,coverage
+"ALT-F2 hybrid, calibrated",0.7351,0.6984,0.6865,0.7448,0.7242,0.7215,0.7271,0.7208,daytime,coverage
+ALT-F3 Chronos-2 + covariates,0.7986,0.8194,0.8452,0.8314,0.8637,0.815,0.809,0.8261,daytime,coverage
+ALT-F3b Chronos-Bolt-Small,0.7698,0.6687,0.6614,0.6599,0.5854,0.7135,0.7345,0.6837,daytime,coverage
+baseline,0.7609,0.7579,0.7579,0.7448,0.7242,0.7564,0.7577,0.7511,daytime,coverage
+ALT-F1 LightGBM,11.5661,14.475,14.4914,14.5476,14.1097,13.0112,12.4249,13.5645,daytime,width
+"ALT-F1 LightGBM, calibrated",15.4514,18.81,18.8199,18.7059,18.3068,17.0961,16.4291,17.7076,daytime,width
+ALT-F2 hybrid,11.4071,15.5676,15.8201,27.6706,25.5721,15.2231,13.7732,18.2786,daytime,width
+"ALT-F2 hybrid, T_c 3 h (no event)",11.4071,23.1848,30.7683,27.6706,25.5721,18.6222,15.6632,22.0442,daytime,width
+"ALT-F2 hybrid, T_c 3 h (no event), calibrated",13.8725,25.0172,30.7683,27.6706,25.5721,20.313,17.6639,23.1504,daytime,width
+"ALT-F2 hybrid, calibrated",13.8725,19.2354,19.4939,27.6706,25.5721,17.7402,16.2329,20.3028,daytime,width
+ALT-F3 Chronos-2 + covariates,14.6288,25.4788,32.2444,41.1504,49.5849,23.5028,20.211,29.9889,daytime,width
+ALT-F3b Chronos-Bolt-Small,15.7355,21.2795,24.8741,25.8121,23.6341,19.438,17.9228,21.4152,daytime,width
+baseline,30.6801,30.7683,30.7683,27.6706,25.5721,30.1546,30.2918,29.3428,daytime,width

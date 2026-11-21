@@ -6,8 +6,10 @@ The swing weights, value functions and the choice belong to the team's trade stu
 All numbers come from **simulated data** (`data/simulated/occupancy_15min.csv`, seed 5151).
 They describe how each alternative does on the simulator, not on Cornell lots.
 
-Produced by `python scripts/spike_forecast.py` at commit 632a7e4 on branch `ch11-forecast-spike`
+Produced by `python scripts/spike_forecast.py` at commit 63a5daa on branch `ch11-forecast-spike`
 (no uncommitted changes; the data file's SHA-256 is in `run.json`). Run on 2026-11-21.
+The LightGBM and Chronos forecasts are identical to the run at 632a7e4; this run adds the
+usage-weighted scores and calibrates without the event window.
 
 | File | Contents |
 |---|---|
@@ -16,7 +18,26 @@ Produced by `python scripts/spike_forecast.py` at commit 632a7e4 on branch `ch11
 | `event_window.csv` | The 2026-11-07 event window only |
 | `cutoff_short_model_vs_baseline.csv` | The per-lead MAE pairs that set T_c, with and without the event window |
 | `calibration_check_week12.csv` | Forecasts made in week 12: every method, plus the calibrated LightGBM options |
-| `run.json` | T_c, calibration widening, leakage checks that held, cost, environment |
+| `usage_weighted.csv` | Each metric by request band (0–1, 1–3, 3–6, 6–24, 24–72 h) and weighted by the request shares below; five scopes including the event window |
+| `usage_weighted_week12_calibrated.csv` | The same on forecasts made in week 12, with the calibrated options |
+| `run.json` | T_c, request shares, calibration widening, leakage checks that held, cost, environment |
+
+## Decisions recorded on 2026-11-21
+
+| Decision | Choice | By |
+|---|---|---|
+| Share of requests by how long before arrival | 0–1 h 50%, 1–3 h 25%, 3–6 h 10%, 6–24 h 10%, 24–72 h 5% (an assumption; there is no usage data) | Team |
+| How to read the T_c rule | Without the event window: **T_c = 3 h** | Katherine; to confirm in X4 |
+| Main selection score | Usage-weighted MAE without the event window, all-day and daytime | Katherine; to confirm in X4 |
+| Event window | Not deleted: reported on its own as a separate line (n = 1) | Katherine; weight set in X4 |
+| Interval calibration | Week 11 without the event window | Katherine |
+| Retrain on weeks 1–12 before the holdout | No: the holdout is run once with the weeks 1–10 models | Katherine |
+
+Reasons. One game in two validation weeks is not an ordinary period, and T_c describes ordinary
+days. Most requests are expected close to arrival, and a driver who plans days ahead is expected
+to check again within T_c before leaving, so long-lead forecasts are a reference only. The holdout
+(week 13) has a home game on 11-21 from the event list, so the event weakness is shown here rather
+than first seen in the holdout.
 
 ## Set-up
 
@@ -68,7 +89,54 @@ baseline's. If that never happens within the model's 6-hour range, T_c is the ne
 
 The rule gives a different answer depending on whether the one event is included. Both versions of
 ALT-F2 are reported, as "ALT-F2 (T_c 7 h)" and "ALT-F2 (T_c 3 h)". **The team needs to decide which
-reading of the rule to use.**
+reading of the rule to use.** Decided 2026-11-21: the reading without the event window, T_c = 3 h.
+
+## Selection score: usage-weighted MAE
+
+Each request band is weighted by its share of requests (team assumption above). Two other share
+sets check whether the ranking depends on the assumption. Without the event window. MAE in spaces.
+
+**All-day**
+
+| Band (share) | baseline | ALT-F1 | ALT-F2 (T_c 7 h) | ALT-F2 (T_c 3 h) | ALT-F3 Chronos-2 | ALT-F3b Bolt |
+|---|---|---|---|---|---|---|
+| 0–1 h (50%) | 5.12 | 3.98 | **3.53** | **3.53** | 3.94 | 4.69 |
+| 1–3 h (25%) | 5.12 | 5.13 | 5.05 | **5.00** | 6.84 | 8.12 |
+| 3–6 h (10%) | **5.13** | 5.42 | 5.51 | **5.13** | 8.17 | 9.41 |
+| 6–24 h (10%) | **5.02** | 5.37 | **5.02** | **5.02** | 9.27 | 9.22 |
+| 24–72 h (5%) | **4.97** | 5.42 | **4.97** | **4.97** | 10.83 | 9.45 |
+| **Weighted, team shares 50/25/10/10/5** | 5.10 | 4.62 | 4.33 | **4.28** | 5.96 | 6.71 |
+| Weighted, more near 70/15/5/5/5 | 5.11 | 4.36 | 4.01 | **3.98** | 5.19 | 5.90 |
+| Weighted, more far 30/20/15/20/15 | 5.08 | 4.92 | 4.65 | **4.58** | 7.25 | 7.70 |
+
+**Daytime (07:00–18:59)**
+
+| | baseline | ALT-F1 | ALT-F2 (T_c 7 h) | ALT-F2 (T_c 3 h) | ALT-F3 Chronos-2 | ALT-F3b Bolt |
+|---|---|---|---|---|---|---|
+| **Weighted, team shares** | 7.09 | 6.51 | 6.17 | **6.04** | 8.23 | 9.21 |
+| Weighted, more near | 7.08 | 6.13 | 5.69 | **5.62** | 7.00 | 7.93 |
+| Weighted, more far | 7.06 | 6.92 | 6.59 | **6.44** | 10.18 | 10.87 |
+
+ALT-F2 (T_c 3 h) has the lowest weighted MAE under all three share sets, all-day and daytime,
+so the ranking does not depend on the exact shares.
+
+**Bias, team shares, without the event window (spaces):** baseline −1.06 (daytime −1.23),
+ALT-F1 −0.32 (−0.11), ALT-F2 (T_c 7 h) −0.41 (−0.35), ALT-F2 (T_c 3 h) −0.54 (−0.52),
+ALT-F3 +0.62 (+0.25). Weighted this way, ALT-F2's under-forecast is about half a space, because
+most requests fall before T_c, where the model is used.
+
+**Event window, MAE by request band (n = 1, reference)**
+
+| | 0–1 h | 1–3 h | 3–6 h | 6–24 h | 24–72 h | Weighted, team shares |
+|---|---|---|---|---|---|---|
+| baseline | 64.1 | 64.0 | 64.0 | 64.0 | 64.0 | 64.0 |
+| ALT-F1 | 11.4 | 11.1 | 12.7 | 13.1 | 13.1 | 11.7 |
+| ALT-F2 (T_c 7 h) | 11.3 | 11.2 | 10.6 | 64.0 | 64.0 | 19.1 |
+| ALT-F2 (T_c 3 h) | 11.3 | 37.4 | 64.0 | 64.0 | 64.0 | 31.0 |
+| ALT-F3 Chronos-2 | **7.3** | 11.9 | 13.3 | 12.3 | 12.1 | **9.8** |
+
+ALT-F2 (T_c 3 h) uses the baseline from 3 h on, so it misses the game by about 64 spaces there.
+The 1–3 h value (37) is the mean of 2 h (model, accurate) and 3 h (baseline).
 
 ## Accuracy: MAE by lead-time band
 
@@ -146,24 +214,37 @@ that is the event day. ALT-F1 is nearly unbiased.
 ## Interval calibration (split conformal)
 
 The LightGBM intervals were widened by one amount per lead-time band. The amount was set on
-forecasts whose target time is in week 11, so that about 80% of week-11 observations fall inside.
+forecasts whose target time is in week 11, without the event window, so that about 80% of week-11 observations fall inside.
 The result was checked on forecasts made in week 12. The median forecast, and therefore the MAE, does not change.
 
-Widening (spaces added to each side): ALT-F1 1.96–2.23 depending on the band; ALT-F2 LightGBM part 1.42 (0–1 h) and 1.95 (1–6 h).
+Widening (spaces added to each side): ALT-F1 1.95–2.18 depending on the band; ALT-F2 LightGBM part 1.24 (0–1 h) and 1.86 (1–6 h).
+Including the event window in week 11 would change coverage by less than one percentage point.
 
 **Check on week 12, 0–72 h**
 
 | | Coverage all-day | Coverage daytime | Width | Pinball |
 |---|---|---|---|---|
 | baseline (not calibrated) | 0.76 | 0.74 | 18.4 | 1.82 |
-| ALT-F1, before → after | 0.53 → **0.73** | 0.52 → **0.66** | 9.8 → 13.9 | 1.92 → 1.81 |
+| ALT-F1, before → after | 0.53 → **0.73** | 0.52 → **0.65** | 9.8 → 13.8 | 1.92 → 1.81 |
 | ALT-F2 (T_c 7 h), before → after | 0.72 → **0.76** | 0.70 → **0.73** | 15.8 → 16.6 | 1.74 → 1.72 |
 | ALT-F2 (T_c 3 h), before → after | 0.74 → **0.76** | 0.72 → **0.74** | 16.8 → 17.2 | 1.74 → 1.73 |
 | ALT-F3 Chronos-2 (not calibrated) | 0.77 | 0.84 | 26.5 | 2.34 |
 
 Calibration brings ALT-F2 into the 75%–85% target all-day. ALT-F1 improves, but it stays below
-the target (0.73 all-day, 0.66 daytime, 0.71 at 48–72 h). Its errors in week 12 were larger than
+the target (0.73 all-day, 0.65 daytime). Its errors in week 12 were larger than
 in week 11, and one calibration week did not capture that.
+
+**Weighted by the team's request shares (week 12):**
+
+| | Coverage all-day | Coverage daytime | Width all-day |
+|---|---|---|---|
+| baseline | 0.76 | 0.76 | 19.8 |
+| ALT-F1, calibrated | 0.75 | 0.69 | 13.1 |
+| ALT-F2 (T_c 7 h), calibrated | 0.78 | 0.72 | 13.0 |
+| ALT-F2 (T_c 3 h), calibrated | **0.78** | **0.74** | 14.3 |
+| ALT-F3 Chronos-2 | 0.77 | 0.82 | 16.6 |
+
+ALT-F2 (T_c 3 h) meets the 75%–85% target all-day and is one point short in daytime.
 
 ## Cost
 
@@ -174,20 +255,23 @@ then the model is loaded and answers one request.
 
 | | baseline | ALT-F1 | ALT-F2 | ALT-F3 Chronos-2 | ALT-F3b Bolt |
 |---|---|---|---|---|---|
-| Training time | < 0.01 s | 112 s | 10 s | none | none |
-| Latency, median (p95) | 0.2 ms (0.2) | 2.3 ms (2.7) | 1.7 ms (2.1) | 832 ms (946) | 1,244 ms (1,716) |
+| Training time | < 0.01 s | 109 s | 10 s | none | none |
+| Latency, median (p95) | 0.2 ms (0.2) | 2.3 ms (2.5) | 1.7 ms (1.9) | 658 ms (662) | 878 ms (885) |
 | Model size | 59 KB table | 8.2 MB (3 models) | 7.1 MB incl. table | 120M parameters | 48M parameters |
-| Memory for model + one request | 1 MB | 32 MB | 27 MB | 292 MB | 318 MB |
+| Memory for model + one request | 1 MB | 29 MB | 27 MB | 312 MB | 367 MB |
 | Extra dependencies | none | lightgbm | lightgbm | torch, chronos-forecasting, model download | same as ALT-F3 |
 
-Chronos latency was 684–868 ms in the first run on 2026-11-20 and 832–1,244 ms in this run. It
-varies with machine load, but the conclusion is the same: in this run it is about 350–550 times slower than LightGBM.
+Chronos latency was 684–868 ms on 2026-11-20, 832–1,244 ms in the earlier run on 2026-11-21 and
+658–878 ms in this run. It varies with machine load, but the conclusion is the same: it is several
+hundred times slower than LightGBM (about 290–520 times in this run).
 
 ## What the numbers show
 
 These are observations only, not a recommendation.
 
-1. **The overall winner depends on how much the event day counts.** With the event day,
+0. **With the team's request shares and without the event window, ALT-F2 (T_c 3 h) has the
+   lowest MAE** (4.28 all-day, 6.04 daytime; ALT-F1 4.62 and 6.51), under all three share sets.
+1. **Unweighted, the overall winner depends on how much the event day counts.** With the event day,
    ALT-F1 has the lowest MAE (5.37). Without it, which covers 98% of forecasts and all of week 12,
    ALT-F2 is lowest (4.86–4.89) and ALT-F1 is worse than the baseline from 6 h on.
 2. **The ALT-F2 premise holds on ordinary days.** The model helps for about the first 2–3 hours,
@@ -199,8 +283,8 @@ These are observations only, not a recommendation.
    does not (0.73 all-day, 0.66 daytime).
 5. **Bias.** ALT-F1 is nearly unbiased. The baseline and ALT-F2 under-forecast occupancy, mostly in daytime.
 6. **Zero-shot Chronos.** It is competitive only in the first hour and on the event day. It is
-   much worse beyond 1 h on ordinary days, and it is about 350–550 times slower, with about
-   9 times the memory of LightGBM.
+   much worse beyond 1 h on ordinary days, and it is several hundred times slower, with about
+   10 times the memory of LightGBM.
 
 ## Limitations to state in the report
 
@@ -225,11 +309,14 @@ These are observations only, not a recommendation.
   | 11 | Trained on leads ≤ 6 h only, basic features | 3.75 | — |
   | 12 | Trained on leads ≤ 6 h only, profile features, predicts the departure (kept for ALT-F2) | 3.16 | — |
 
-  T_c and the calibration were also set on these weeks. All of this favours the LightGBM options
+  T_c, the calibration, the request shares and the reading without the event were also set on
+  these weeks, after the results were seen; both readings are kept in the tables. All of this favours the LightGBM options
   slightly. The single holdout run after selection is the unbiased check.
 - **One event and no break weekdays in validation.** The event result rests on one game, and it
   decides whether ALT-F1 or ALT-F2 has the lower overall MAE. Break-day behaviour is first seen
   in the holdout (Thanksgiving, week 14).
+- **Request shares are an assumption.** There is no usage data (no trip records are stored). The
+  sensitivity check shows the ranking holds for shares tilted toward nearer or farther requests.
 - **Calibration uses one week.** It is checked on one more week; coverage on the holdout may differ.
 - **Chronos settings.** The context is 21 days of history. Chronos-Bolt forecasts past 64 steps
   by feeding its own forecasts back in, so its long-lead result reflects the model as used here.

@@ -2,20 +2,51 @@
   "cutoff_T_c_minutes": 420,
   "cutoff_T_c_minutes_without_event_window": 180,
   "cutoff_rule": "shortest lead where the ALT-F2 LightGBM (trained on leads <= 6 h) has higher all-day validation MAE than the baseline; if none, the next lead after 6 h. ALT-F2 = that LightGBM below T_c, baseline from T_c on",
+  "team_T_c_reading": "without the event window (decided 2026-11-21)",
+  "usage_shares": {
+    "bands": [
+      "0-1h",
+      "1-3h",
+      "3-6h",
+      "6-24h",
+      "24-72h"
+    ],
+    "team": [
+      0.5,
+      0.25,
+      0.1,
+      0.1,
+      0.05
+    ],
+    "more near": [
+      0.7,
+      0.15,
+      0.05,
+      0.05,
+      0.05
+    ],
+    "more far": [
+      0.3,
+      0.2,
+      0.15,
+      0.2,
+      0.15
+    ]
+  },
   "calibration": {
     "method": "split conformal, one widening per lead-time band (spaces added to each side)",
-    "calibrated_on": "forecasts with target time in week 11",
+    "calibrated_on": "forecasts with target time in week 11, without the event window",
     "checked_on": "forecasts made in week 12",
     "ALT-F1 widening": {
-      "0-1h": 1.958,
+      "0-1h": 1.945,
       "1-6h": 2.178,
-      "6-24h": 2.122,
-      "24-48h": 2.062,
-      "48-72h": 2.231
+      "6-24h": 2.09,
+      "24-48h": 2.043,
+      "48-72h": 2.18
     },
     "ALT-F2 LightGBM part widening": {
-      "0-1h": 1.418,
-      "1-6h": 1.945
+      "0-1h": 1.235,
+      "1-6h": 1.86
     }
   },
   "validation_forecast_times": 336,
@@ -39,65 +70,65 @@
       "memory_mb": 1.2,
       "latency_one_request": {
         "runs": 30,
-        "median_ms": 0.207,
-        "p95_ms": 0.239
+        "median_ms": 0.187,
+        "p95_ms": 0.212
       }
     },
     "ALT-F1 LightGBM": {
-      "fit_s": 111.6,
+      "fit_s": 108.8,
       "trained_on": "weeks 1-10, lead times 15 min-72 h",
       "training_samples": 767586,
       "model_size_kb": 8201.2,
-      "memory_mb": 32.2,
+      "memory_mb": 29.4,
       "latency_one_request": {
         "runs": 30,
-        "median_ms": 2.278,
-        "p95_ms": 2.664
+        "median_ms": 2.288,
+        "p95_ms": 2.5
       }
     },
     "ALT-F2 hybrid": {
-      "fit_s": 9.9,
+      "fit_s": 10.2,
       "trained_on": "weeks 1-10; LightGBM on lead times 15 min-6 h",
       "training_samples": 163134,
       "model_size_kb": 7088.1,
-      "memory_mb": 27.3,
+      "memory_mb": 27.4,
       "latency_one_request": {
         "runs": 30,
-        "median_ms": 1.703,
-        "p95_ms": 2.098
+        "median_ms": 1.734,
+        "p95_ms": 1.895
       }
     },
     "ALT-F3 Chronos-2 + covariates": {
       "fit_s": 0,
       "trained_on": "none (zero-shot)",
       "model": "amazon/chronos-2",
-      "load_s": 3.2,
-      "validation_run_s": 296.6,
+      "load_s": 4.0,
+      "validation_run_s": 248.4,
       "parameters_m": 119.5,
-      "memory_mb": 291.6,
+      "memory_mb": 312.2,
       "latency_one_request": {
         "runs": 30,
-        "median_ms": 831.58,
-        "p95_ms": 946.443
+        "median_ms": 657.935,
+        "p95_ms": 661.856
       }
     },
     "ALT-F3b Chronos-Bolt-Small": {
       "fit_s": 0,
       "trained_on": "none (zero-shot)",
       "model": "amazon/chronos-bolt-small",
-      "load_s": 0.3,
-      "validation_run_s": 388.6,
+      "load_s": 1.7,
+      "validation_run_s": 284.5,
       "parameters_m": 47.7,
-      "memory_mb": 318.2,
+      "memory_mb": 366.9,
       "latency_one_request": {
         "runs": 30,
-        "median_ms": 1244.183,
-        "p95_ms": 1715.599
+        "median_ms": 877.573,
+        "p95_ms": 884.905
       }
     }
   },
   "environment": {
-    "commit": "632a7e48292ce5014f4629d034ee1fc3857b77fb",
+    "commit": "63a5daaff143a6f1cd4158622d2da7740c7b5dd9",
     "uncommitted_changes_in_scripts_or_data": false,
     "data_sha256": "81faa2458d1f2e919355e6cef9cb0863fe850f42bb9fa85f36a32d2661a646b2",
     "machine": "arm64",
