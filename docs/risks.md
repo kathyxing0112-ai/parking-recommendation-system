@@ -1,6 +1,6 @@
 # Product Risk Register (Ch 12, §12.3)
 
-**Status: draft.** The B3 likelihood and impact values below are copied from the team's B3 sheet (`风险表.xlsx`, sheet "B3 风险评分"), which is still marked "Draft initial values — pending team review". The six AI risks have no ratings yet. The team rates them on the same scales; AI does not score risks.
+**Status:** the B3 ratings of R-01 to R-05 are the team's baseline ratings before mitigation, from the B3 sheet (`风险表.xlsx`, sheet "B3 风险评分"), confirmed by Katherine Xing and Xichen Wang on 2026-11-22. The six AI risks have no ratings yet. The team rates them on the same scales; AI does not score risks.
 
 ## Scales and Calculation (B3 量表)
 
@@ -84,7 +84,7 @@ model triggers a new assessment (report §4.5).
 
 ## Open Items for the Team
 
-1. Confirm the B3 ratings and the Low/Medium/High thresholds. All five risks are still "draft".
+1. Remove the "Draft initial values" label in the B3 sheet (ratings confirmed 2026-11-22), and record a residual rating for R-04 now that the guardrail is verified (report §4.5).
 2. Rate AI-1 to AI-6 on the B3 scales.
 3. Update the R-04 evidence in B3 (column K). It says "SR-14 on main specifies 60 minutes". The 72 h window is on branch `ch11-forecast-trade` and reaches main with the A2 PR, so this line in this file and in Innoslate changes after the merge.
 4. Confirm that the R-04 handling here matches the B5 mitigation plan.
