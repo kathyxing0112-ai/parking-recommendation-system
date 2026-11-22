@@ -358,3 +358,46 @@ reported with its cause and recorded as a risk.
 - **Calibration uses one week.** It is checked on one more week; coverage on the holdout may differ.
 - **Chronos settings.** The context is 21 days of history. Chronos-Bolt forecasts past 64 steps
   by feeding its own forecasts back in, so its long-lead result reflects the model as used here.
+
+## SR-14 holdout result (single run, 2026-11-22)
+
+Run once on weeks 13–15 with `scripts/evaluate_sr14_holdout.py`, committed before the run
+(d0dbe52). It evaluates the product A2 and model files exactly as merged in PR #16; nothing was
+trained, tuned or recalibrated. Raw output: `holdout/results.json`, `holdout/trips.csv`.
+Errors are in free spaces using the integer counts the product returns. Simulated data only.
+
+| SR-14 check (primary scope: all day, team request shares) | Result | Met | Prediction before the run |
+|---|---|---|---|
+| MAE not above the baseline | ALT-F2 6.26, baseline 9.95 | Yes | Likely met |
+| 80% interval coverage 75%–85% | 0.776 | Yes | At risk |
+| Primary option has a free space on arrival, ≥ 85 of 100 trips | 100 of 100 | Yes | Likely met |
+
+| Scope (n forecasts) | ALT-F2 MAE | Baseline MAE | Coverage | Bias (free spaces) |
+|---|---|---|---|---|
+| All day, weighted (61,740) | 6.26 | 9.95 | 0.776 | +1.88 |
+| Daytime, weighted (30,930) | 9.53 | 15.65 | 0.714 | +3.26 |
+| Ordinary days, weighted (51,764) | 4.30 | 5.09 | 0.833 | −0.09 |
+| Thanksgiving break days, unweighted (9,288) | 30.77 | 34.24 | 0.181 | +30.48 |
+| Event windows, unweighted (688) | 59.46 | 65.72 | 0.811 | −56.89 |
+| LightGBM part (lead < 180 min), unweighted (7,551) | 4.01 | 9.91 | 0.819 | +0.71 |
+| LightGBM part, break days (1,080) | 4.46 | 34.31 | 0.673 | +3.14 |
+| LightGBM part, event windows (80) | 12.11 | 65.95 | 0.325 | +9.99 |
+| Baseline part (lead ≥ 180 min), break days (8,208) | 34.23 | 34.23 | 0.116 | +34.08 |
+| Baseline part, event windows (608) | 65.69 | 65.69 | 0.875 | −65.69 |
+
+Bias here is actual minus forecast free spaces: positive means the forecast said the lot was
+fuller than it was (the safe side for a driver), negative means emptier.
+
+Reading, without changing anything:
+- All three SR-14 checks are met in the primary scope fixed before the run. Coverage is met with
+  little margin: it is below 0.75 for daytime (0.714) and unweighted all day (0.714).
+- The misses come from the baseline part, which has no break or event input: on Thanksgiving
+  days it says the lots are about 34 spaces fuller than they are (coverage 0.12), and in event
+  windows about 66 spaces emptier. The LightGBM part stays close on both (4.5 and 12.1 spaces).
+  This is the residual risk recorded in ADR-0004 and Section 4.4 of the report.
+- The trip check does not separate the methods well: ranking by walking time alone also gives
+  100 of 100, because the simulated lots seldom fill. The smallest free count at arrival for a
+  primary option was 1 space.
+- The integer bounds the product returns (floor of the lower, ceiling of the upper) make its
+  interval slightly wider than the spike's; the dry run on weeks 11–12 gives 0.84 weighted
+  coverage against the spike's 0.78 for the same models.
