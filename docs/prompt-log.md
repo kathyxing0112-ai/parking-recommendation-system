@@ -661,7 +661,7 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   and the decision that follows (Lab Manual §10.4.3). Claude Code produced the
   numbers and figures only.
 - Verification: `tests.yml` selection 241 passed.
-- Reviewed by: (pending, Xichen Wang)
+- Reviewed by: (Xichen Wang)
 
 
 ## 2026-11-16 to 2026-11-22 — Katherine Xing — Claude Code (model: Claude Opus 5.5)
@@ -692,4 +692,4 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   that wrote the guardrail, so they are not independent tests.
 - Verification: `tests.yml` selection 302 passed (2026-11-22). The holdout
   weeks 13–15 were not read. The pre-holdout predictions are in commit 92303d0.
-- Reviewed by: (pending, Xichen Wang)
+- Reviewed by: (Xichen Wang)
