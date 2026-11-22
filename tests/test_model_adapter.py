@@ -23,7 +23,7 @@ SUPPORTED = {
     "vehicle_categories": ["sedan", "suv"],
     "eligibility_values": ["permit_O", "visitor"],
 }
-# What the model replies: copied values, null when not stated, "HH:MM" times.
+# What the model replies: copied values, null when not stated, "[day word] HH:MM" times.
 REPLY = {
     "destination": "Upson Hall",
     "arrival_time": "11:20",
@@ -94,9 +94,11 @@ def test_unstated_fields_are_listed_as_missing():
     ("vehicle_category", "bus"),                  # not an approved category
     ("declared_eligibility", "faculty CU permit"),  # not an approved eligibility value
     ("arrival_time", "11:20 am"),                 # not HH:MM
-    ("arrival_time", "2026-10-02T11:20:00-04:00"),  # not HH:MM
-    ("arrival_time", "10:00"),                    # before submission
-    ("arrival_time", "11:31"),                    # more than 60 minutes after submission
+    ("arrival_time", "2026-10-02T11:20:00-04:00"),  # not "[day word] HH:MM"
+    ("arrival_time", "today 10:00"),              # before submission
+    ("arrival_time", "Monday 10:31"),             # 72 h 1 min after submission
+    ("arrival_time", "Nov 31 10:00"),             # not a calendar date
+    ("arrival_time", "next week 10:00"),          # not a day word the adapter reads
     ("arrival_time", "25:00"),                    # not a clock time
     ("departure_time", "11:20"),                  # not after arrival
     ("destination", 7),                           # wrong type
@@ -151,10 +153,44 @@ def test_arrival_after_midnight_is_the_next_day():
     assert result["trip_request"]["departure_time"] == "2026-11-11T02:00:00-05:00"
 
 
-def test_next_day_arrival_outside_the_window_is_missing():
-    # 23:00 sent at 23:40 would be tomorrow at 23:00, far outside 60 minutes.
+def test_clock_time_earlier_than_submission_is_tomorrow():
+    # 23:00 sent at 23:40 with no day named is tomorrow at 23:00; the
+    # confirmation step shows the date so the driver can correct it.
     result = at_night("23:00", "23:59")
-    assert result["missing_fields"] == ["arrival_time", "departure_time"]
+    assert result["trip_request"]["arrival_time"] == "2026-11-11T23:00:00-05:00"
+
+
+# Submitted Friday 2026-10-02 10:30 -04:00.
+@pytest.mark.parametrize("arrival, expected", [
+    ("today 10:30", "2026-10-02T10:30:00-04:00"),              # 0 minutes
+    ("Friday 11:30", "2026-10-02T11:30:00-04:00"),             # 60 minutes; today's weekday is today
+    ("tomorrow 10:30", "2026-10-03T10:30:00-04:00"),           # 24 hours
+    ("day after tomorrow 09:00", "2026-10-04T09:00:00-04:00"),
+    ("Oct 4 09:00", "2026-10-04T09:00:00-04:00"),
+    ("Monday 10:30", "2026-10-05T10:30:00-04:00"),             # 72 hours, inclusive
+])
+def test_named_day_within_72_hours_is_accepted(arrival, expected):
+    """SR-12: arrival 0-72 hours after submission, inclusive, with a calendar date."""
+    result = interpret(replying({**REPLY, "arrival_time": arrival, "departure_time": "Monday 23:00"}))
+    assert result["status"] == "complete"
+    assert result["trip_request"]["arrival_time"] == expected
+
+
+def test_departure_without_a_day_follows_the_arrival_date():
+    result = interpret(replying({**REPLY, "arrival_time": "Sunday 22:00", "departure_time": "01:00"}))
+    assert result["trip_request"]["departure_time"] == "2026-10-05T01:00:00-04:00"
+    result = interpret(replying({**REPLY, "arrival_time": "tomorrow 09:00", "departure_time": "12:00"}))
+    assert result["trip_request"]["departure_time"] == "2026-10-03T12:00:00-04:00"
+
+
+def test_departure_named_today_after_a_late_arrival_is_the_next_day():
+    result = at_night("today 23:55", "today 01:00")
+    assert result["trip_request"]["departure_time"] == "2026-11-11T01:00:00-05:00"
+
+
+def test_departure_on_an_earlier_day_is_missing():
+    result = interpret(replying({**REPLY, "arrival_time": "Sunday 09:00", "departure_time": "Saturday 17:00"}))
+    assert result["missing_fields"] == ["departure_time"]
 
 
 def test_departure_equal_to_arrival_is_missing():
@@ -180,7 +216,7 @@ def test_request_follows_adapter_specification():
     assert "enum" not in json.dumps(body["format"])
     user_prompt = body["messages"][1]["content"]
     assert "Driver message: park please" in user_prompt
-    assert "Current local date and time: 2026-10-02 10:30 (UTC-04:00)" in user_prompt
+    assert "Current local date and time: Friday 2026-10-02 10:30 (UTC-04:00)" in user_prompt
     assert "Supported eligibility values: permit_O, visitor" in user_prompt
     assert timeout == 60
 

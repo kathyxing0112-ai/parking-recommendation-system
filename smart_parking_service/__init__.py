@@ -45,7 +45,7 @@ PROVISIONAL_SUPPORTED_VALUES = {
 }
 
 TRIP_REQUEST_VALIDATION_RULES = {
-    "arrival_window_minutes": 60,  # SPEC Data Contract section 5
+    "arrival_window_minutes": 72 * 60,  # SPEC Data Contract section 5 (SR-12: 0-72 h)
     "supported_values": PROVISIONAL_SUPPORTED_VALUES,
 }
 INFORMATION_ACQUISITION_AND_REFRESH_RULES = {"refresh_interval_seconds": 60, "lot_ids": PILOT_LOT_IDS}  # C.1 Spec 2.3.2

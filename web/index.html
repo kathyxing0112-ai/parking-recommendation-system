@@ -291,7 +291,7 @@ const FIELD_NAMES = {
   vehicle_category: "Vehicle", declared_eligibility: "Permit", access_needs: "Accessible space",
 };
 const REASONS = {
-  "arrival_time is outside the arrival window": "Arrival must be within the next 60 minutes.",
+  "arrival_time is outside the arrival window": "Arrival must be within the next 72 hours.",
   "departure_time is not later than arrival_time": "Leave time must be later than arrival time.",
 };
 let options = { destinations: [], vehicle_categories: [], eligibility_values: [] };
@@ -343,10 +343,11 @@ function choices(values, labelOf) {
   return `<option value="">Choose...</option>` + values.map((v) => `<option value="${esc(v)}">${esc(labelOf(v))}</option>`).join("");
 }
 
+// Today and the next three dates cover the 72-hour arrival window (SR-12).
 function dayChoices() {
   const today = new Date();
-  const tomorrow = new Date(today.getTime() + 86400000);
-  return [localDate(today), localDate(tomorrow)].map((v) => `<option value="${v}">${esc(dayLabel(v))}</option>`).join("");
+  return [0, 1, 2, 3].map((n) => localDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + n)))
+    .map((v) => `<option value="${v}">${esc(dayLabel(v))}</option>`).join("");
 }
 
 function timeChoices() {
