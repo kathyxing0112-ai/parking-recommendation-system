@@ -18,5 +18,4 @@ jobs:
       - run: >-
           python -m pytest tests/ -v
           --ignore=tests/test_spec_acceptance.py
-          --deselect=tests/test_functional_requirements.py::test_FR_1_4_2_estimates_arrival_time_availability
           --deselect=tests/test_functional_requirements.py::test_FR_1_4_4_presents_parking_recommendations_and_status

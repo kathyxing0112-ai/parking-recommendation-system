@@ -6,8 +6,8 @@ message at a time, in the order of the updated UC.1 sequence diagram
 X.C.2 feed through the data access component, and the message is interpreted
 by the local Qwen3 model through its adapter; if the model is not running or
 its output violates the Model Response Contract, the driver fills in the
-six-field form instead. A1 filters the areas and A3 ranks them by walking time,
-because A2 has no forecast yet.
+six-field form instead. A1 filters the areas, A2 forecasts free spaces at the
+arrival time (ALT-F2), and A3 ranks them, by walking time if any forecast is missing.
 """
 
 from datetime import datetime, timedelta

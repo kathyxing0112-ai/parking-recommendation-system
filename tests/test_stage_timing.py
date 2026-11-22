@@ -22,7 +22,7 @@ from stage_timing import stage
 FIND_PARKING_STAGES = {
     "UC1.find_parking", "X.C.2.availability", "X.C.3.context", "X.C.4.rules",
     "C.1.prepare", "C.1.1.confirm", "C.1.2.requests", "C.1.3.validate", "C.1.4.eligibility",
-    "C.3.rank", "C.0.assemble_result",
+    "C.2.estimate", "C.3.rank", "C.0.assemble_result",
 }
 EXPECTED_PARENT = {
     "UC1.find_parking": None,
@@ -34,6 +34,7 @@ EXPECTED_PARENT = {
     "C.1.2.requests": "C.1.prepare",
     "C.1.3.validate": "C.1.prepare",
     "C.1.4.eligibility": "C.1.prepare",
+    "C.2.estimate": "UC1.find_parking",
     "C.3.rank": "UC1.find_parking",
     "C.0.assemble_result": "UC1.find_parking",
     "UC1.interpret_request": None,

@@ -8,14 +8,17 @@ messages inside it, in the order of the updated UC.1 sequence diagram
 Since Chapter 8, parking availability comes from the simulated X.C.2 feed
 through the data access component, and trip interpretation goes through the
 local language model adapter (docs/deployment.md). UC.1.10 and UC.1.11 run
-through A1, and UC.1.13 ranks through A3. A2 is not implemented, so no forecast
-exists and A3 uses its walking-time fallback (SR-13). A4 is not implemented
-either, so this module still builds the driver-facing result.
+through A1, UC.1.12 forecasts availability at arrival through A2 (ALT-F2,
+SR-14), and UC.1.13 ranks through A3, which falls back to walking time when any
+eligible area has no supported forecast (SR-13). A4 is not implemented, so this
+module still builds the driver-facing result.
 """
 
 from datetime import date, datetime, timedelta
 
 from contextual_information_sources import get_contextual_information, get_destinations
+from estimate_arrival_time_availability import estimate_arrival_time_availability
+from estimate_arrival_time_availability import warm_up as warm_up_forecast
 from cornell_transportation_and_parking_services import get_parking_rules_and_closures, get_rule_table
 from language_model import interpret_trip_request as model_interpret
 from language_model import warm_up_model
@@ -50,7 +53,9 @@ TRIP_REQUEST_VALIDATION_RULES = {
 }
 INFORMATION_ACQUISITION_AND_REFRESH_RULES = {"refresh_interval_seconds": 60, "lot_ids": PILOT_LOT_IDS}  # C.1 Spec 2.3.2
 DATA_VALIDATION_AND_FRESHNESS_RULES = {"stale_after_seconds": 120}  # SR-09
-# SR-13. No forecast exists yet, so A3 uses its walking-time fallback.
+# SR-14: forecast only from an observation at most 120 s old; model grid below T_c.
+FORECAST_VALIDITY_CRITERIA = {"max_observation_age_seconds": 120, "horizons_minutes": [0, 15, 30, 45, 60, 120]}
+# SR-13: S = 0.40W + 0.40A + 0.20Q when every eligible area has a supported forecast.
 RANKING_AND_FALLBACK_RULES = {"weights": {"walking_time": 0.4, "availability": 0.4, "uncertainty": 0.2}}
 
 LIVE_ROUNDS = 36          # three hours of 5-minute rounds on the live status page
@@ -88,13 +93,18 @@ def interpret_trip_request(message: str) -> dict:
     return {"status": "form_required", "trip_request": {}, "missing_fields": list(REQUIRED_FIELDS)}
 
 
+def warm_up_forecast_model() -> None:
+    """Load the forecast model and occupancy history before the first driver (A2)."""
+    warm_up_forecast()
+
+
 def warm_up_language_model() -> bool:
     """Load the local model with the product's own prompt before the first driver (keep_alive in language_model)."""
     return warm_up_model(PROVISIONAL_SUPPORTED_VALUES)
 
 
 def find_suitable_parking(trip_request: dict) -> dict:
-    """UC.1.4-UC.1.14: gather inputs, run A1 and A3, and return recommendations."""
+    """UC.1.4-UC.1.14: gather inputs, run A1, A2 and A3, and return recommendations."""
     submitted_at = _now()
     # UC.1.4-UC.1.9: request and receive data from the three external sources.
     with stage("X.C.2.availability"):
@@ -127,15 +137,27 @@ def find_suitable_parking(trip_request: dict) -> dict:
         # SR-12: an invalid request blocks the recommendation until corrected.
         return {"status": "invalid_trip_request", "reason": str(error), "ranked_options": []}
 
-    # UC.1.13: A3 ranks. A2 is not implemented, so no area has a forecast.
+    # UC.1.12: A2 forecasts free spaces at the arrival time (SR-14).
+    with stage("C.2.estimate"):
+        forecast = estimate_arrival_time_availability(
+            prepared["validated_parking_data"],
+            prepared["normalized_trip_requirements"],
+            prepared["validated_context_information"],
+            prepared["eligible_parking_areas"],
+            prepared["data_quality_and_freshness_status"],
+            forecast_validity_criteria=FORECAST_VALIDITY_CRITERIA,
+        )
+    estimates = {e["lot_id"]: e for e in forecast["arrival_time_availability_estimates"]}
+
+    # UC.1.13: A3 ranks; without a supported forecast for every area it uses walking time.
     with stage("C.3.rank"):
         ranked = rank_parking_options(
             prepared["normalized_trip_requirements"],
             prepared["validated_context_information"],
             prepared["eligible_parking_areas"],
             prepared["data_quality_and_freshness_status"],
-            [],
-            {},
+            forecast["arrival_time_availability_estimates"],
+            forecast["forecast_validity_status"],
             ranking_and_fallback_rules=RANKING_AND_FALLBACK_RULES,
         )
     with stage("C.0.assemble_result"):
@@ -148,6 +170,7 @@ def find_suitable_parking(trip_request: dict) -> dict:
         for rank, (option, role) in enumerate(zip(ranked, ("primary", "backup")), start=1):
             lot = observed[option["lot_id"]]
             available = lot["capacity"] - lot["occupied"]
+            estimate = estimates.get(option["lot_id"])
             ranked_options.append({
                 "rank": rank,
                 "role": role,
@@ -156,12 +179,8 @@ def find_suitable_parking(trip_request: dict) -> dict:
                 "walking_time_minutes": option["walking_time_minutes"],
                 "ranking_basis": option["ranking_basis"],
                 "stale": freshness[option["lot_id"]] == "stale",
-                "explanation": (
-                    f"{option['lot_id']} is eligible for {trip_request['declared_eligibility']}, "
-                    f"{option['walking_time_minutes']} min walk, "
-                    f"{available} spaces observed now (synthetic). "
-                    "Forecasts are unavailable, so options are ranked by walking time."
-                ),
+                "forecast": _forecast_summary(estimate),
+                "explanation": _explanation(option, trip_request, available, estimate),
             })
 
         # The confirmed request is echoed back so the driver can re-check it on the
@@ -173,8 +192,31 @@ def find_suitable_parking(trip_request: dict) -> dict:
             "ranked_options": ranked_options,
             "trip_summary": trip_summary,
             "data_mode": "synthetic",
+            "ranking_basis": ranked[0]["ranking_basis"] if ranked else None,
             "a1_outputs": _a1_outputs(prepared),
         }
+
+
+def _forecast_summary(estimate: dict | None) -> dict | None:
+    """What the driver sees of A2's estimate for one option."""
+    if estimate is None:
+        return None
+    return {key: estimate[key] for key in ("available_spaces", "interval_lower", "interval_upper",
+                                           "interval_level", "lead_minutes", "method", "long_range")}
+
+
+def _explanation(option: dict, trip_request: dict, available_now: int, estimate: dict | None) -> str:
+    """UC.1.14: the explanation names only the factors the ranking used (SR-15)."""
+    text = (f"{option['lot_id']} is eligible for {trip_request['declared_eligibility']}, "
+            f"{option['walking_time_minutes']} min walk, {available_now} spaces observed now (synthetic).")
+    if option["ranking_basis"] == "score":
+        text += (f" Forecast at arrival: about {estimate['available_spaces']} free "
+                 f"(80% range {estimate['interval_lower']}-{estimate['interval_upper']}). "
+                 "Ranked by walking time, forecast free spaces and forecast certainty.")
+        if estimate["long_range"]:
+            text += " Arrival is 3 h or more away, so the forecast is the usual level for that day and time: for reference only."
+        return text
+    return text + " A forecast is unavailable for at least one eligible lot, so options are ranked by walking time."
 
 
 def _a1_outputs(prepared: dict) -> dict:

@@ -1,0 +1,76 @@
+{
+  "approach": "ALT-F2 hybrid: LightGBM below T_c, lot/day/time-slot baseline from T_c to 72 h",
+  "t_c_minutes": 180,
+  "t_c_reading": "without the 2026-11-07 event window (team decision 2026-11-21)",
+  "model_grid_minutes": [
+    0,
+    15,
+    30,
+    45,
+    60,
+    120
+  ],
+  "interval_widening_spaces": {
+    "0-1h": 1.235,
+    "1-6h": 1.86
+  },
+  "widening_bands_minutes": {
+    "0-1h": [
+      0,
+      60
+    ],
+    "1-6h": [
+      60,
+      360
+    ]
+  },
+  "lot_codes": {
+    "LOT-1": 0,
+    "LOT-2": 1,
+    "LOT-3": 2
+  },
+  "training_capacity": {
+    "LOT-1": 200,
+    "LOT-2": 120,
+    "LOT-3": 150
+  },
+  "features": [
+    "lot_code",
+    "lead",
+    "origin_minute",
+    "rate_now",
+    "lag_15",
+    "lag_30",
+    "lag_60",
+    "rolling_mean_1h",
+    "same_time_last_week",
+    "target_last_week",
+    "target_minute",
+    "event_flag",
+    "day_of_week",
+    "is_class_day",
+    "is_break",
+    "is_weekend",
+    "temp_c",
+    "precipitation_probability",
+    "snow_flag",
+    "origin_profile",
+    "target_profile",
+    "dev_now",
+    "dev_1h"
+  ],
+  "profile_weeks": 15,
+  "series_start": "2026-08-24T04:00:00+00:00",
+  "lightgbm_settings": {
+    "n_estimators": 400,
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "min_child_samples": 100,
+    "random_state": 5151,
+    "frozen_on": "2026-11-21"
+  },
+  "trained_on": "simulated weeks 1-10, leads 15 min to 6 h, forecast every 15 min",
+  "calibrated_on": "week 11 without the event window",
+  "data_sha256": "81faa2458d1f2e919355e6cef9cb0863fe850f42bb9fa85f36a32d2661a646b2",
+  "simulated": true
+}
