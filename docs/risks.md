@@ -56,7 +56,7 @@ Any estimate that fails is withheld. The lot becomes "unsupported", A3 ranks by
 walking time, and the page shows no forecast for it. The reason is returned in
 `withheld` and is never shown to the driver.
 
-`tests/test_r04_forecast_guard.py` has 17 failure-path tests. Each feeds one
+`tests/test_r04_forecast_guard.py` has 22 failure-path tests (including missing fields and observation ages of 119, 120 and 121 s). Each feeds one
 kind of bad A2 output, including through the whole UC.1 flow with A2 corrupted,
 and asserts that nothing reaches ranking or display.
 

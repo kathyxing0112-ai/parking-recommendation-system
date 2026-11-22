@@ -84,6 +84,15 @@ def test_inconsistent_estimate_is_withheld_and_ranking_falls_back(reason):
     assert {o["ranking_basis"] for o in rank(guarded)} == {"fallback_walking_time"}
 
 
+@pytest.mark.parametrize("field", ["available_spaces", "interval_lower", "interval_upper", "capacity"])
+def test_estimate_with_a_missing_field_is_withheld(field):
+    bad = estimate()
+    del bad[field]
+    guarded = guard(a2_output(bad))
+    assert guarded["withheld"]["LOT-1"] == "not_whole_numbers"
+    assert {o["ranking_basis"] for o in rank(guarded)} == {"fallback_walking_time"}
+
+
 def test_boolean_is_not_accepted_as_a_count():
     guarded = guard(a2_output(estimate(capacity=True, available_spaces=True, interval_lower=0,
                                        interval_upper=True)))
@@ -117,7 +126,7 @@ def test_stale_observation_marked_supported_is_withheld():
     assert guarded["withheld"]["LOT-1"] == "observation_not_current"
 
 
-@pytest.mark.parametrize("age_seconds, withheld", [(120, False), (121, True)])
+@pytest.mark.parametrize("age_seconds, withheld", [(119, False), (120, False), (121, True)])
 def test_freshness_is_rechecked_before_display(age_seconds, withheld):
     now = datetime.fromisoformat(OBSERVED_AT) + timedelta(seconds=age_seconds)
     guarded = guard(a2_output(estimate()), now=now)
