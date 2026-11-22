@@ -4,7 +4,7 @@
 - Runtime: Local virtual environment
 - Model Runner: Ollama
 - Model: Qwen3 4B as the initial baseline (interprets chatbot messages into the six-field trip request; see the SPEC.md Model Response Contract)
-- Forecasting model: LightGBM as the candidate, compared with the historical time-slot baseline by validation MAE (SR-14); not yet installed
+- Forecasting model: LightGBM 4.7.0 quantile models below T_c and the lot/day/time-slot baseline after it (ALT-F2, ADR-0004), trained by `scripts/train_forecast.py`; model files in `estimate_arrival_time_availability/model/`
 - Editor: Visual Studio Code, Pycharm(Katherine Xing)
 
 ## Coding Assistants
