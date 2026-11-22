@@ -26,7 +26,7 @@ only those, plus the two identifiers the interface contract already uses.
 | `session_id` | string | yes | I-09 `record_session_id` | Lets SR-03 apply the own-session rule |
 | `submitted_at` | string, ISO 8601 with UTC offset | yes | I-11; E-01 `submitted_at` | The 24-hour retention period starts here |
 | `trip_request.destination` | string, from the supported destination list | yes | SPEC Data Contract §5 | |
-| `trip_request.arrival_time` | string, ISO 8601 with UTC offset | yes | §5 | No earlier than `submitted_at` and at most 60 minutes after it |
+| `trip_request.arrival_time` | string, ISO 8601 with UTC offset | yes | §5 | No earlier than `submitted_at` and at most 72 hours after it, inclusive |
 | `trip_request.departure_time` | string, ISO 8601 with UTC offset | yes | §5 | Later than `arrival_time` |
 | `trip_request.vehicle_category` | string, from the approved list | yes | §5 | |
 | `trip_request.declared_eligibility` | string, from the approved list | yes | §5 | |

@@ -109,8 +109,11 @@ cornell_driver_interface ──► smart_parking_service
   wins, so a late event cannot replace a newer one. The component does not
   judge freshness. A1.3 marks an observation stale after 120 s (SR-09).
 - **Not stored yet.** The data store does not yet hold:
-  - Section 2, the 15-minute modeling table. It arrives with the weeks 1–15
-    simulator and the forecast comparison (ADR-0002).
+  - Section 2, the 15-minute modeling table. `scripts/build_modeling_table.py`
+    writes it as a file, `data/simulated/occupancy_15min.csv`: one row per
+    lot and 15-minute time over the 15 simulated weeks (2026-08-24 to
+    2026-12-06), split 1–10 train, 11–12 validation, 13–15 holdout. Lags and
+    lead-time labels are built from it by the forecasting code.
   - Section 4, the rule table. The team confirmed it on 2026-11-03. It lives
     with X.C.4 in
     `cornell_transportation_and_parking_services/parking_rules.json` and is
@@ -122,6 +125,15 @@ cornell_driver_interface ──► smart_parking_service
   and a small per-slot change is added to it. A car therefore stays parked between
   5-minute slots, and the rate moves in a straight line between hourly values.
   Earlier rounds are recalculated from the seed, not stored.
+  The class-day hourly rate is lowered on weekends (×0.4) and on no-class
+  weekdays (×0.5, Registrar fall 2026 dates in
+  `contextual_information_sources/academic_calendar_fall2026.csv`), raised
+  when precipitation falls (×1.06, snow ×1.10, drawn from the seeded daily
+  forecast chance) and during the draft major events in
+  `campus_events_fall2026.csv`. Each lot also drifts slowly above or below its
+  usual level (90-minute half-life), so recent occupancy helps a forecast for
+  the next few hours but not for the next day. All of these are simulator
+  assumptions.
 
 ## Model adapter (C.1.1)
 

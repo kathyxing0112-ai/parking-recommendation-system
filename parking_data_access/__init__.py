@@ -145,3 +145,30 @@ class ParkingDataStore:
         events = self._source.get_updated_parking_availability(lot_id, as_of)
         self.ingest(events, received_at=datetime.now(timezone.utc))
         return {"lot_id": lot_id, "observations": self.latest_events([lot_id], as_of)}
+
+
+SERIES_PATH = Path(__file__).resolve().parents[1] / "data" / "simulated" / "occupancy_15min.csv"
+_series: dict | None = None
+
+
+def occupancy_rate_history(lot_id: str, times: list[datetime], not_after: datetime) -> list[float | None]:
+    """The feed's stored 15-minute occupancy rate for one lot at each of `times`.
+
+    Stands in for the history the data access component keeps: the simulated
+    15-minute series (SPEC Data Contract section 2), counted from the same
+    simulated sensor events the live feed reports. A2 uses it for the forecast
+    inputs that look back in time (lags, same time last week, weekday profile).
+    A time after `not_after` (the forecast time), or one the series does not
+    hold, gives None, so no future occupancy can reach a forecast.
+    """
+    global _series
+    if _series is None:
+        import csv
+        series: dict = {}
+        with SERIES_PATH.open(newline="", encoding="utf-8") as file:
+            for row in csv.DictReader(file):
+                at = datetime.fromisoformat(row["as_of_timestamp"]).astimezone(timezone.utc)
+                series.setdefault(row["lot_id"], {})[at] = float(row["occupancy_rate"])
+        _series = series
+    lot = _series.get(lot_id, {})
+    return [lot.get(at.astimezone(timezone.utc)) if at <= not_after else None for at in times]

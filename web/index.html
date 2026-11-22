@@ -153,6 +153,8 @@
   .backup .why { background: var(--why-blue); }
   .fresh { margin: 0; font-size: 13px; color: var(--muted); }
   .stale { color: var(--amber); font-weight: 700; }
+  .forecast { margin: 6px 0 0; }
+  .long-range { margin: 4px 0 0; font-size: 0.85em; color: var(--amber); }
   .below { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 12px 2px 0; font-size: 14px; color: var(--body); }
 
   .a1 { padding: 0 20px 20px; }
@@ -225,7 +227,7 @@
         <p class="chart-sub">Share of spaces taken, every 5 minutes</p>
         <div class="chart-wrap" id="chart"></div>
         <p class="chart-note" id="chart-note"></p>
-        <p class="foot-note">Simulated occupancy, not a forecast. The forecast goes here once A2 is finished.</p>
+        <p class="foot-note">Simulated occupancy, not a forecast. Forecasts for your arrival time are shown with your trip results.</p>
       </div>
     </div>
   </section>
@@ -267,7 +269,7 @@
         <button class="link" id="edit-trip" type="button">Edit trip</button>
       </div>
       <div class="results">
-        <p class="banner">No forecast yet: A2 and its model are not finished, so options are ranked by walking time.</p>
+        <p class="banner" id="ranking-banner"></p>
         <div class="cards" id="cards"></div>
         <div class="below">
           <span id="not-shown"></span>
@@ -291,7 +293,7 @@ const FIELD_NAMES = {
   vehicle_category: "Vehicle", declared_eligibility: "Permit", access_needs: "Accessible space",
 };
 const REASONS = {
-  "arrival_time is outside the arrival window": "Arrival must be within the next 60 minutes.",
+  "arrival_time is outside the arrival window": "Arrival must be within the next 72 hours.",
   "departure_time is not later than arrival_time": "Leave time must be later than arrival time.",
 };
 let options = { destinations: [], vehicle_categories: [], eligibility_values: [] };
@@ -343,10 +345,11 @@ function choices(values, labelOf) {
   return `<option value="">Choose...</option>` + values.map((v) => `<option value="${esc(v)}">${esc(labelOf(v))}</option>`).join("");
 }
 
+// Today and the next three dates cover the 72-hour arrival window (SR-12).
 function dayChoices() {
   const today = new Date();
-  const tomorrow = new Date(today.getTime() + 86400000);
-  return [localDate(today), localDate(tomorrow)].map((v) => `<option value="${v}">${esc(dayLabel(v))}</option>`).join("");
+  return [0, 1, 2, 3].map((n) => localDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + n)))
+    .map((v) => `<option value="${v}">${esc(dayLabel(v))}</option>`).join("");
 }
 
 function timeChoices() {
@@ -508,13 +511,21 @@ function renderCard(option, outputs) {
   const lot = outputs.validated_parking_data.find((item) => item.lot_id === option.lot_id);
   const name = outputs.lot_names[option.lot_id];
   const primaryName = outputs.lot_names[option.primary_lot_id];
+  const scored = option.ranking_basis === "score";
   const why = option.role === "primary"
-    ? "Closest lot the confirmed rules allow for your whole stay."
-    : `Longer walk. Head here if ${esc(primaryName)} is full when you get there.`;
+    ? (scored ? "Best balance of walking time and forecast free spaces when you arrive."
+              : "Closest lot the confirmed rules allow for your whole stay.")
+    : `${scored ? "Second best balance." : "Longer walk."} Head here if ${esc(primaryName)} is full when you get there.`;
+  const f = option.forecast;
+  const forecastLine = f
+    ? `<p class="forecast"><b>About ${esc(f.available_spaces)} free when you arrive</b> (80% range ${esc(f.interval_lower)}–${esc(f.interval_upper)})</p>
+       ${f.long_range ? `<p class="long-range">Arrival is 3 hours or more away, so this is the usual level for that day and time. For reference only: check again closer to arrival.</p>` : ""}`
+    : "";
   return `<article class="card ${esc(option.role)}">
     <div class="card-top"><span class="role">${esc(option.role.toUpperCase())}</span><span>${esc(option.walking_time_minutes)} min walk</span></div>
     <h3>${esc(name)}</h3>
     <div class="count"><b>${esc(option.available_spaces)}</b><span>free of ${esc(lot.capacity)} right now</span></div>
+    ${forecastLine}
     <p class="why"><strong>Why:</strong> ${why}</p>
     <p class="fresh ${option.stale ? "stale" : ""}">${option.stale ? "Data is out of date. " : ""}Data updated ${secondsAgo(lot.observed_at)} s ago</p>
   </article>`;
@@ -549,6 +560,9 @@ function renderResults(result) {
   const trip = result.trip_summary;
   $("trip-line").textContent = `${trip.destination} · ${tripTimes(trip)} · ${PERMIT_NAMES[trip.declared_eligibility] || trip.declared_eligibility} · ${trip.vehicle_category}`;
   const primaryId = result.ranked_options[0]?.lot_id;
+  $("ranking-banner").textContent = result.ranking_basis === "score"
+    ? "Ranked by walking time, forecast free spaces at your arrival time and how certain the forecast is (simulated data)."
+    : "A forecast is unavailable for at least one eligible lot, so options are ranked by walking time.";
   $("cards").innerHTML = result.ranked_options.length
     ? result.ranked_options.map((option) => renderCard({ ...option, primary_lot_id: primaryId }, outputs)).join("")
     : `<p>No eligible parking area was found for this trip.</p>`;

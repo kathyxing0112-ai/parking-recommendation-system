@@ -549,7 +549,7 @@ components:
       required: [destination, arrival_time, departure_time, vehicle_category, declared_eligibility, access_needs]
       properties:
         destination: {type: string}
-        arrival_time: {type: string, format: date-time}
+        arrival_time: {type: string, format: date-time, description: 'No earlier than submission and at most 72 hours after it, inclusive (SR-12).'}
         departure_time: {type: string, format: date-time}
         vehicle_category: {type: string}
         declared_eligibility: {type: string}
@@ -623,7 +623,7 @@ components:
     TripRequestValidationRules:
       type: object
       properties:
-        arrival_window_minutes: {type: integer, x-unit: minutes}
+        arrival_window_minutes: {type: integer, x-unit: minutes, maximum: 4320, description: 'Latest arrival after submission; 4320 (72 hours) in the pilot (SR-12).'}
     InformationAcquisitionAndRefreshRules:
       type: object
       properties:

@@ -73,7 +73,7 @@ def test_FR_1_4_1_prepares_eligible_parking_information():
         {},
         walking,
         {},
-        trip_request_validation_rules={"arrival_window_minutes": 60},
+        trip_request_validation_rules={"arrival_window_minutes": 72 * 60},
         information_acquisition_and_refresh_rules={"refresh_interval_seconds": 60},
         data_validation_and_freshness_rules={"stale_after_seconds": 120},
         parking_policy_constraints=rules,

@@ -661,5 +661,35 @@ Later on 2026-11-03, further decisions from Katherine Xing:
   and the decision that follows (Lab Manual §10.4.3). Claude Code produced the
   numbers and figures only.
 - Verification: `tests.yml` selection 241 passed.
-- Reviewed by: (pending, Xichen Wang)
+- Reviewed by: (Xichen Wang)
 
+
+## 2026-11-16 to 2026-11-22 — Katherine Xing — Claude Code (model: Claude Opus 5.5)
+
+- Purpose: Lab Manual §11.2 (prototype spike, implementation of the selected
+  option, ADR) and §12.3 (product risk register, guardrail with failure-path
+  tests).
+- Prompts: in the Claude Code session, Katherine asked for:
+  - a list of trade-off measures for the three forecast architectures (ALT-F1, F2, F3);
+  - a spike that scores them on validation weeks 11–12 with the same inputs, then usage-weighted scores, event-free calibration and a backtest on training weeks;
+  - the 72-hour arrival window;
+  - the selected ALT-F2 in A2;
+  - review notes on Xichen Wang's X4;
+  - drafts of ADR-0004 and this risk register from the team's B3 sheet;
+  - a guardrail for the top-rated risk.
+- Output:
+  - `scripts/spike_forecast.py`, `scripts/backtest_forecast.py` and `docs/measurements/ch11/` (branch `ch11-forecast-spike`);
+  - the 72 h window (`ch11-forecast-trade`);
+  - `scripts/train_forecast.py`, `estimate_arrival_time_availability/` and `tests/test_a2_forecast.py`;
+  - `docs/adr/0004-forecast-architecture-alt-f2.md` and `docs/risks.md`;
+  - `smart_parking_service.guard_forecasts` and `tests/test_r04_forecast_guard.py`.
+- Not delegated:
+  - the T_c reading without the event window, the usage shares, the choice not to build an event-aware baseline, and the 120–180 min interpolation (option A), all decided by the team or Katherine;
+  - the swing weights and the selection (Xichen Wang, X4);
+  - all risk likelihood and impact ratings (team, B3 sheet);
+  - the license check of Chronos (Katherine Xing, primary sources, 2026-11-21).
+- The guardrail's bad-output cases were written in the same Claude Code session
+  that wrote the guardrail, so they are not independent tests.
+- Verification: `tests.yml` selection 302 passed (2026-11-22). The holdout
+  weeks 13–15 were not read. The pre-holdout predictions are in commit 92303d0.
+- Reviewed by: (Xichen Wang)

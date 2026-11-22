@@ -1,6 +1,9 @@
-# The walking skeleton uses the Python standard library at runtime.
+# The walking skeleton uses the Python standard library at runtime, except A2:
+# its ALT-F2 forecast loads LightGBM models (estimate_arrival_time_availability/model).
+lightgbm==4.7.0
 # Chapter 3's red acceptance suite runs with pytest.
 pytest
 # Chapter 7: contracts/generate_stubs.py and tests/test_interface_contract.py
 # read contracts/api-v1.yaml.
 pyyaml
+# Training and trade-study scripts (scripts/train_forecast.py, spike_forecast.py) also need pandas.

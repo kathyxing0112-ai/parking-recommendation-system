@@ -73,6 +73,7 @@ def main() -> None:
     # Load the model in the background so the first driver does not wait for it.
     # Not a driver action, so it goes to the service directly.
     threading.Thread(target=smart_parking_service.warm_up_language_model, daemon=True).start()
+    threading.Thread(target=smart_parking_service.warm_up_forecast_model, daemon=True).start()
     print(f"Cornell Smart Parking: open http://{HOST}:{PORT}")
     server.serve_forever()
 
