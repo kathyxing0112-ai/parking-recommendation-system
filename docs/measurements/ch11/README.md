@@ -265,6 +265,9 @@ Chronos latency was 684–868 ms on 2026-11-20, 832–1,244 ms in the earlier ru
 658–878 ms in this run. It varies with machine load, but the conclusion is the same: it is several
 hundred times slower than LightGBM (about 290–520 times in this run).
 
+Licences, checked by Katherine on 2026-11-21: `amazon/chronos-2` and `amazon/chronos-bolt-small`
+(Hugging Face model pages) and `amazon-science/chronos-forecasting` (GitHub) are Apache-2.0.
+
 ## What the numbers show
 
 These are observations only, not a recommendation.
@@ -285,6 +288,41 @@ These are observations only, not a recommendation.
 6. **Zero-shot Chronos.** It is competitive only in the first hour and on the event day. It is
    much worse beyond 1 h on ordinary days, and it is several hundred times slower, with about
    10 times the memory of LightGBM.
+
+## Backtest and predictions for the holdout (written 2026-11-22, before the holdout run)
+
+The holdout (weeks 13–15) is harder than validation: week 13 has the 2026-11-21 home game and
+week 14 is Thanksgiving break (2026-11-25 to 11-29). Validation has one event and no break
+weekdays. To see how the options behave on such days without reading the holdout, the training
+weeks were split again: train on weeks 1–6, forecast weeks 7–10, which contain fall break
+(10/12–13 weekdays), the homecoming game (10/17) and an evening concert (10/28).
+
+Settings are the frozen ones, ALT-F2 uses T_c = 3 h, its short model is calibrated on week 7
+(no event window) and checked on forecasts made in weeks 8–10. Scores use the team's request
+shares. Script: `scripts/backtest_forecast.py`. Six training weeks instead of ten, so the
+numbers are conservative.
+
+| Weeks 8–10, usage-weighted | n | Baseline MAE | ALT-F1 MAE | ALT-F2 MAE | ALT-F2 coverage | ALT-F2 bias |
+|---|---|---|---|---|---|---|
+| All day, without event windows | 60,364 | 7.84 | 5.61 | **5.55** | 0.745 | +2.08 |
+| Daytime, without event windows | 29,554 | 11.98 | 8.25 | **8.23** | 0.698 | +3.74 |
+| Break weekdays 10/12–13 | 3,240 | 33.6 | **5.21** | 15.75 | 0.475 | +13.82 |
+| Event windows | 1,505 | 71.9 | **12.13** | 34.75 | 0.268 | −30.84 |
+
+Positive bias means the forecast says the lot is fuller than it is (the safe direction for a
+driver); negative means emptier. Beyond T_c ALT-F2 uses the baseline, which has no break or
+event input: it over-forecasts on break days and under-forecasts during events.
+
+**Predictions for the SR-14 holdout checks**, recorded before the run, for ALT-F2 with T_c = 3 h:
+
+| SR-14 check | Prediction | Reason |
+|---|---|---|
+| MAE not above the baseline | Likely met | ALT-F2 equals the baseline beyond T_c and beat it within T_c in validation and in the backtest (5.55 vs 7.84) |
+| Primary option has a free space on arrival, ≥ 85 of 100 trips | Likely met | On break days ALT-F2 over-forecasts occupancy (safe direction). The risk is trips to LOT-1/LOT-2 during the 11/21 game requested more than 3 h ahead |
+| 80% interval coverage 75%–85% | At risk | Backtest 0.745 all day, 0.698 daytime, 0.475 on break days; validation daytime 0.74 |
+
+Whatever the holdout shows, the model, settings and T_c stay as they are; a missed check is
+reported with its cause and recorded as a risk.
 
 ## Limitations to state in the report
 
@@ -313,8 +351,8 @@ These are observations only, not a recommendation.
   these weeks, after the results were seen; both readings are kept in the tables. All of this favours the LightGBM options
   slightly. The single holdout run after selection is the unbiased check.
 - **One event and no break weekdays in validation.** The event result rests on one game, and it
-  decides whether ALT-F1 or ALT-F2 has the lower overall MAE. Break-day behaviour is first seen
-  in the holdout (Thanksgiving, week 14).
+  decides whether ALT-F1 or ALT-F2 has the lower overall MAE. Break days are seen only
+  in the backtest on training weeks (fall break) and in the holdout (Thanksgiving, week 14).
 - **Request shares are an assumption.** There is no usage data (no trip records are stored). The
   sensitivity check shows the ranking holds for shares tilted toward nearer or farther requests.
 - **Calibration uses one week.** It is checked on one more week; coverage on the holdout may differ.
