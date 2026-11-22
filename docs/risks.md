@@ -60,9 +60,27 @@ walking time, and the page shows no forecast for it. The reason is returned in
 kind of bad A2 output, including through the whole UC.1 flow with A2 corrupted,
 and asserts that nothing reaches ranking or display.
 
-**Monitoring:** the `C.0.forecast_guard` stage time is recorded with the other
-stages. After the holdout run, SR-14 coverage and MAE are reported in
-`docs/measurements/ch11/`.
+**Relation to the mitigation plan (report §4.4).** The plan has three parts.
+C.2 reports validity and withholds unsupported estimates; this was already in A2.
+C.3 checks validity and bounds before scoring, and falls back to walking time.
+C.4 suppresses unsupported estimates. The cross-checks between the status and the
+data (wrong lot, wrong arrival time, wrong observation, stale but marked
+supported) are done in one place, `guard_forecasts`, just before C.3. A3 keeps
+its own bounds check and the SR-13 fallback. The page shows a forecast only for
+an estimate that passed the guard, which stands in for C.4 until A4 has a body.
+
+**Monitoring (report §4.5, Table 4-4).**
+
+| Indicator | Target | Result on 2026-11-22 | Evidence |
+|---|---|---|---|
+| Failure cases: missing fields, stale data marked supported, 119/120/121 s, unsupported lead, invalid bounds, plus a valid control | each case withheld; the control passes | 22 of 22 pass | `tests/test_r04_forecast_guard.py` |
+| Invalid forecasts used in ranking or shown | 0 | 0 in the failure-path tests, including two through the whole UC.1 flow | same file |
+| Walk-only fallback in the specified cases | 100% | 100% | same file |
+| Driver-visible SR-13 latency, 30 local confirmed requests with at least two eligible options | ≤ 5 s in all 30 | 30 of 30 under 5 s, each with 2 options. Median 9.4 ms, p95 14.1 ms, max 1.42 s. The max is run 1, where the A2 model loaded on first use (`C.2.estimate` 1.37 s). `web_app.py` loads it at start-up. | `python scripts/measure_uc1.py --scenario 2 --runs 30 --http`, Apple M4, commit b9a35e7. Output is in `measurements/runs/` (git-ignored). Page rendering is not included (as in Lab 10.4). |
+
+After the holdout run, SR-14 coverage and MAE are reported in `docs/measurements/ch11/`.
+A failed gate, a change to the forecast horizon, or a change to the data source or
+model triggers a new assessment (report §4.5).
 
 ## Open Items for the Team
 
