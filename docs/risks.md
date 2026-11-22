@@ -1,6 +1,6 @@
 # Product Risk Register (Ch 12, §12.3)
 
-**Status:** the B3 ratings of R-01 to R-05 are the team's baseline ratings before mitigation, from the B3 sheet (`风险表.xlsx`, sheet "B3 风险评分"), confirmed by Katherine Xing and Xichen Wang on 2026-11-22. The six AI risks have no ratings yet. The team rates them on the same scales; AI does not score risks.
+**Status:** the B3 ratings of R-01 to R-05 are the team's baseline ratings before mitigation, from the B3 sheet (`风险表.xlsx`, sheet "B3 风险评分"), confirmed by Katherine Xing and Xichen Wang on 2026-11-22. The six AI risks were rated by the team on the same scales on 2026-11-22; AI did not score any risk.
 
 ## Scales and Calculation (B3 量表)
 
@@ -24,14 +24,14 @@ The matrix in the B3 矩阵 sheet places each risk in the right cell: R-01 at (3
 
 ## AI-Specific Risks (Lab Manual §12.3.2)
 
-| ID | Risk named by the Manual | Where it sits in the model | L | I | Risk | Handling in the product | Code / tests |
-|---|---|---|---|---|---|---|---|
-| AI-1 | Model output has the right format but wrong content | C.1.1.1 Qwen3 → C.1.1 adapter, s1.3 → s1.4 (I/O 308674). This is the AI side of R-01. | team | team | — | Value checks against the supported lists and the 72 h window. An unusable value is listed as missing, not guessed, and the driver confirms the trip. | `tests/test_model_adapter.py` (`test_unusable_value_is_listed_as_missing_not_substituted`, `test_access_needs_of_wrong_type_is_missing_not_false`) |
-| AI-2 | Model unavailable or slow | C.1.1 → C.1.1.1, s1.2 → s1.3 (I/O 308673, candidate B1-25) | team | team | — | Fallback. A connection error or the 60 s timeout leads to `model_unavailable` and the six-field form. Truncated output falls back too. The model is warmed up at start-up. | `test_unreachable_or_slow_model_falls_back`, `test_truncated_output_falls_back`, `test_warm_up_failure_does_not_stop_the_product` |
-| AI-3 | Untrusted input from a data source enters the prompt | X.C.1 driver message → C.1.1 prompt | team | team | — | Only the driver's message and the application's own supported-value lists enter the prompt. No occupancy, rule or context data does. Messages over 2,000 characters are not sent. Whatever the message says, the reply must pass the six-field contract and driver confirmation. | `test_overlong_message_is_not_sent_to_model`, `test_request_follows_adapter_specification` |
-| AI-4 | Response schema drifts between model versions | C.1.1.1 → C.1.1 (Model Response Contract) | team | team | — | A reply that is not a JSON object with exactly the six fields is discarded (`wrong_fields` / `malformed_json`) and the form is shown. The model is named as `qwen3:4b` in `language_model/`. | `test_reply_without_the_six_fields_falls_back`, `test_unexpected_ollama_envelope_falls_back` |
-| AI-5 | A dependency is deprecated | Ollama runtime (C.1.1.1 mechanism), `lightgbm` (C.2) | team | team | — | Python packages are pinned in `requirements.txt` (`lightgbm==4.7.0`). The forecast model files are versioned with a manifest and data hash, and `scripts/train_forecast.py` rebuilds them. The Ollama and Qwen3 versions are recorded in `docs/environment.md`. | `tests/test_a2_forecast.py::test_model_files_record_the_team_decisions` |
-| AI-6 | Data leaves the machine by an unintended path | C.1.1 → C.1.1.1 endpoint; X.C.2/X.C.3 are local simulated sources | team | team | — | The model endpoint is the loopback address only. Raw messages and raw model output are never logged or stored (SR-04). No trip records are stored. Forecast features come from local simulated data. | `test_model_endpoint_is_local`, `test_fallback_presents_six_field_form_without_raw_output` |
+| ID | Risk named by the Manual | Where it sits in the model | L | I         | Risk | Handling in the product | Code / tests |
+|---|---|---|---|-----------|------|---|---|
+| AI-1 | Model output has the right format but wrong content | C.1.1.1 Qwen3 → C.1.1 adapter, s1.3 → s1.4 (I/O 308674). This is the AI side of R-01. | 3 | 3/2/4 → 3 | 9 Medium | Value checks against the supported lists and the 72 h window. An unusable value is listed as missing, not guessed, and the driver confirms the trip. | `tests/test_model_adapter.py` (`test_unusable_value_is_listed_as_missing_not_substituted`, `test_access_needs_of_wrong_type_is_missing_not_false`) |
+| AI-2 | Model unavailable or slow | C.1.1 → C.1.1.1, s1.2 → s1.3 (I/O 308673, candidate B1-25) | 2 | 1/1/2 → 1 | 2 Low | Fallback. A connection error or the 60 s timeout leads to `model_unavailable` and the six-field form. Truncated output falls back too. The model is warmed up at start-up. | `test_unreachable_or_slow_model_falls_back`, `test_truncated_output_falls_back`, `test_warm_up_failure_does_not_stop_the_product` |
+| AI-3 | Untrusted input from a data source enters the prompt | X.C.1 driver message → C.1.1 prompt | 1 | 1/1/2 → 1      | 1 Low | Only the driver's message and the application's own supported-value lists enter the prompt. No occupancy, rule or context data does. Messages over 2,000 characters are not sent. Whatever the message says, the reply must pass the six-field contract and driver confirmation. | `test_overlong_message_is_not_sent_to_model`, `test_request_follows_adapter_specification` |
+| AI-4 | Response schema drifts between model versions | C.1.1.1 → C.1.1 (Model Response Contract) | 2 | 3/2/3 → 3      | 6 Medium | A reply that is not a JSON object with exactly the six fields is discarded (`wrong_fields` / `malformed_json`) and the form is shown. The model is named as `qwen3:4b` in `language_model/`. | `test_reply_without_the_six_fields_falls_back`, `test_unexpected_ollama_envelope_falls_back` |
+| AI-5 | A dependency is deprecated | Ollama runtime (C.1.1.1 mechanism), `lightgbm` (C.2) | 1 | 2/2/3 → 2      | 2 Low | Python packages are pinned in `requirements.txt` (`lightgbm==4.7.0`). The forecast model files are versioned with a manifest and data hash, and `scripts/train_forecast.py` rebuilds them. The Ollama and Qwen3 versions are recorded in `docs/environment.md`. | `tests/test_a2_forecast.py::test_model_files_record_the_team_decisions` |
+| AI-6 | Data leaves the machine by an unintended path | C.1.1 → C.1.1.1 endpoint; X.C.2/X.C.3 are local simulated sources | 1 | 2/2/4 → 3      | 3 Low | The model endpoint is the loopback address only. Raw messages and raw model output are never logged or stored (SR-04). No trip records are stored. Forecast features come from local simulated data. | `test_model_endpoint_is_local`, `test_fallback_presents_six_field_form_without_raw_output` |
 
 ## Top Risk R-04: Guardrail
 
@@ -85,6 +85,5 @@ model triggers a new assessment (report §4.5).
 ## Open Items for the Team
 
 1. Remove the "Draft initial values" label in the B3 sheet (ratings confirmed 2026-11-22), and record a residual rating for R-04 now that the guardrail is verified (report §4.5).
-2. Rate AI-1 to AI-6 on the B3 scales.
-3. Update the R-04 evidence in B3 (column K). It says "SR-14 on main specifies 60 minutes". The 72 h window is on branch `ch11-forecast-trade` and reaches main with the A2 PR, so this line in this file and in Innoslate changes after the merge.
-4. Confirm that the R-04 handling here matches the B5 mitigation plan.
+2. Update the R-04 evidence in B3 (column K). It says "SR-14 on main specifies 60 minutes". The 72 h window is on branch `ch11-forecast-trade` and reaches main with the A2 PR, so this line in this file and in Innoslate changes after the merge.
+3. Confirm that the R-04 handling here matches the B5 mitigation plan.
