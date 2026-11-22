@@ -147,6 +147,13 @@ def find_suitable_parking(trip_request: dict) -> dict:
             prepared["data_quality_and_freshness_status"],
             forecast_validity_criteria=FORECAST_VALIDITY_CRITERIA,
         )
+    # R-04 guardrail: an estimate reaches ranking and display only if it is the
+    # supported forecast for this lot, this trip and a still-current observation.
+    with stage("C.0.forecast_guard"):
+        forecast = guard_forecasts(forecast, prepared["normalized_trip_requirements"],
+                                   prepared["eligible_parking_areas"], prepared["validated_parking_data"],
+                                   prepared["data_quality_and_freshness_status"],
+                                   datetime.now().astimezone())
     estimates = {e["lot_id"]: e for e in forecast["arrival_time_availability_estimates"]}
 
     # UC.1.13: A3 ranks; without a supported forecast for every area it uses walking time.
@@ -195,6 +202,92 @@ def find_suitable_parking(trip_request: dict) -> dict:
             "ranking_basis": ranked[0]["ranking_basis"] if ranked else None,
             "a1_outputs": _a1_outputs(prepared),
         }
+
+
+def guard_forecasts(forecast: dict, normalized_trip_requirements: dict, eligible_parking_areas: list[dict],
+                    validated_parking_data: list[dict], data_quality_and_freshness_status: dict,
+                    now: datetime) -> dict:
+    """R-04 guardrail (docs/risks.md): withhold any A2 estimate that ranking or display must not use.
+
+    Runs between A2 and A3, so A3 and the page see only estimates that pass.
+    An estimate is kept only if all of these hold; otherwise the lot is marked
+    "unsupported" and A3 falls back to walking time (SR-13):
+      - A2 marked the lot "supported", the lot is eligible, and A2 returned exactly one estimate for it;
+      - the values are whole numbers with 0 <= lower <= estimate <= upper <= capacity,
+        the capacity is the observed one, and the interval level is 80%;
+      - the estimate is for this trip's arrival time, made from this lot's observation,
+        with a lead time of 0-72 h;
+      - the observation is still "current" and, rechecked now, at most 120 s old (SR-14:
+        recheck freshness before display).
+    Returns {"arrival_time_availability_estimates", "forecast_validity_status", "withheld"},
+    where "withheld" maps each withheld lot to the first failed check.
+    """
+    status = dict(forecast.get("forecast_validity_status") or {})
+    eligible = {area["lot_id"] for area in eligible_parking_areas}
+    observed = {lot["lot_id"]: lot for lot in validated_parking_data}
+    arrival = _aware(normalized_trip_requirements.get("arrival_time"))
+    by_lot = {}
+    for estimate in forecast.get("arrival_time_availability_estimates") or []:
+        lot_id = estimate.get("lot_id") if isinstance(estimate, dict) else None
+        by_lot.setdefault(lot_id, []).append(estimate)
+
+    kept, withheld = [], {}
+    for lot_id in sorted(eligible | {k for k in by_lot if isinstance(k, str)}):
+        reason = _forecast_problem(lot_id, status.get(lot_id), by_lot.get(lot_id, []), lot_id in eligible,
+                                   observed.get(lot_id), data_quality_and_freshness_status.get(lot_id),
+                                   arrival, now)
+        if reason is None:
+            kept.append(by_lot[lot_id][0])
+        else:
+            if lot_id in status or lot_id in eligible:
+                status[lot_id] = "unsupported"
+            if reason != "not_supported":
+                withheld[lot_id] = reason
+    return {"arrival_time_availability_estimates": kept, "forecast_validity_status": status,
+            "withheld": withheld}
+
+
+def _forecast_problem(lot_id, status, estimates, is_eligible, lot, freshness, arrival, now) -> str | None:
+    """The first check an estimate fails, or None if ranking and display may use it."""
+    if not estimates or status != "supported":
+        return "not_supported" if not estimates else "status_not_supported"
+    if not is_eligible:
+        return "lot_not_eligible"
+    if len(estimates) != 1:
+        return "duplicate_estimates"
+    e = estimates[0]
+    numbers = [e.get(k) for k in ("capacity", "available_spaces", "interval_lower", "interval_upper")]
+    if not all(isinstance(n, int) and not isinstance(n, bool) for n in numbers):
+        return "not_whole_numbers"
+    capacity, available, lower, upper = numbers
+    if not 0 <= lower <= available <= upper <= capacity or capacity <= 0:
+        return "bounds_inconsistent"
+    if e.get("interval_level") != 0.8:
+        return "wrong_interval_level"
+    if lot is None or capacity != lot.get("capacity"):
+        return "capacity_mismatch"
+    if arrival is None or _aware(e.get("arrival_time")) != arrival:
+        return "other_arrival_time"
+    forecast_time = _aware(e.get("forecast_time"))
+    observed_at = _aware(lot.get("observed_at"))
+    if forecast_time is None or forecast_time != observed_at:
+        return "other_observation"
+    if not timedelta(0) <= arrival - forecast_time <= timedelta(hours=72):
+        return "lead_out_of_range"
+    if freshness != "current":
+        return "observation_not_current"
+    age = (now - observed_at).total_seconds()
+    if age > FORECAST_VALIDITY_CRITERIA["max_observation_age_seconds"]:
+        return "observation_aged_before_display"
+    return None
+
+
+def _aware(value) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo is not None else None
 
 
 def _forecast_summary(estimate: dict | None) -> dict | None:

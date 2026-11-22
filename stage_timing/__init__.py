@@ -38,6 +38,7 @@ STAGES = {
     "C.1.3.validate": ("C.1.3", "A1.3 validates parking and context data"),
     "C.1.4.eligibility": ("C.1.4", "A1.4 determines eligible parking areas"),
     "C.2.estimate": ("C.2", "A2 forecasts free spaces at the arrival time (ALT-F2)"),
+    "C.0.forecast_guard": ("C.0", "R-04 guardrail: withholds A2 estimates ranking and display must not use"),
     "C.3.rank": ("C.3", "A3 ranks the eligible options"),
     "C.0.assemble_result": ("C.0 (stands in for C.4)", "Builds the driver-facing result; A4 has no body yet"),
     # Measured by the client in scripts/measure_uc1.py --http, not with stage():

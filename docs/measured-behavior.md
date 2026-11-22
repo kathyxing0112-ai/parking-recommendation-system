@@ -27,6 +27,7 @@ Tests: `tests/test_stage_timing.py`.
 | `C.1.3.validate` | C.1.3 | A1.3 validates parking and context data | s1.8 / s2.4 Validate Parking Records |
 | `C.1.4.eligibility` | C.1.4 | A1.4 determines eligible areas | s1.10 / s2.6 Filter Eligible Parking Options |
 | `C.2.estimate` | C.2 | A2 forecasts free spaces at arrival (added 2026-11-22, after the Ch10 runs) | — |
+| `C.0.forecast_guard` | C.0 | R-04 guardrail between A2 and A3 (added 2026-11-22, after the Ch10 runs) | — |
 | `C.3.rank` | C.3 | A3 ranks the options | s1.11 / s2.7 Rank Parking Recommendations |
 | `C.0.assemble_result` | C.0 (stands in for C.4) | Driver-facing result; A4 has no body yet | s1.12 / s2.8 Deliver, together with the HTTP reply |
 | `HTTP.interpret_round_trip` | Browser → `web_app` | POST /api/interpret, client side (`--http`) | Window C seen by the client |
