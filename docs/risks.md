@@ -6,7 +6,7 @@
 
 - **Likelihood (L)** and **Cost, Schedule and Technical impact** are rated 1–5 using the definitions in the B3 量表 sheet.
 - **Overall Impact (I)** is the mean of the three impacts, rounded. Each impact has weight 1/3 because the team has no approved dimension weights.
-- **Risk = L × I.** Low is 1–5, Medium is 6–12 and High is 13–25. These thresholds are proposed and await team confirmation.
+- **Risk = L × I.** Low is 1–5, Medium is 6–12 and High is 13–25. These are the bands used in the team-confirmed B3 table and matrix.
 - In the matrix, likelihood increases up the vertical axis and Overall Impact increases to the right.
 - Source: SYSEN 5151 Lab Manual v3.0, pp. 176–177 and 179–180.
 
@@ -50,35 +50,35 @@ A3) keeps an estimate only if all of these hold:
 - A2 marked the lot supported, the lot is eligible, and A2 returned exactly one estimate for it.
 - The counts are whole numbers with 0 ≤ lower ≤ estimate ≤ upper ≤ capacity, the capacity matches the observed one, and the interval level is 80%.
 - The estimate is for this trip's arrival time, it was made from this lot's observation, and the lead time is 0–72 h.
-- The observation is still "current" and is at most 120 s old when rechecked just before display (SR-14).
+- The observation is still current and no more than 120 s old at the guardrail check before ranking and result assembly (SR-14).
 
 Any estimate that fails is withheld. The lot becomes "unsupported", A3 ranks by
 walking time, and the page shows no forecast for it. The reason is returned in
 `withheld` and is never shown to the driver.
 
-`tests/test_r04_forecast_guard.py` has 22 failure-path tests (including missing fields and observation ages of 119, 120 and 121 s). Each feeds one
-kind of bad A2 output, including through the whole UC.1 flow with A2 corrupted,
-and asserts that nothing reaches ranking or display.
+`tests/test_r04_forecast_guard.py` has 22 passing guardrail cases, including
+failure paths, a valid-estimate control, and the 119, 120 and 121 s boundary.
+The 119 and 120 s cases pass through the gate, while the 121 s case is withheld.
+Two UC.1 cases inject bad A2 output and examine the assembled product result.
 
 **Relation to the mitigation plan (report §4.4).** The plan has three parts.
 C.2 reports validity and withholds unsupported estimates; this was already in A2.
 C.3 checks validity and bounds before scoring, and falls back to walking time.
-C.4 suppresses unsupported estimates. The cross-checks between the status and the
-data (wrong lot, wrong arrival time, wrong observation, stale but marked
-supported) are done in one place, `guard_forecasts`, just before C.3. A3 keeps
-its own bounds check and the SR-13 fallback. The page shows a forecast only for
-an estimate that passed the guard, which stands in for C.4 until A4 has a body.
+The page hides unsupported numeric forecasts. `guard_forecasts` checks status
+against lot, arrival time, observation and freshness before A3. A3 keeps its
+bounds check and SR-13 fallback. C.0 assembles results until A4 has a body.
 
 **Monitoring (report §4.5, Table 4-4).**
 
 | Indicator | Target | Result on 2026-11-22 | Evidence |
 |---|---|---|---|
-| Failure cases: missing fields, stale data marked supported, 119/120/121 s, unsupported lead, invalid bounds, plus a valid control | each case withheld; the control passes | 22 of 22 pass | `tests/test_r04_forecast_guard.py` |
-| Invalid forecasts used in ranking or shown | 0 | 0 in the failure-path tests, including two through the whole UC.1 flow | same file |
-| Walk-only fallback in the specified cases | 100% | 100% | same file |
-| Driver-visible SR-13 latency, 30 local confirmed requests with at least two eligible options | ≤ 5 s in all 30 | 30 of 30 under 5 s, each with 2 options. Median 9.4 ms, p95 14.1 ms, max 1.42 s. The max is run 1, where the A2 model loaded on first use (`C.2.estimate` 1.37 s). `web_app.py` loads it at start-up. | `python scripts/measure_uc1.py --scenario 2 --runs 30 --http`, Apple M4, commit b9a35e7. Output is in `measurements/runs/` (git-ignored). Page rendering is not included (as in Lab 10.4). |
+| Guardrail cases: unsupported and mismatched inputs, a valid control, and the 119/120/121 s boundaries | Reject invalid inputs, retain the valid controls, and check walking-time fallback where specified | 22 of 22 pass | `tests/test_r04_forecast_guard.py` |
+| Invalid forecasts used in ranking or reported as supported | 0 in the tested cases | No bad estimate accepted in the exercised ranking and assembled-output checks | same file |
+| Walk-only fallback in the specified cases | 100% of cases that check fallback | All fallback assertions pass | same file |
+| HTTP replay, 30 local confirmed requests with at least two eligible options | Track HTTP responses containing both options within 5 s | 30 of 30. Median 9.4 ms, p95 14.1 ms and maximum 1.42 s, including first-load cost. The app now preloads A2. | `python scripts/measure_uc1.py --scenario 2 --runs 30 --http`, Apple M4, commit `b9a35e7`. This measurement ends at the HTTP response. |
+| Driver-visible SR-13 acceptance | Both options visible within 5 s for all 30 applicable local requests | Requires browser timing on the merged baseline | Measure through display as specified in report §4.5. |
 
-After the holdout run, SR-14 coverage and MAE are reported in `docs/measurements/ch11/`.
+The [frozen SR-14 holdout results](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/dc69b21/docs/measurements/ch11/holdout/results.json) report coverage and MAE. Monitor the error of supported long-lead forecasts carrying a reference label separately from guardrail validity checks. The event-aware safeguard remains future work.
 A failed gate, a change to the forecast horizon, or a change to the data source or
 model triggers a new assessment (report §4.5).
 
