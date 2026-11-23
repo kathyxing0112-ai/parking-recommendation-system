@@ -1,6 +1,6 @@
 # Product Risk Register (Ch 12, §12.3)
 
-**Status:** the B3 ratings of R-01 to R-05 are the team's baseline ratings before mitigation, from the B3 sheet (`风险表.xlsx`, sheet "B3 风险评分"), confirmed by Katherine Xing and Xichen Wang on 2026-11-22. The six AI risks were rated by the team on the same scales on 2026-11-22; AI did not score any risk.
+**Status:** the B3 ratings of R-01 to R-05 are the team's baseline ratings before mitigation, from the B3 sheet (`风险表.xlsx`, sheet "B3 风险评分"), confirmed by Katherine Xing and Xichen Wang on 2026-11-22. The six AI risks use the same scales. The team reviewed and confirmed the final ratings on 2026-11-22.
 
 ## Scales and Calculation (B3 量表)
 
