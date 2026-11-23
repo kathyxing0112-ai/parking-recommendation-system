@@ -2,10 +2,11 @@
 
 ## Status
 
-Accepted on validation evidence (Ch 11 trade study, X4, 2026-11-22). The team has
-not yet signed off on the swing weights and maintainability scores, and LCC and
-affordability are still being calculated. Neither of these can reopen the choice
-using holdout results (see Consequences).
+Accepted on Weeks 11–12 validation evidence (Ch 11 trade study, X4, 2026-11-22).
+Implemented in [PR #16](https://github.com/kathyxing0112-ai/parking-recommendation-system/pull/16) at merge commit `9bc07c3`.
+The criteria below record the weights and maintainability ratings used in the
+integrated report. The report’s life-cycle cost analysis records the local-pilot
+affordability comparison. The selection was frozen before holdout verification.
 
 ## Context
 
@@ -104,7 +105,7 @@ lead time, not only for the arrival. The A2 signature itself is unchanged.
 
 - **Events.** After T_c the baseline under-forecasts occupied spaces by about 64 in the one event window. Long-range forecasts are labeled for reference only, and the page asks the driver to check again closer to arrival. That wording does not guarantee behavior. The team decided on 2026-11-22 not to build an event-aware baseline this round.
 - **Breaks.** In the backtest (train weeks 1–6, test weeks 8–10), F2's weighted MAE on the fall-break days 10/12–13 was 15.75 spaces, against 5.21 for F1, because the baseline assumes a normal weekday. The holdout includes Thanksgiving week (week 14), so SR-14 coverage is predicted to be at risk (pre-registered in 92303d0).
-- **Holdout.** The approach, T_c and settings are frozen. Weeks 13–15 are run once for SR-14 verification. If SR-14 fails, the failure is reported and investigated; the weights are not changed, the models are not retuned, and F2 is not replaced after the fact.
+- **Holdout.** The team froze the approach, T_c and settings before the one Weeks 13–15 run. The [protocol](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/d0dbe52/scripts/evaluate_sr14_holdout.py) was committed before the [results](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/dc69b21/docs/measurements/ch11/holdout/results.json). All three checks met the preregistered all-day, usage-weighted scope. Coverage was 77.6% in that scope, approximately 71.4% for unweighted all-day and weighted daytime. The SR-14 verification record should state the weighting convention. The holdout did not determine the choice.
 - **Dependency.** `lightgbm==4.7.0` is added to `requirements.txt`. The model files take about 7 MB in the repository.
 
 ## What the Losing Options Would Need
@@ -115,5 +116,5 @@ lead time, not only for the arrival. The A2 signature itself is unchanged.
 ## What Would Change This Decision
 
 - An SR-14 failure on the holdout opens a new trade study cycle, not a swap after the fact.
-- Evidence that event or break days are a larger share of requests than the 1.7% assumed above, since F1 leads beyond about 1.73%.
+- Evidence that event or break days account for a larger share of requests. The raw-MAE crossover of approximately 1.73% is a sensitivity threshold. The proportion of simulated forecasts falling into the validation event window does not estimate real demand.
 - An event- or calendar-aware baseline, which would remove F2's main weakness (future work).
