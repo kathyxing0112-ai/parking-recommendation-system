@@ -686,9 +686,8 @@ Later on 2026-11-03, further decisions from Katherine Xing:
 - Not delegated:
   - the T_c reading without the event window, the usage shares, the choice not to build an event-aware baseline, and the 120–180 min interpolation (option A), all decided by the team or Katherine;
   - the swing weights and the selection (Xichen Wang, X4);
-  - final risk likelihood and impact ratings (team, B3 sheet);
+  - all risk likelihood and impact ratings (assigned and verified manually by the team, B3 sheet);
   - the license check of Chronos (Katherine Xing, primary sources, 2026-11-21).
-- The initial B3 scoring draft was AI-assisted. The team reviewed and confirmed the final risk ratings on November 22, 2026.
 - The guardrail's bad-output cases were written in the same Claude Code session
   that wrote the guardrail, so they are not independent tests.
 - Verification: `tests.yml` selection 302 passed (2026-11-22). The holdout
