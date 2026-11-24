@@ -5,8 +5,10 @@
 Accepted on Weeks 11–12 validation evidence (Ch 11 trade study, X4, 2026-11-22).
 Implemented in [PR #16](https://github.com/kathyxing0112-ai/parking-recommendation-system/pull/16) at merge commit `9bc07c3`.
 The criteria below record the weights and maintainability ratings used in the
-integrated report. The report’s life-cycle cost analysis records the local-pilot
-affordability comparison. The selection was frozen before holdout verification.
+integrated report. The report’s life-cycle cost analysis (§2.7) gives, over
+12 months at an assumed $50/h with no new hardware: F1 20 h ($1,000), F2 24 h
+($1,200), F3 38 h ($1,900). Against the team's 30 h ($1,500) ceiling for C.2, F1
+and F2 are affordable and F3 is not. The selection was frozen before holdout verification.
 
 ## Context
 
@@ -105,7 +107,7 @@ lead time, not only for the arrival. The A2 signature itself is unchanged.
 
 - **Events.** After T_c the baseline under-forecasts occupied spaces by about 64 in the one event window. Long-range forecasts are labeled for reference only, and the page asks the driver to check again closer to arrival. That wording does not guarantee behavior. The team decided on 2026-11-22 not to build an event-aware baseline this round.
 - **Breaks.** In the backtest (train weeks 1–6, test weeks 8–10), F2's weighted MAE on the fall-break days 10/12–13 was 15.75 spaces, against 5.21 for F1, because the baseline assumes a normal weekday. The holdout includes Thanksgiving week (week 14), so SR-14 coverage is predicted to be at risk (pre-registered in 92303d0).
-- **Holdout.** The team froze the approach, T_c and settings before the one Weeks 13–15 run. The [protocol](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/d0dbe52/scripts/evaluate_sr14_holdout.py) was committed before the [results](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/dc69b21/docs/measurements/ch11/holdout/results.json). All three checks met the preregistered all-day, usage-weighted scope. Coverage was 77.6% in that scope, approximately 71.4% for unweighted all-day and weighted daytime. The SR-14 verification record should state the weighting convention. The holdout did not determine the choice.
+- **Holdout.** The team froze the approach, T_c and settings before the one Weeks 13–15 run. The [protocol](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/d0dbe52/scripts/evaluate_sr14_holdout.py) was committed before the [results](https://github.com/kathyxing0112-ai/parking-recommendation-system/blob/dc69b21/docs/measurements/ch11/holdout/results.json). All three checks met the preregistered all-day, usage-weighted scope. Coverage was 77.6% in that scope, approximately 71.4% for unweighted all-day and weighted daytime. SR-14 results are reported with this weighting convention stated. The holdout did not determine the choice.
 - **Dependency.** `lightgbm==4.7.0` is added to `requirements.txt`. The model files take about 7 MB in the repository.
 
 ## What the Losing Options Would Need

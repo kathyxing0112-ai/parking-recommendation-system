@@ -82,8 +82,14 @@ The [frozen SR-14 holdout results](https://github.com/kathyxing0112-ai/parking-r
 A failed gate, a change to the forecast horizon, or a change to the data source or
 model triggers a new assessment (report §4.5).
 
+**Residual risk (team decision 2026-11-22, report §4.4 and §6).** The team gives no
+numerical post-treatment rating for R-04. The tests show that invalid or mismatched
+forecasts are withheld, but they do not establish a new likelihood or impact. The
+remaining exposure, plausible but inaccurate forecasts on event and break days, is
+accepted for this iteration: forecasts 3 h or more ahead are labelled "for reference
+only", and an event-aware baseline is future work.
+
 ## Open Items for the Team
 
-1. Remove the "Draft initial values" label in the B3 sheet (ratings confirmed 2026-11-22), and record a residual rating for R-04 now that the guardrail is verified (report §4.5).
-2. Update the R-04 evidence in B3 (column K). It says "SR-14 on main specifies 60 minutes". The 72 h window is on branch `ch11-forecast-trade` and reaches main with the A2 PR, so this line in this file and in Innoslate changes after the merge.
-3. Confirm that the R-04 handling here matches the B5 mitigation plan.
+1. Remove the "Draft initial values" label in the B3 sheet, since the ratings were confirmed on 2026-11-22.
+2. Update the R-04 evidence in B3 (column K) and in Innoslate. It still says SR-14 on main specifies 60 minutes; since PR #16, SR-14 on main specifies 0–72 h.
