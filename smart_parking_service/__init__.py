@@ -10,8 +10,7 @@ through the data access component, and trip interpretation goes through the
 local language model adapter (docs/deployment.md). UC.1.10 and UC.1.11 run
 through A1, UC.1.12 forecasts availability at arrival through A2 (ALT-F2,
 SR-14), and UC.1.13 ranks through A3, which falls back to walking time when any
-eligible area has no supported forecast (SR-13). A4 is not implemented, so this
-module still builds the driver-facing result.
+eligible area has no supported forecast (SR-13). UC.1.14 presents the result through A4.
 """
 
 from datetime import date, datetime, timedelta
@@ -25,6 +24,7 @@ from language_model import warm_up_model
 from parking_availability_data_sources import get_lot_inventory
 from parking_data_access import ParkingDataStore
 from prepare_eligible_parking_information import InvalidTripRequest, prepare_eligible_parking_information
+from present_parking_recommendations_and_status import present_parking_recommendations_and_status
 from rank_parking_options import rank_parking_options
 from stage_timing import stage
 
@@ -154,7 +154,6 @@ def find_suitable_parking(trip_request: dict) -> dict:
                                    prepared["eligible_parking_areas"], prepared["validated_parking_data"],
                                    prepared["data_quality_and_freshness_status"],
                                    datetime.now().astimezone())
-    estimates = {e["lot_id"]: e for e in forecast["arrival_time_availability_estimates"]}
 
     # UC.1.13: A3 ranks; without a supported forecast for every area it uses walking time.
     with stage("C.3.rank"):
@@ -167,41 +166,35 @@ def find_suitable_parking(trip_request: dict) -> dict:
             forecast["forecast_validity_status"],
             ranking_and_fallback_rules=RANKING_AND_FALLBACK_RULES,
         )
-    with stage("C.0.assemble_result"):
-        observed = {lot["lot_id"]: lot for lot in prepared["validated_parking_data"]}
-        freshness = prepared["data_quality_and_freshness_status"]
+    # UC.1.14: A4 presents the options with explanations derived by the
+    # application from the factors the ranking used (ADR-0002, SR-13, SR-15).
+    with stage("C.4.present"):
+        presented = present_parking_recommendations_and_status(
+            {}, {}, {},
+            prepared["validated_parking_data"],
+            prepared["normalized_trip_requirements"],
+            prepared["validated_context_information"],
+            prepared["eligible_parking_areas"],
+            prepared["data_quality_and_freshness_status"],
+            forecast["arrival_time_availability_estimates"],
+            forecast["forecast_validity_status"],
+            ranked,
+            authorization_decision={"permitted": False},  # no trip record is stored in the pilot
+            parking_policy_constraints=rules,
+            presentation_and_explanation_rules=DATA_VALIDATION_AND_FRESHNESS_RULES,
+        )
 
-        # UC.1.14: the application, not the language model, derives each
-        # explanation from the factors it used (ADR-0002, SR-13, SR-15).
-        ranked_options = []
-        for rank, (option, role) in enumerate(zip(ranked, ("primary", "backup")), start=1):
-            lot = observed[option["lot_id"]]
-            available = lot["capacity"] - lot["occupied"]
-            estimate = estimates.get(option["lot_id"])
-            ranked_options.append({
-                "rank": rank,
-                "role": role,
-                "lot_id": option["lot_id"],
-                "available_spaces": available,
-                "walking_time_minutes": option["walking_time_minutes"],
-                "ranking_basis": option["ranking_basis"],
-                "stale": freshness[option["lot_id"]] == "stale",
-                "forecast": _forecast_summary(estimate),
-                "explanation": _explanation(option, trip_request, available, estimate),
-            })
-
+    return {
+        "destination": trip_request["destination"],
+        "ranked_options": presented["ranked_parking_recommendations"],
+        "advisory_notice": presented["advisory_notice"],
         # The confirmed request is echoed back so the driver can re-check it on the
         # results screen (A4 receives Normalized Trip Requirements, flow 9.13).
-        trip_summary = {field: trip_request[field] for field in REQUIRED_FIELDS}
-
-        return {
-            "destination": trip_request["destination"],
-            "ranked_options": ranked_options,
-            "trip_summary": trip_summary,
-            "data_mode": "synthetic",
-            "ranking_basis": ranked[0]["ranking_basis"] if ranked else None,
-            "a1_outputs": _a1_outputs(prepared),
-        }
+        "trip_summary": presented["trip_summary"],
+        "data_mode": "synthetic",
+        "ranking_basis": ranked[0]["ranking_basis"] if ranked else None,
+        "a1_outputs": _a1_outputs(prepared),
+    }
 
 
 def guard_forecasts(forecast: dict, normalized_trip_requirements: dict, eligible_parking_areas: list[dict],
@@ -288,28 +281,6 @@ def _aware(value) -> datetime | None:
     except (TypeError, ValueError):
         return None
     return parsed if parsed.tzinfo is not None else None
-
-
-def _forecast_summary(estimate: dict | None) -> dict | None:
-    """What the driver sees of A2's estimate for one option."""
-    if estimate is None:
-        return None
-    return {key: estimate[key] for key in ("available_spaces", "interval_lower", "interval_upper",
-                                           "interval_level", "lead_minutes", "method", "long_range")}
-
-
-def _explanation(option: dict, trip_request: dict, available_now: int, estimate: dict | None) -> str:
-    """UC.1.14: the explanation names only the factors the ranking used (SR-15)."""
-    text = (f"{option['lot_id']} is eligible for {trip_request['declared_eligibility']}, "
-            f"{option['walking_time_minutes']} min walk, {available_now} spaces observed now (synthetic).")
-    if option["ranking_basis"] == "score":
-        text += (f" Forecast at arrival: about {estimate['available_spaces']} free "
-                 f"(80% range {estimate['interval_lower']}-{estimate['interval_upper']}). "
-                 "Ranked by walking time, forecast free spaces and forecast certainty.")
-        if estimate["long_range"]:
-            text += " Arrival is 3 h or more away, so the forecast is the usual level for that day and time: for reference only."
-        return text
-    return text + " A forecast is unavailable for at least one eligible lot, so options are ranked by walking time."
 
 
 def _a1_outputs(prepared: dict) -> dict:

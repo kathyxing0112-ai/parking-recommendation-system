@@ -64,9 +64,9 @@ Two UC.1 cases inject bad A2 output and examine the assembled product result.
 **Relation to the mitigation plan (report §4.4).** The plan has three parts.
 C.2 reports validity and withholds unsupported estimates; this was already in A2.
 C.3 checks validity and bounds before scoring, and falls back to walking time.
-The page hides unsupported numeric forecasts. `guard_forecasts` checks status
+A4 (C.4) shows a forecast only where A2 marked it supported. `guard_forecasts` checks status
 against lot, arrival time, observation and freshness before A3. A3 keeps its
-bounds check and SR-13 fallback. C.0 assembles results until A4 has a body.
+bounds check and SR-13 fallback.
 
 **Monitoring (report §4.5, Table 4-4).**
 

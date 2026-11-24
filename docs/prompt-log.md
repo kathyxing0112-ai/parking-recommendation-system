@@ -693,3 +693,22 @@ Later on 2026-11-03, further decisions from Katherine Xing:
 - Verification: `tests.yml` selection 302 passed (2026-11-22). The holdout
   weeks 13–15 were not read. The pre-holdout predictions are in commit 92303d0.
 - Reviewed by: (Xichen Wang)
+
+## 2026-11-24 — Katherine Xing — Claude Code (model: Claude Opus 5.5)
+
+- Purpose: issue #14, a body for A4 Present Parking Recommendations and Status (C.4).
+- Prompt: Katherine asked Claude Code to complete A4.
+- Output:
+  - `present_parking_recommendations_and_status/` builds the primary and backup options, the
+    explanation, the stale label and last-observed time, a forecast only for lots A2 marked
+    supported, the advisory notice, the trip summary, the selected option and the rechecked status.
+  - `smart_parking_service` calls A4 in stage `C.4.present` instead of building the result itself
+    (`C.0.assemble_result` stays in `stage_timing.STAGES` for the earlier measurement runs).
+  - The page shows A4's advisory notice.
+  - `tests.yml` no longer deselects `test_FR_1_4_4`.
+- Not changed: the explanation wording, the ranking and the guardrail. No trip record is stored,
+  so A4 sends no protected data operation request to A5.
+- Verification: `test_FR_1_4_4` passes. The full suite has 308 passed and 19 failed; the 19 are
+  the acceptance placeholders in `tests/test_spec_acceptance.py`. One confirmed trip was checked
+  in the browser.
+- Reviewed by: (pending)

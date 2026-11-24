@@ -273,7 +273,7 @@
         <div class="cards" id="cards"></div>
         <div class="below">
           <span id="not-shown"></span>
-          <span>Advice only, not a reservation</span>
+          <span id="advisory">Advice only, not a reservation</span>
         </div>
       </div>
       <section class="a1">
@@ -568,6 +568,7 @@ function renderResults(result) {
     : `<p>No eligible parking area was found for this trip.</p>`;
   const notShown = outputs.excluded_lot_ids.map((id) => outputs.lot_names[id]);
   $("not-shown").textContent = notShown.length ? `Not shown: ${notShown.join(", ")} (not eligible for this trip)` : "";
+  if (result.advisory_notice) $("advisory").textContent = result.advisory_notice;
   renderStages(trip, outputs);
   $("plan-view").hidden = true;
   $("results-view").hidden = false;
