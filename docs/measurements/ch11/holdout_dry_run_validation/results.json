@@ -1,0 +1,232 @@
+{
+  "weeks": "validation",
+  "script_commit": null,
+  "model_manifest": {
+    "t_c_minutes": 180,
+    "model_grid_minutes": [
+      0,
+      15,
+      30,
+      45,
+      60,
+      120
+    ],
+    "interval_widening_spaces": {
+      "0-1h": 1.235,
+      "1-6h": 1.86
+    },
+    "trained_on": "simulated weeks 1-10, leads 15 min to 6 h, forecast every 15 min",
+    "data_sha256": "81faa2458d1f2e919355e6cef9cb0863fe850f42bb9fa85f36a32d2661a646b2"
+  },
+  "sr14_checks": {
+    "MAE not above the baseline (weighted, all day)": {
+      "alt_f2": 4.721897382927423,
+      "baseline": 6.082855864967117,
+      "met": true
+    },
+    "80% interval coverage within 0.75-0.85 (weighted, all day)": {
+      "coverage": 0.8425532065927442,
+      "met": true
+    },
+    "primary option has a free space on arrival, at least 85 of 100 trips": {
+      "successes": 98,
+      "trips": 100,
+      "met": true
+    }
+  },
+  "breakdowns": {
+    "scope": {
+      "all day": {
+        "n": 40068,
+        "n_supported": 40068,
+        "weighted_mae_f2": 4.721897382927423,
+        "weighted_mae_baseline": 6.082855864967117,
+        "weighted_coverage": 0.8425532065927442,
+        "weighted_bias": -0.8868778336008439,
+        "mae_f2": 5.794973544973545,
+        "mae_baseline": 6.06848357791754,
+        "coverage": 0.817360487171808,
+        "bias": -1.851028251971648
+      },
+      "daytime": {
+        "n": 20094,
+        "n_supported": 20094,
+        "weighted_mae_f2": 6.875217870880914,
+        "weighted_mae_baseline": 8.963263505801551,
+        "weighted_coverage": 0.8010609557239992,
+        "weighted_bias": -1.1561033396033398,
+        "mae_f2": 8.573554294814372,
+        "mae_baseline": 8.99253508510003,
+        "coverage": 0.7944162436548223,
+        "bias": -2.817209117149398
+      },
+      "ordinary days": {
+        "n": 39380,
+        "n_supported": 39380,
+        "weighted_mae_f2": 4.282117820513351,
+        "weighted_mae_baseline": 5.128632941073714,
+        "weighted_coverage": 0.8456731199415518,
+        "weighted_bias": -0.59520780735873,
+        "mae_f2": 4.883443372270188,
+        "mae_baseline": 5.053859827323515,
+        "coverage": 0.8170898933468765,
+        "bias": -0.9130523108176739
+      },
+      "ordinary days, daytime": {
+        "n": 19406,
+        "n_supported": 19406,
+        "weighted_mae_f2": 6.058196482979848,
+        "weighted_mae_baseline": 7.126587876422471,
+        "weighted_coverage": 0.8060274361629706,
+        "weighted_bias": -0.5772624803982758,
+        "mae_f2": 6.822322992888798,
+        "mae_baseline": 7.0372565186024945,
+        "coverage": 0.7930536947335876,
+        "bias": -0.9480573018654025
+      },
+      "Thanksgiving break days": {
+        "n": 0,
+        "mae_f2": NaN,
+        "mae_baseline": NaN,
+        "coverage": NaN,
+        "bias": NaN
+      },
+      "event windows": {
+        "n": 688,
+        "mae_f2": 57.969476744186046,
+        "mae_baseline": 64.1438953488372,
+        "coverage": 0.8328488372093024,
+        "bias": -55.53924418604651
+      }
+    },
+    "usage_band": {
+      "0-1h": {
+        "n": 4029,
+        "mae_f2": 3.6411020104244227,
+        "mae_baseline": 6.081409779101514,
+        "coverage": 0.8622486969471332,
+        "bias": -0.0963018118639861
+      },
+      "1-3h": {
+        "n": 2001,
+        "mae_f2": 5.528735632183908,
+        "mae_baseline": 6.091954022988506,
+        "coverage": 0.8345827086456772,
+        "bias": -1.24087956021989
+      },
+      "3-6h": {
+        "n": 2979,
+        "mae_f2": 6.111111111111111,
+        "mae_baseline": 6.111111111111111,
+        "coverage": 0.81067472306143,
+        "bias": -2.1695199731453507
+      },
+      "6-24h": {
+        "n": 17307,
+        "mae_f2": 6.030739007338071,
+        "mae_baseline": 6.030739007338071,
+        "coverage": 0.8125613913445426,
+        "bias": -2.045415149939331
+      },
+      "24-72h": {
+        "n": 13752,
+        "mae_f2": 6.099549156486329,
+        "mae_baseline": 6.099549156486329,
+        "coverage": 0.8091913903432228,
+        "bias": -2.1402705061082026
+      }
+    },
+    "part": {
+      "LightGBM part (lead < 180 min)": {
+        "all": {
+          "n": 5031,
+          "mae_f2": 3.9049890677797654,
+          "mae_baseline": 6.083283641423177,
+          "coverage": 0.8616577221228384,
+          "bias": -0.13953488372093023
+        },
+        "ordinary days": {
+          "n": 4951,
+          "mae_f2": 3.7873156937992323,
+          "mae_baseline": 5.142799434457685,
+          "coverage": 0.8672995354473844,
+          "bias": -0.2987275297919612
+        },
+        "Thanksgiving break days": {
+          "n": 0,
+          "mae_f2": NaN,
+          "mae_baseline": NaN,
+          "coverage": NaN,
+          "bias": NaN
+        },
+        "event windows": {
+          "n": 80,
+          "mae_f2": 11.1875,
+          "mae_baseline": 64.2875,
+          "coverage": 0.5125,
+          "bias": 9.7125
+        }
+      },
+      "baseline part (lead >= 180 min)": {
+        "all": {
+          "n": 35037,
+          "mae_f2": 6.066358421097696,
+          "mae_baseline": 6.066358421097696,
+          "coverage": 0.8109998002112053,
+          "bias": -2.0967834004052857
+        },
+        "ordinary days": {
+          "n": 34429,
+          "mae_f2": 5.041070028173923,
+          "mae_baseline": 5.041070028173923,
+          "coverage": 0.8098695866856429,
+          "bias": -1.0013941735165122
+        },
+        "Thanksgiving break days": {
+          "n": 0,
+          "mae_f2": NaN,
+          "mae_baseline": NaN,
+          "coverage": NaN,
+          "bias": NaN
+        },
+        "event windows": {
+          "n": 608,
+          "mae_f2": 64.125,
+          "mae_baseline": 64.125,
+          "coverage": 0.875,
+          "bias": -64.125
+        }
+      }
+    }
+  },
+  "trips": {
+    "by_band": {
+      "0-1h": {
+        "sum": 20,
+        "count": 20
+      },
+      "1-6h": {
+        "sum": 20,
+        "count": 20
+      },
+      "24-48h": {
+        "sum": 19,
+        "count": 20
+      },
+      "48-72h": {
+        "sum": 19,
+        "count": 20
+      },
+      "6-24h": {
+        "sum": 20,
+        "count": 20
+      }
+    },
+    "nearest_lot_successes_context_only": 98,
+    "ranking_basis": {
+      "score": 100
+    }
+  },
+  "runtime_seconds": 3.6,
+  "simulated": true
+}
