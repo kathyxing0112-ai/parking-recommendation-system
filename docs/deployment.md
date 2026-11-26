@@ -33,9 +33,9 @@ six first-level subsystems. Each one performs exactly one first-level function.
 | Asset | Name | Performs | Code | State in this increment |
 |---|---|---|---|---|
 | C.1 | Parking Information Subsystem | A1 Prepare Eligible Parking Information | `prepare_eligible_parking_information/` | Implemented: calls one module per subfunction (below) |
-| C.2 | Availability Forecasting Subsystem | A2 Estimate Arrival Time Availability | `estimate_arrival_time_availability/` | Signature only; waits for the forecast model (ADR-0002) |
+| C.2 | Availability Forecasting Subsystem | A2 Estimate Arrival Time Availability | `estimate_arrival_time_availability/` | Implemented (ALT-F2, ADR-0004) |
 | C.3 | Recommendation Ranking Subsystem | A3 Rank Parking Options | `rank_parking_options/` | Implemented |
-| C.4 | Driver Presentation Subsystem | A4 Present Parking Recommendations and Status | `present_parking_recommendations_and_status/` | Signature only; body pending |
+| C.4 | Driver Presentation Subsystem | A4 Present Parking Recommendations and Status | `present_parking_recommendations_and_status/` | Implemented |
 | C.5 | Access Authorization Subsystem | A5 Authorize Protected Data Operations | `authorize_protected_data_operations/` | Implemented |
 | C.6 | Data Retention Subsystem | A6 Apply Personal Data Retention Rules | `apply_personal_data_retention_rules/` | Implemented (deletion authorized, not yet physical) |
 
@@ -51,9 +51,8 @@ C.1 is decomposed to the second level:
 Two more packages are part of C.0 but are not functions on the IDEF0
 (`docs/traceability.md`): `smart_parking_service/` puts the UC.1 messages in
 order, and `cornell_driver_interface/` is the system side of X.C.1.
-`smart_parking_service` runs A1 and A3. Until A2 and A4 have bodies, it has no
-forecast, A3 uses its walking-time fallback, and the service itself builds the
-driver-facing result (ADR-0003, divergences).
+`smart_parking_service` runs A1, A2, the R-04 forecast guardrail, A3 and A4 in
+UC.1 order; A4 builds the driver-facing result.
 
 ## What talks to what
 

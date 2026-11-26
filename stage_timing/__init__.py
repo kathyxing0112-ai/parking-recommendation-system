@@ -40,7 +40,8 @@ STAGES = {
     "C.2.estimate": ("C.2", "A2 forecasts free spaces at the arrival time (ALT-F2)"),
     "C.0.forecast_guard": ("C.0", "R-04 guardrail: withholds A2 estimates ranking and display must not use"),
     "C.3.rank": ("C.3", "A3 ranks the eligible options"),
-    "C.0.assemble_result": ("C.0 (stands in for C.4)", "Builds the driver-facing result; A4 has no body yet"),
+    "C.0.assemble_result": ("C.0 (stands in for C.4)", "Builds the driver-facing result; A4 had no body yet (runs before 2026-11-24)"),
+    "C.4.present": ("C.0 -> C.4", "A4 builds the driver-facing result: options, explanations, stale labels, advisory notice"),
     # Measured by the client in scripts/measure_uc1.py --http, not with stage():
     "HTTP.interpret_round_trip": ("X.C.1 browser -> web_app (loopback HTTP)", "POST /api/interpret, request sent until the JSON reply is read"),
     "HTTP.confirm_round_trip": ("X.C.1 browser -> web_app (loopback HTTP)", "POST /api/confirm, request sent until the JSON reply is read (SR-13 window without page rendering)"),
